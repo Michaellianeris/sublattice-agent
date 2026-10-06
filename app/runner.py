@@ -72,6 +72,11 @@ def summarise(runtime):
     neel_z = np.abs((m1[:, 2] - m2[:, 2]) / 2.0)
     np.savetxt("neel_z.dat", np.column_stack((t, neel_z)), fmt="%.6e")
 
+    dot = np.sum(m1 * m2, axis=1)
+
+    def order(v):
+        return "AFM" if v < -0.9 else "FM" if v > 0.9 else "canted"
+
     sign = np.sign(neel[:, 2])
     flips = np.where(np.diff(sign) != 0)[0]
     half = len(t) // 2
@@ -87,6 +92,8 @@ def summarise(runtime):
         "m2_initial": vec(m2[0]), "m2_final": vec(m2[-1]),
         "neel_initial": vec(neel[0]), "neel_final": vec(neel[-1]),
         "net_m_final": vec(mnet[-1]),
+        "m1_dot_m2_initial": round(float(dot[0]), 4), "m1_dot_m2_final": round(float(dot[-1]), 4),
+        "order_initial": order(dot[0]), "order_final": order(dot[-1]),
         "neel_z_abs_mean": float(np.mean(neel_z)),
         "neel_z_abs_mean_second_half": float(np.mean(neel_z[half:])),
         "net_m_z_mean": float(np.mean(mnet[:, 2])),
