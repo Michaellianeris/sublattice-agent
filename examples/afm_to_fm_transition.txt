@@ -1,0 +1,4 @@
+# Default scenario: starts antiferromagnetic (m1 ~ -m2), positive exchange A0 makes the coupling
+# ferromagnetic, no current, T = 0 K. m1.m2 goes from -1 to +1 within about 50 ps
+--t=2e-9
+--A0=0.248e-12

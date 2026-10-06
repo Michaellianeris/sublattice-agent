@@ -406,7 +406,8 @@ body.bench-open .bench{display:block}
 
       <div id="fast">
         <div class="chips" id="fpresets" aria-label="Presets">
-          <button type="button" data-p="default">Defaults</button>
+          <button type="button" data-p="default">Default: AFM &rarr; FM</button>
+          <button type="button" data-p="afm">AFM stays AFM</button>
           <button type="button" data-p="minus">Néel &minus;z, no current</button>
           <button type="button" data-p="plus">Néel +z, no current</button>
           <button type="button" data-p="sotp">SOT +</button>
@@ -951,6 +952,7 @@ function buildRunViewer(box, r) {
       <div><div class="dial">${dialSVG()}</div>
         <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:currentColor;border-top-style:dashed"></b>n</span></div></div>
       <dl class="figures">
+        ${s.order_final ? `<dt>order</dt><dd>${s.order_initial} → ${s.order_final} (m₁·m₂ ${fmt(s.m1_dot_m2_initial, 2)} → ${fmt(s.m1_dot_m2_final, 2)})</dd>` : ""}
         <dt>m₁ final</dt><dd>${vec(s.m1_final)}</dd>
         <dt>m₂ final</dt><dd>${vec(s.m2_final)}</dd>
         <dt>Néel vector final</dt><dd>${vec(s.neel_final)}</dd>
@@ -1192,7 +1194,7 @@ async function paintCard(id, c, r) {
     c.chart.setData(d.t_ns, CARD_SERIES.map(s => ({...s, y: cols[s.k]})));
     setStep(el, "plot", "done", "Trajectory ready");
     const s = r.summary;
-    plot.querySelector(".rc-meta").textContent = `mean |nz| = ${fmt(s.neel_z_abs_mean)}   nz sign changes = ${s.neel_z_sign_changes}   n final = ${vec(s.neel_final)}`;
+    plot.querySelector(".rc-meta").textContent = `${s.order_final ? s.order_initial + " → " + s.order_final + "   " : ""}mean |nz| = ${fmt(s.neel_z_abs_mean)}   nz sign changes = ${s.neel_z_sign_changes}   n final = ${vec(s.neel_final)}`;
   } catch (e) { setStep(el, "plot", "bad", "Trajectory not available: " + esc(e.message)); }
 }
 
@@ -1208,7 +1210,7 @@ $("#closebench").onclick = () => setBench(false);
 const FAST = [
   {k: "t", label: "Duration (ns)", scale: 1e-9, min: 0.5, max: 30, step: 0.5},
   {k: "Ms", label: "Saturation Ms (kA/m)", scale: 1e3, min: 100, max: 1200, step: 1},
-  {k: "A0", label: "Exchange A0 (pJ/m)", scale: 1e-12, min: -1.2, max: -0.02, step: 0.002},
+  {k: "A0", label: "Exchange A0 (pJ/m)", scale: 1e-12, min: -1.2, max: 1.2, step: 0.002},
   {k: "Ku", label: "Anisotropy Ku (10\u2074 J/m\u00b3)", scale: 1e4, min: 0.2, max: 10, step: 0.01},
   {k: "a", label: "Damping \u03b1", scale: 1, min: 0.005, max: 0.3, step: 0.005},
   {k: "Temp", label: "Temperature (K)", scale: 1, min: 0, max: 400, step: 5},
@@ -1243,12 +1245,14 @@ function fastText() {
   return lines.join("\n") + "\n";
 }
 function fastUpdate() { $("#ftext").textContent = fastText(); $("#fcheckout").textContent = ""; $("#fcheckout").className = "check"; }
+const baseFast = () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; };
 const PRESETS_FAST = {
-  default: () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; },
-  minus: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 0); },
-  plus: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 0); $("#f-neel").value = "plus"; },
-  sotp: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 30); },
-  sotn: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", -30); },
+  default: () => { baseFast(); fastSet("A0", 0.248); fastSet("t", 2); },
+  afm: () => { baseFast(); fastSet("t", 2); },
+  minus: () => { baseFast(); fastSet("SOT_DC_Amp", 0); },
+  plus: () => { baseFast(); fastSet("SOT_DC_Amp", 0); $("#f-neel").value = "plus"; },
+  sotp: () => { baseFast(); fastSet("SOT_DC_Amp", 30); },
+  sotn: () => { baseFast(); fastSet("SOT_DC_Amp", -30); },
 };
 document.querySelectorAll("#fpresets button").forEach(b => b.onclick = () => {
   PRESETS_FAST[b.dataset.p](); fastUpdate();
@@ -1313,7 +1317,7 @@ $("#apikey").addEventListener("input", () => { clearTimeout(modelTimer); modelTi
 async function init() {
   setTheme(document.documentElement.dataset.theme);
   state.config = await api("/api/config");
-  buildFast(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
+  PRESETS_FAST.default(); fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
   sel.value = localStorage.getItem("sublattice.model") || state.config.model;
