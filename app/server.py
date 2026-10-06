@@ -1,0 +1,153 @@
+"""HTTP API and static UI."""
+import os
+from pathlib import Path
+
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from pydantic import BaseModel
+
+from . import agent
+from . import params as P
+from . import simulations as S
+
+WEB = Path(__file__).resolve().parent.parent / "web"
+EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
+MAX_UPLOAD = 200_000
+
+app = FastAPI(title="Sublattice Agent")
+S.recover_interrupted()
+
+
+class ChatIn(BaseModel):
+    messages: list
+    model: str | None = None
+
+
+class ParamsIn(BaseModel):
+    parameters_text: str
+    label: str = ""
+
+
+class SaveIn(BaseModel):
+    name: str
+    parameters_text: str
+
+
+@app.get("/")
+def index():
+    return FileResponse(WEB / "index.html")
+
+
+@app.get("/api/config")
+def config():
+    return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
+            "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+
+
+@app.post("/api/chat")
+def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
+    if body.model and body.model not in agent.MODELS:
+        raise HTTPException(400, f"unknown model {body.model}")
+    try:
+        messages, events = agent.chat(body.messages, api_key=x_api_key, model=body.model)
+    except agent.AgentError as e:
+        return JSONResponse({"error": str(e)}, status_code=e.status)
+    return {"messages": messages, "events": events}
+
+
+# ---- parameter files
+
+@app.post("/api/files")
+async def upload(file: UploadFile = File(...)):
+    raw = await file.read()
+    if len(raw) > MAX_UPLOAD:
+        raise HTTPException(413, "file larger than 200 kB")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(400, "the file is not UTF-8 text")
+    name = S.save_input(file.filename or "parameters.txt", text)
+    return {"name": name, "text": text, "check": P.validate(text, S.sec_per_step())}
+
+
+@app.post("/api/files/save")
+def save(body: SaveIn):
+    return {"name": S.save_input(body.name, body.parameters_text)}
+
+
+@app.get("/api/files")
+def files():
+    return {"files": S.list_inputs()}
+
+
+@app.get("/api/files/{name}")
+def get_file(name: str):
+    text = S.read_input(name)
+    if text is None:
+        raise HTTPException(404, "file not found")
+    return PlainTextResponse(text, headers={"Content-Disposition": f'attachment; filename="{S.safe_name(name)}"'})
+
+
+@app.get("/api/examples")
+def examples():
+    return {"examples": [{"name": p.name, "text": p.read_text()} for p in sorted(EXAMPLES.glob("*.txt"))]}
+
+
+@app.post("/api/validate")
+def validate(body: ParamsIn):
+    out = P.validate(body.parameters_text, S.sec_per_step())
+    out.pop("cleaned_text", None)
+    return out
+
+
+# ---- runs and sweeps
+
+@app.post("/api/runs")
+def start(body: ParamsIn):
+    out = S.start_run(body.parameters_text, body.label)
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.get("/api/runs")
+def runs(limit: int = 50):
+    return {"runs": S.list_runs(limit), "sweeps": S.list_sweeps()}
+
+
+@app.get("/api/runs/{run_id}")
+def run(run_id: str):
+    info = S.run_info(run_id, full=True)
+    if not info:
+        raise HTTPException(404, "run not found")
+    return info
+
+
+@app.post("/api/runs/{run_id}/cancel")
+def cancel(run_id: str):
+    return S.cancel(run_id)
+
+
+@app.get("/api/runs/{run_id}/files/{name}")
+def run_file(run_id: str, name: str):
+    path = S.run_file(run_id, name)
+    if not path:
+        raise HTTPException(404, "file not found")
+    return FileResponse(path, filename=f"{run_id}_{name}")
+
+
+@app.get("/api/sweeps/{sweep_id}")
+def sweep(sweep_id: str, discard_fraction: float = 0.0):
+    info = S.sweep_info(sweep_id, discard_fraction)
+    if not info:
+        raise HTTPException(404, "sweep not found")
+    return info
+
+
+@app.get("/api/sweeps/{sweep_id}/plot")
+def sweep_plot(sweep_id: str):
+    path = S.sweep_file(sweep_id, "sweep_neel_z.png")
+    if not path:
+        raise HTTPException(404, "plot not ready")
+    return FileResponse(path)

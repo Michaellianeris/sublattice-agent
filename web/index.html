@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sublattice Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F3; --panel:#FFFFFF; --ink:#17212B; --muted:#5A6875; --line:#CDD5DD; --soft:#F5F7F9;
+  --m1:#1F4FD1; --m2:#B0127F; --ok:#2E7D4F; --warn:#9A5B00; --err:#B42318;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--serif)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--m1);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:.86em}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+.mark{display:flex;align-items:center;gap:10px}
+.mark h1{white-space:nowrap;margin:0;font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
+.controls{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.controls label{color:var(--muted);font-size:.9rem;display:flex;align-items:center;gap:6px}
+.controls select,.controls input{border:1px solid var(--line);border-radius:4px;padding:4px 8px;background:var(--panel)}
+.controls input{width:220px}
+.keystate{font-size:.85rem;color:var(--muted)}
+.keystate.good{color:var(--ok)}
+
+/* layout */
+main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:calc(100vh - 57px)}
+.chat{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+.bench{overflow-y:auto;padding:20px 24px 40px}
+
+/* conversation */
+.log{flex:1;overflow-y:auto;padding:24px 28px}
+.msg{max-width:72ch;margin:0 0 18px}
+.msg.user{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px 10px 2px 10px;padding:10px 14px;width:fit-content;max-width:62ch}
+.msg.assistant p{margin:.45em 0}
+.msg pre{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:10px 12px;overflow-x:auto;font:13px/1.5 var(--mono)}
+.msg code{font-family:var(--mono);font-size:.86em;background:var(--soft);padding:1px 4px;border-radius:3px}
+.msg pre code{background:none;padding:0}
+.msg table{border-collapse:collapse;margin:.6em 0;font-size:.92rem}
+.msg td,.msg th{border-bottom:1px solid var(--line);padding:4px 10px;text-align:left}
+.msg h3,.msg h4{margin:.8em 0 .2em;font-size:1.02rem}
+.msg ul,.msg ol{padding-left:1.3em;margin:.4em 0}
+.attachment{font-family:var(--mono);font-size:.8rem;color:var(--muted);margin-top:6px}
+.tools{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+.chip{font-size:.85rem;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.chip.link{cursor:pointer;color:var(--ink)}
+.chip.link:hover{border-color:var(--m1)}
+.chip.bad{color:var(--err);border-color:#E7B8B3}
+.thinking{color:var(--muted);font-style:italic;margin:0 0 18px}
+.error{color:var(--err);border-left:3px solid var(--err);padding:4px 10px;margin:0 0 18px;max-width:72ch}
+
+.empty{max-width:56ch;margin:8vh auto 0;color:var(--muted)}
+.empty h2{color:var(--ink);font-size:1.6rem;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.starters{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.starters button{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:9px 12px;cursor:pointer}
+.starters button:hover{border-color:var(--m1)}
+
+.composer{border-top:1px solid var(--line);background:var(--panel);padding:12px 20px 14px}
+.composer.drag{outline:2px dashed var(--m1);outline-offset:-6px}
+.pending{display:flex;gap:8px;margin-bottom:8px}
+.pending span{font-family:var(--mono);font-size:.8rem;border:1px solid var(--line);border-radius:4px;padding:2px 8px;background:var(--soft)}
+.pending button{border:none;background:none;cursor:pointer;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:flex-end}
+.row textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-height:44px;max-height:180px;background:var(--panel)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 14px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--m1);border-color:var(--m1);color:#fff}
+.btn.primary:hover{background:#173FAA}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* bench */
+.bench h2{font-size:1.1rem;font-weight:600;margin:28px 0 10px}
+.bench h2:first-child{margin-top:0}
+.selected{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+.sel-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sel-head strong{font-size:1.15rem}
+.status{font-size:.88rem;color:var(--muted)}
+.status.done{color:var(--ok)} .status.failed,.status.interrupted{color:var(--err)} .status.running{color:var(--m1)}
+.bar{height:4px;background:var(--soft);border-radius:2px;margin:10px 0 4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--m1);transition:width .6s}
+
+.state{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center;margin:14px 0}
+.dial svg{width:170px;height:170px;display:block}
+.dial .arrow{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.figures{display:grid;grid-template-columns:auto auto;gap:4px 14px;font-size:.92rem}
+.figures dt{color:var(--muted)}
+.figures dd{margin:0;font-family:var(--mono);font-size:.84rem;text-align:right}
+.legend{display:flex;gap:14px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.legend b{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.plot{width:100%;border:1px solid var(--line);border-radius:4px;margin-top:10px;background:#fff}
+.files{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:.9rem}
+.files a{color:var(--m1)}
+.actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.warn{color:var(--warn);font-size:.9rem;margin:6px 0 0}
+.sweep-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px}
+.sweep-table td{padding:2px 6px;border-bottom:1px solid var(--soft);font-family:var(--mono);font-size:.8rem}
+
+.runs{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:300px;overflow-y:auto}
+.runs li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--soft);cursor:pointer}
+.runs li:last-child{border-bottom:none}
+.runs li:hover{background:var(--soft)}
+.runs li.active{box-shadow:inset 3px 0 0 var(--m1)}
+.runs .id{font-family:var(--mono);font-size:.82rem}
+.runs .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92rem}
+.runs .mini{width:60px;height:3px;background:var(--soft);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.runs .mini i{display:block;height:100%;background:var(--m1)}
+.nothing{color:var(--muted);font-size:.92rem;padding:12px}
+
+.editor textarea{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font:13px/1.6 var(--mono);background:var(--panel)}
+.editor .row{align-items:center;flex-wrap:wrap;margin-top:8px}
+.editor input{border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:200px}
+.check{font-size:.9rem;margin-top:8px}
+.check.ok{color:var(--ok)} .check.bad{color:var(--err)}
+
+@media (max-width:900px){
+  main{grid-template-columns:1fr;height:auto}
+  .chat{height:80vh;border-right:none;border-bottom:1px solid var(--line)}
+  .controls{margin-left:0;width:100%}
+  .controls input{width:150px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark">
+    <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true">
+      <circle r="11" fill="none" stroke="#CDD5DD"/>
+      <line x1="0" y1="0" x2="5" y2="-9" stroke="#1F4FD1" stroke-width="2.4" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="-5" y2="9" stroke="#B0127F" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <h1>Sublattice Agent</h1>
+  </div>
+  <div class="controls">
+    <label>Model <select id="model"></select></label>
+    <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+    <span id="keystate" class="keystate"></span>
+    <button class="btn" id="newchat">New conversation</button>
+  </div>
+</header>
+
+<main>
+  <section class="chat" aria-label="Conversation">
+    <div class="log" id="log" aria-live="polite"></div>
+    <div class="composer" id="composer">
+      <div class="pending" id="pending" hidden></div>
+      <div class="row">
+        <button class="btn" id="attach" title="Attach a parameter .txt file">Attach .txt</button>
+        <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
+        <textarea id="input" rows="1" placeholder="Describe a run or ask about a result"></textarea>
+        <button class="btn primary" id="send">Send</button>
+      </div>
+      <div class="hint">Enter sends, Shift+Enter adds a line. You can also drop a .txt file here.</div>
+    </div>
+  </section>
+
+  <section class="bench" aria-label="Runs">
+    <h2>Selected run</h2>
+    <div class="selected" id="selected"><div class="nothing">Pick a run from the list, or start one.</div></div>
+
+    <h2>Runs</h2>
+    <ul class="runs" id="runs"><li class="nothing">No runs yet.</li></ul>
+
+    <h2>Parameter file</h2>
+    <div class="editor">
+      <textarea id="params" spellcheck="false" placeholder="--t=5e-9&#10;--SOT_DC_Amp=30e6"></textarea>
+      <div class="row">
+        <select id="examples" class="btn"><option value="">Load an example</option></select>
+        <input id="label" placeholder="Label for the run">
+        <button class="btn" id="check">Check</button>
+        <button class="btn primary" id="run">Run</button>
+        <button class="btn" id="save">Save as file</button>
+      </div>
+      <div class="check" id="checkout"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const state = {messages: [], busy: false, pending: null, selected: null, runs: [], sweeps: [], config: {}};
+
+// ---------- api
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  const isJson = (res.headers.get("content-type") || "").includes("json");
+  const body = isJson ? await res.json() : await res.text();
+  if (!res.ok) throw new Error((body && (body.error || body.detail)) || res.statusText);
+  return body;
+}
+const postJson = (path, data, headers = {}) =>
+  api(path, {method: "POST", headers: {"Content-Type": "application/json", ...headers}, body: JSON.stringify(data)});
+
+// ---------- tiny markdown
+function esc(s) { return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function inline(s) {
+  return s.replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+          .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+}
+function md(text) {
+  const out = []; const lines = esc(text).split("\n"); let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (l.startsWith("```")) {
+      const buf = []; i++;
+      while (i < lines.length && !lines[i].startsWith("```")) buf.push(lines[i++]);
+      out.push(`<pre><code>${buf.join("\n")}</code></pre>`); i++; continue;
+    }
+    if (/^\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim()));
+      let html = "<table><tr>" + cells(l).map(c => `<th>${c}</th>`).join("") + "</tr>"; i += 2;
+      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])) html += "<tr>" + cells(lines[i++]).map(c => `<td>${c}</td>`).join("") + "</tr>";
+      out.push(html + "</table>"); continue;
+    }
+    if (/^\s*([-*]|\d+\.)\s+/.test(l)) {
+      const ordered = /^\s*\d+\./.test(l); const items = [];
+      while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*([-*]|\d+\.)\s+/, ""));
+      out.push(`<${ordered ? "ol" : "ul"}>${items.map(x => `<li>${inline(x)}</li>`).join("")}</${ordered ? "ol" : "ul"}>`); continue;
+    }
+    const h = l.match(/^(#{1,4})\s+(.*)/);
+    if (h) { out.push(`<h4>${inline(h[2])}</h4>`); i++; continue; }
+    if (!l.trim()) { i++; continue; }
+    const para = [];
+    while (i < lines.length && lines[i].trim() && !/^(```|#{1,4}\s|\s*([-*]|\d+\.)\s)/.test(lines[i])) para.push(lines[i++]);
+    out.push(`<p>${inline(para.join("<br>"))}</p>`);
+  }
+  return out.join("");
+}
+
+// ---------- conversation rendering
+const TOOL_LABEL = {
+  list_input_files: () => "Listed files", read_input_file: a => `Read ${a.name}`,
+  save_input_file: a => `Saved ${a.name}`, validate_parameters: () => "Checked parameters",
+  start_simulation: () => "Started run", start_sweep: a => `Started sweep of ${a.parameter}`,
+  get_run: a => `Looked at ${a.run_id}`, get_sweep: a => `Looked at ${a.sweep_id}`,
+  list_runs: () => "Listed runs", cancel_run: a => `Cancelled ${a.run_id}`,
+};
+
+function toolResults(messages) {
+  const map = {};
+  for (const m of messages) if (m.role === "user" && Array.isArray(m.content))
+    for (const b of m.content) if (b.type === "tool_result") {
+      let txt = typeof b.content === "string" ? b.content : (b.content.find(x => x.type === "text") || {}).text || "";
+      try { map[b.tool_use_id] = JSON.parse(txt); } catch { map[b.tool_use_id] = {}; }
+    }
+  return map;
+}
+
+function render() {
+  const log = $("#log"); log.innerHTML = "";
+  if (!state.messages.length && !state.busy) { log.appendChild(emptyState()); return; }
+  const results = toolResults(state.messages);
+  for (const m of state.messages) {
+    if (m.role === "user") {
+      if (typeof m.content === "string") { addUser(m.content); continue; }
+      const texts = m.content.filter(b => b.type === "text").map(b => b.text);
+      if (texts.length) addUser(texts.join("\n"));
+      continue;
+    }
+    const blocks = Array.isArray(m.content) ? m.content : [{type: "text", text: m.content}];
+    let chips = null;
+    for (const b of blocks) {
+      if (b.type === "text" && b.text.trim()) {
+        chips = null;
+        const d = document.createElement("div"); d.className = "msg assistant"; d.innerHTML = md(b.text); log.appendChild(d);
+      } else if (b.type === "tool_use") {
+        if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
+        chips.appendChild(toolChip(b, results[b.id] || {}));
+      }
+    }
+  }
+  if (state.busy) { const t = document.createElement("div"); t.className = "thinking"; t.textContent = "Working…"; log.appendChild(t); }
+  if (state.error) { const e = document.createElement("div"); e.className = "error"; e.textContent = state.error; log.appendChild(e); }
+  log.scrollTop = log.scrollHeight;
+}
+
+function addUser(text) {
+  const d = document.createElement("div"); d.className = "msg user";
+  const m = text.match(/^Attached parameter file `([^`]+)`:\n```\n[\s\S]*?\n```\n?([\s\S]*)$/);
+  if (m) {
+    d.textContent = m[2].trim() || "(file only)";
+    const a = document.createElement("div"); a.className = "attachment"; a.textContent = "attached " + m[1]; d.appendChild(a);
+  } else d.textContent = text;
+  $("#log").appendChild(d);
+}
+
+function toolChip(block, result) {
+  const c = document.createElement("span"); c.className = "chip";
+  const a = block.input || {};
+  let label = (TOOL_LABEL[block.name] || (() => block.name))(a);
+  const target = result.run_id || result.sweep_id || a.run_id || a.sweep_id;
+  if (block.name === "start_simulation" && result.run_id) label = `Started ${result.run_id}`;
+  if (block.name === "start_sweep" && result.sweep_id) label = `Started ${result.sweep_id} (${result.runs} runs)`;
+  if (result.ok === false || result.error) { c.classList.add("bad"); label += ": " + (result.error || "failed"); }
+  c.textContent = label;
+  if (target && !result.error) { c.classList.add("link"); c.tabIndex = 0; c.onclick = () => select(target); }
+  return c;
+}
+
+function emptyState() {
+  const d = document.createElement("div"); d.className = "empty";
+  d.innerHTML = `<h2>Run a macrospin simulation</h2>
+    <p>Attach a parameter file, or describe the conditions in words. The assistant checks them with the
+    simulator's own parser, starts the run, and explains the result when it finishes.</p>
+    <div class="starters"></div>`;
+  const starters = [
+    "Explain which parameters I can set and their units.",
+    "Run 5 ns of SOT-driven dynamics with a DC current of 20e6 A/cm² and tell me if the Néel vector switches.",
+    "Cycle a FeRh layer through its transition (±40 K around 370 K at 1 GHz) for 2 ns.",
+    "Sweep the AC drive frequency from 10 to 40 GHz in 5 GHz steps and show where the response peaks.",
+  ];
+  for (const s of starters) {
+    const b = document.createElement("button"); b.textContent = s; b.onclick = () => { $("#input").value = s; send(); };
+    d.querySelector(".starters").appendChild(b);
+  }
+  return d;
+}
+
+// ---------- sending
+function stripImages(messages) {
+  return messages.map(m => !Array.isArray(m.content) ? m : {...m, content: m.content.map(b =>
+    b.type === "tool_result" && Array.isArray(b.content)
+      ? {...b, content: b.content.map(x => x.type === "image" ? {type: "text", text: "[plot shown earlier]"} : x)} : b)});
+}
+function persist() { try { localStorage.setItem("macrospin.chat", JSON.stringify(stripImages(state.messages))); } catch {} }
+
+async function send() {
+  const text = $("#input").value.trim();
+  if (state.busy || (!text && !state.pending)) return;
+  let content = text;
+  if (state.pending) content = "Attached parameter file `" + state.pending.name + "`:\n```\n" + state.pending.text.trim() + "\n```\n" + text;
+  state.messages.push({role: "user", content});
+  $("#input").value = ""; autosize(); setPending(null);
+  state.busy = true; state.error = null; render(); toggle();
+  try {
+    const headers = {}; const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
+    const out = await postJson("/api/chat", {messages: state.messages, model: $("#model").value}, headers);
+    state.messages = out.messages;
+    const started = [...out.events].reverse().find(e => e.run_id || e.sweep_id);
+    if (started) select(started.run_id || started.sweep_id);
+  } catch (e) {
+    state.messages.pop(); $("#input").value = text; state.error = e.message;
+  }
+  state.busy = false; persist(); render(); toggle(); refreshRuns();
+}
+function toggle() { $("#send").disabled = state.busy; }
+
+// ---------- attachments
+function setPending(p) {
+  state.pending = p; const el = $("#pending");
+  if (!p) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false; el.innerHTML = `<span>${esc(p.name)}</span><button title="Remove attachment" aria-label="Remove attachment">✕</button>`;
+  el.querySelector("button").onclick = () => setPending(null);
+}
+async function uploadFile(file) {
+  if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  try {
+    const out = await api("/api/files", {method: "POST", body: fd});
+    setPending({name: out.name, text: out.text});
+    $("#params").value = out.text; showCheck(out.check);
+  } catch (e) { state.error = "Upload failed: " + e.message; render(); }
+}
+$("#attach").onclick = () => $("#fileinput").click();
+$("#fileinput").onchange = e => { uploadFile(e.target.files[0]); e.target.value = ""; };
+const comp = $("#composer");
+comp.addEventListener("dragover", e => { e.preventDefault(); comp.classList.add("drag"); });
+comp.addEventListener("dragleave", () => comp.classList.remove("drag"));
+comp.addEventListener("drop", e => { e.preventDefault(); comp.classList.remove("drag"); uploadFile(e.dataTransfer.files[0]); });
+
+function autosize() { const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 180) + "px"; }
+$("#input").addEventListener("input", autosize);
+$("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+$("#send").onclick = send;
+$("#newchat").onclick = () => { state.messages = []; state.error = null; persist(); render(); };
+
+// ---------- runs
+async function refreshRuns() {
+  try {
+    const out = await api("/api/runs");
+    state.runs = out.runs; state.sweeps = out.sweeps; renderRuns();
+    if (state.selected) await renderSelected();
+  } catch {}
+}
+function renderRuns() {
+  const ul = $("#runs"); ul.innerHTML = "";
+  const items = [...state.sweeps.map(s => ({kind: "sweep", ...s})),
+                 ...state.runs.filter(r => !r.sweep_id).map(r => ({kind: "run", ...r}))]
+    .sort((a, b) => (b.created || 0) - (a.created || 0));
+  if (!items.length) { ul.innerHTML = `<li class="nothing">No runs yet.</li>`; return; }
+  for (const it of items) {
+    const li = document.createElement("li"); li.tabIndex = 0;
+    if (it.id === state.selected) li.classList.add("active");
+    let right;
+    if (it.kind === "sweep") right = `<span class="status">${it.done}/${it.runs} done</span>`;
+    else if (it.status === "running") right = `<span class="mini"><i style="width:${(it.progress * 100).toFixed(0)}%"></i></span><span class="status running">${(it.progress * 100).toFixed(0)}%</span>`;
+    else right = `<span class="status ${it.status}">${it.status}</span>`;
+    const label = it.kind === "sweep" ? `Sweep of ${it.parameter}${it.label ? ", " + it.label : ""}` : (it.label || "untitled");
+    li.innerHTML = `<span class="id">${it.id}</span><span class="lbl">${esc(label)}</span><span>${right}</span>`;
+    li.onclick = () => select(it.id);
+    li.onkeydown = e => { if (e.key === "Enter") select(it.id); };
+    ul.appendChild(li);
+  }
+}
+async function select(id) { state.selected = id; renderRuns(); await renderSelected(); }
+
+function dial(summary) {
+  const R = 64;
+  const ang = v => v ? Math.atan2(v[0], v[2]) * 180 / Math.PI : 0;  // projection on the x-z plane
+  const len = v => v ? Math.min(1, Math.hypot(v[0], v[2])) : 0;
+  const m1 = summary && summary.m1_final, m2 = summary && summary.m2_final, n = summary && summary.neel_final;
+  const arrow = (v, color, w, dash) => !v ? "" :
+    `<g class="arrow" style="transform:rotate(${ang(v)}deg)"><line x1="0" y1="0" x2="0" y2="${-R * len(v)}" stroke="${color}" stroke-width="${w}" stroke-linecap="round" ${dash ? 'stroke-dasharray="4 4"' : ""}/>
+     <circle cx="0" cy="${-R * len(v)}" r="${w + 1.5}" fill="${color}"/></g>`;
+  return `<svg viewBox="-85 -85 170 170" role="img" aria-label="Final sublattice orientations in the x–z plane">
+    <circle r="${R}" fill="none" stroke="#CDD5DD"/><line x1="-${R}" y1="0" x2="${R}" y2="0" stroke="#E3E8ED"/><line x1="0" y1="-${R}" x2="0" y2="${R}" stroke="#E3E8ED"/>
+    <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" fill="#5A6875">+z</text><text x="${R + 10}" y="3" font-size="10" fill="#5A6875">+x</text>
+    ${arrow(m1, "#1F4FD1", 3.2)}${arrow(m2, "#B0127F", 3.2)}${arrow(n, "#17212B", 1.2, true)}</svg>`;
+}
+const fmt = (v, d = 4) => v === null || v === undefined ? "–" : (typeof v === "number" ? (Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(2) : +v.toFixed(d)) : v);
+const vec = v => v ? "(" + v.map(x => fmt(x, 3)).join(", ") + ")" : "–";
+const dur = s => s === undefined || s === null ? "" : s < 90 ? `${Math.round(s)} s` : `${(s / 60).toFixed(1)} min`;
+
+async function renderSelected() {
+  const box = $("#selected"); const id = state.selected;
+  if (!id) return;
+  try {
+    if (id.startsWith("s")) return renderSweep(box, await api(`/api/sweeps/${id}`));
+    const r = await api(`/api/runs/${id}`);
+    const s = r.summary;
+    const st = r.status === "running" ? `running, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`
+      : r.status === "queued" ? `queued, estimated ${dur(r.estimated_runtime_s)}` : r.status + (s ? `, ${dur(s.runtime_s)}` : "");
+    box.innerHTML = `
+      <div class="sel-head"><strong class="mono">${r.id}</strong><span>${esc(r.label || "")}</span><span class="status ${r.status}">${st}</span></div>
+      ${["running", "queued"].includes(r.status) ? `<div class="bar"><i style="width:${(r.progress * 100).toFixed(1)}%"></i></div>` : ""}
+      ${(r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("")}
+      <div class="state">
+        <div class="dial">${dial(s)}</div>
+        <dl class="figures">
+          <dt>m₁ final</dt><dd>${vec(s && s.m1_final)}</dd>
+          <dt>m₂ final</dt><dd>${vec(s && s.m2_final)}</dd>
+          <dt>Néel vector final</dt><dd>${vec(s && s.neel_final)}</dd>
+          <dt>mean |n<sub>z</sub>|</dt><dd>${fmt(s && s.neel_z_abs_mean)}</dd>
+          <dt>n<sub>z</sub> sign changes</dt><dd>${s ? s.neel_z_sign_changes : "–"}</dd>
+          <dt>dominant f(m<sub>1x</sub>)</dt><dd>${s && s.dominant_freq_m1x_GHz ? s.dominant_freq_m1x_GHz + " GHz" : "–"}</dd>
+          <dt>steps</dt><dd>${(r.steps || 0).toLocaleString()}</dd>
+        </dl>
+      </div>
+      <div class="legend"><span><b style="background:#1F4FD1"></b>m₁</span><span><b style="background:#B0127F"></b>m₂</span><span><b style="background:#17212B"></b>Néel n (dashed)</span><span>x–z projection</span></div>
+      ${r.files.includes("Two_Spin_Dynamics.png") ? `<img class="plot" alt="Magnetization dynamics of ${r.id}" src="/api/runs/${r.id}/files/Two_Spin_Dynamics.png?v=${r.finished || ""}">` : ""}
+      ${r.error_tail ? `<pre class="mono" style="white-space:pre-wrap;color:var(--err)">${esc(r.error_tail)}</pre>` : ""}
+      <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}</div>
+      <div class="actions">
+        ${r.status === "done" ? `<button class="btn" id="analyse">Ask the assistant to analyse ${r.id}</button>` : ""}
+        ${["running", "queued"].includes(r.status) ? `<button class="btn" id="cancel">Cancel run</button>` : ""}
+        <button class="btn" id="loadparams">Load its parameters</button>
+      </div>`;
+    const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse run ${r.id}.`; send(); };
+    const c = $("#cancel"); if (c) c.onclick = async () => { await postJson(`/api/runs/${r.id}/cancel`, {}); refreshRuns(); };
+    $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; };
+  } catch (e) { box.innerHTML = `<div class="nothing">${esc(e.message)}</div>`; }
+}
+
+function renderSweep(box, s) {
+  const c = s.status_counts || {};
+  const done = c.done || 0, total = s.run_ids.length;
+  box.innerHTML = `
+    <div class="sel-head"><strong class="mono">${s.id}</strong><span>Sweep of ${esc(s.parameter)}${s.label ? ", " + esc(s.label) : ""}</span>
+      <span class="status ${done === total ? "done" : "running"}">${done}/${total} done${c.failed ? `, ${c.failed} failed` : ""}</span></div>
+    <div class="bar"><i style="width:${(100 * done / total).toFixed(1)}%"></i></div>
+    ${s.plot ? `<img class="plot" alt="Mean |n_z| versus ${esc(s.parameter)}" src="/api/sweeps/${s.id}/plot?v=${done}">` : ""}
+    <table class="sweep-table"><tr><td>${esc(s.parameter)}</td><td>run</td><td>status</td><td>mean |n_z|</td></tr>
+      ${s.rows.map(r => `<tr><td>${r.value.toExponential(3)}</td><td><a href="#" data-run="${r.run_id}">${r.run_id}</a></td><td>${r.status}</td><td>${fmt(r.neel_z_abs_mean)}</td></tr>`).join("")}</table>
+    <div class="actions">${s.plot ? `<button class="btn" id="analyse">Ask the assistant to analyse ${s.id}</button>` : ""}</div>`;
+  box.querySelectorAll("[data-run]").forEach(a => a.onclick = e => { e.preventDefault(); select(a.dataset.run); });
+  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse sweep ${s.id}.`; send(); };
+}
+
+// ---------- parameter editor
+function showCheck(r) {
+  const el = $("#checkout");
+  if (!r) { el.textContent = ""; return; }
+  if (!r.ok) { el.className = "check bad"; el.textContent = r.error; return; }
+  el.className = "check ok";
+  const changed = Object.entries(r.changed_from_defaults || {}).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join(",") : v}`).join("  ");
+  el.innerHTML = `Valid. ${r.steps.toLocaleString()} steps, about ${dur(r.estimated_runtime_s)}.` +
+    (changed ? `<div class="mono" style="color:var(--muted);margin-top:4px">${esc(changed)}</div>` : "") +
+    (r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("");
+}
+$("#check").onclick = async () => { try { showCheck(await postJson("/api/validate", {parameters_text: $("#params").value})); } catch (e) { showCheck({ok: false, error: e.message}); } };
+$("#run").onclick = async () => {
+  try {
+    const out = await postJson("/api/runs", {parameters_text: $("#params").value, label: $("#label").value});
+    await refreshRuns(); select(out.run_id);
+  } catch (e) { showCheck({ok: false, error: e.message}); }
+};
+$("#save").onclick = async () => {
+  const name = prompt("File name", ($("#label").value || "parameters").replace(/\s+/g, "_") + ".txt");
+  if (!name) return;
+  const out = await postJson("/api/files/save", {name, parameters_text: $("#params").value});
+  window.location = `/api/files/${encodeURIComponent(out.name)}`;
+};
+$("#examples").onchange = e => { const ex = state.examples.find(x => x.name === e.target.value); if (ex) { $("#params").value = ex.text; $("#label").value = ex.name.replace(".txt", "").replace(/_/g, " "); showCheck(null); } e.target.value = ""; };
+
+// ---------- key + model
+function keyState() {
+  const k = $("#apikey").value.trim(), el = $("#keystate");
+  if (k) { el.textContent = "key set for this tab"; el.className = "keystate good"; }
+  else if (state.config.has_server_key) { el.textContent = "using the server key"; el.className = "keystate good"; }
+  else { el.textContent = "no key yet"; el.className = "keystate"; }
+}
+$("#apikey").addEventListener("input", () => { sessionStorage.setItem("macrospin.key", $("#apikey").value.trim()); keyState(); });
+
+async function init() {
+  state.config = await api("/api/config");
+  const sel = $("#model");
+  for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
+  sel.value = localStorage.getItem("macrospin.model") || state.config.model;
+  sel.onchange = () => localStorage.setItem("macrospin.model", sel.value);
+  $("#apikey").value = sessionStorage.getItem("macrospin.key") || ""; keyState();
+  state.examples = (await api("/api/examples")).examples;
+  for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
+  try { state.messages = JSON.parse(localStorage.getItem("macrospin.chat") || "[]"); } catch {}
+  render(); await refreshRuns();
+  const tick = async () => {
+    await refreshRuns();
+    const active = state.runs.some(r => ["running", "queued"].includes(r.status));
+    setTimeout(tick, active ? 2000 : 10000);
+  };
+  setTimeout(tick, 2000);
+}
+init();
+</script>
+</body>
+</html>

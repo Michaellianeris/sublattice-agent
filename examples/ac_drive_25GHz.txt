@@ -1,0 +1,6 @@
+# Broadband-response style run: AC SOT current at 25 GHz (sweep Fr / SOT_AC_Fr to map the response)
+--t=3e-9
+--SOT_DC_Amp=0
+--SOT_AC_Amp=5e6
+--SOT_AC_Fr=25e9
+--Fr=25e9

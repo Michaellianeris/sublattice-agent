@@ -1,0 +1,9 @@
+.git
+.env
+workspace
+**/__pycache__
+**/*.pyc
+tests
+original_scripts
+*.md
+!macrospin/README.md

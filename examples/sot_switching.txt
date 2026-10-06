@@ -1,0 +1,6 @@
+# Spin-orbit-torque driven dynamics of a two-sublattice antiferromagnet
+# 5 ns at T = 0 K, DC SOT current only
+--t=5e-9
+--h=1e-13
+--SOT_DC_Amp=30e6
+--SOT_pol=1.0,0.0,0.0

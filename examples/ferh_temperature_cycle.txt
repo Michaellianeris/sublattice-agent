@@ -1,0 +1,9 @@
+# FeRh free layer: temperature cycled around the 370 K transition
+# T(t) = 370 K + Temp * sin(2 pi Fr t); positive A0 gives AFM coupling below the transition
+--flagTempVarying
+--Temp=40
+--Fr=1e9
+--A0=0.248e-12
+--t=2e-9
+--SOT_DC_Amp=0
+--SOT_AC_Amp=0

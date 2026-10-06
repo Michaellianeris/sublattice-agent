@@ -1,0 +1,10 @@
+# simulation (original macrospin code)
+numpy==2.4.4
+scipy==1.17.1
+matplotlib==3.10.8
+SciencePlots==2.2.2
+# web app + Claude agent
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+anthropic==1.11.0

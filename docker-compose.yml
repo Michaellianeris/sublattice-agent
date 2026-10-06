@@ -1,0 +1,18 @@
+services:
+  sublattice-agent:
+    build: .
+    image: sublattice-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-5}
+      - CLAUDE_MODELS=${CLAUDE_MODELS:-claude-sonnet-5,claude-opus-5-5,claude-haiku-4-5-20251001}
+      - MAX_PARALLEL=${MAX_PARALLEL:-}
+      - MAX_SWEEP_RUNS=${MAX_SWEEP_RUNS:-400}
+    volumes:
+      - sublattice-data:/data
+    restart: unless-stopped
+
+volumes:
+  sublattice-data:

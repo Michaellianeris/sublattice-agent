@@ -1,0 +1,8 @@
+# Chirp current pulse 10 GHz -> 1 THz over 100 ps, then free relaxation
+--flag4
+--Chirp_Amp=9.65e6
+--Chirp_min_Fr=10e9
+--Chirp_max_Fr=1000e9
+--t_chirp=0.1e-9
+--t=1e-9
+--SOT_DC_Amp=0
