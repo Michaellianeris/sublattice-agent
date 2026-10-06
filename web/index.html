@@ -6,7 +6,8 @@
 <title>Sublattice Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("sublattice.theme")||"light"}catch{}</script>
 <style>
 :root{
   --paper:#EDF0F3; --panel:#FFFFFF; --ink:#17212B; --muted:#5A6875; --line:#CDD5DD; --soft:#F5F7F9; --grid:#E3E8ED;
@@ -137,7 +138,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:ca
 .legend button[aria-pressed=false] svg{opacity:.3}
 .legend svg{width:20px;height:8px}
 .canvaswrap{width:100%;position:relative}
-.canvaswrap canvas{display:block;touch-action:pan-y;cursor:crosshair;border:1px solid var(--line);border-radius:4px;background:#fff}
+.canvaswrap canvas{display:block;touch-action:pan-y;cursor:crosshair;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
 .readout{display:flex;flex-wrap:wrap;gap:2px 16px;margin-top:6px;min-height:2.6em;color:var(--ink)}
 .readout em{font-style:normal;color:var(--muted)}
 .transport{display:flex;align-items:center;gap:8px;margin-top:6px}
@@ -169,29 +170,182 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:ca
   .popover{left:0;right:auto}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---- v2 look: icon rail, centred hero, floating composer, soft cards ---- */
+:root{
+  --paper:#F6F7FA; --line:#E3E6EC; --soft:#F3F5F9; --grid:#ECEFF4; --muted:#667085; --ink:#1A2230;
+  --sans:Inter,"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 20px rgba(16,24,40,.06);
+}
+body{display:grid;grid-template-columns:64px minmax(0,1fr);font:15px/1.55 var(--sans);overflow:hidden}
+.rail{flex-direction:column;flex-wrap:nowrap;gap:6px;padding:14px 0;border-bottom:none;border-right:1px solid var(--line);height:100vh;justify-content:flex-start;align-items:center}
+.rail .mark{margin-bottom:10px}
+.rail-sp{flex:1}
+.rail-btn{width:40px;height:40px;border:none;background:none;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.rail-btn:hover,.rail-btn[aria-expanded=true]{background:var(--soft);color:var(--ink)}
+.rail .pill{padding:0;width:40px;height:26px;justify-content:center;gap:0}
+.rail .pill span{display:none}
+.rail .pill i{width:10px;height:10px}
+.rail .settings{position:relative}
+.popover{left:calc(100% + 12px);right:auto;top:auto;bottom:0;border-radius:12px;box-shadow:var(--shadow)}
+main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);background:var(--paper)}
+.chat{background:transparent;position:relative}
+.log{padding:28px 32px 12px}
+.msg,.error{max-width:68ch}
+.msg.assistant{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 16px;box-shadow:var(--shadow)}
+.msg.user{background:var(--m1);color:#fff;border:none;border-radius:16px 16px 4px 16px}
+.msg.user .attachment{color:rgba(255,255,255,.75)}
+.chip{background:var(--panel);box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.thinking{font-style:normal}
+
+.empty{max-width:640px;margin:4vh auto 0;text-align:center}
+.empty .hero{width:min(300px,70%);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 8px 14px rgba(160,90,190,.12))}
+.empty .hero .s1{animation:sway 8s ease-in-out infinite;transform-origin:100px 112px}
+.empty .hero .s2{animation:sway 8s ease-in-out infinite reverse;transform-origin:242px 112px}
+@keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.empty h2{font-size:1.7rem;font-weight:600;letter-spacing:-.02em;margin:4px 0 8px}
+.empty p{max-width:52ch;margin:0 auto}
+.skills-title{display:flex;align-items:center;gap:12px;margin:26px 0 12px;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.skills-title::before,.skills-title::after{content:"";flex:1;border-top:1px solid var(--line)}
+.starters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:0;text-align:left}
+.starters button{display:flex;flex-direction:column;gap:3px;border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.starters button:hover{transform:translateY(-2px);border-color:var(--m1)}
+.starters b{color:var(--m1);font-size:.9rem}
+.starters span{font-size:.8rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+.composer{border-top:none;background:transparent;padding:6px 24px 18px}
+.composer .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:10px 12px 8px;transition:border-color .15s,box-shadow .15s}
+.composer .box:focus-within{border-color:var(--m1);box-shadow:0 0 0 3px rgba(31,79,209,.12),var(--shadow)}
+.composer textarea{display:block;width:100%;border:none;outline:none;resize:none;background:transparent;min-height:28px;max-height:180px;padding:2px 4px}
+.composer .row{align-items:center;margin-top:4px}
+.composer .hint{flex:1;margin:0;font-size:.75rem}
+.composer .icon,.composer .send{width:34px;height:34px;border-radius:50%;border:none;display:grid;place-items:center;cursor:pointer}
+.composer .icon{background:none;color:var(--muted)}
+.composer .icon:hover{background:var(--soft);color:var(--ink)}
+.composer .send{background:var(--m1);color:#fff}
+.composer .send:hover{background:#173FAA}
+.composer .send:disabled{opacity:.4;cursor:not-allowed}
+
+.bench{background:var(--panel);border-left:1px solid var(--line);padding:24px 28px 40px}
+.bench h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.runs{border-radius:12px;box-shadow:none}
+.tabs{gap:6px;border-bottom:none;background:var(--soft);padding:4px;border-radius:10px;width:fit-content}
+.tabs button{border-radius:7px;padding:5px 16px;border-bottom:none;margin:0}
+.tabs button[aria-selected=true]{background:var(--panel);box-shadow:0 1px 3px rgba(16,24,40,.1)}
+.selected{border-radius:14px;box-shadow:var(--shadow)}
+.btn{border-radius:8px}
+.btn.primary{background:var(--m1)}
+
+
+/* ---- themes ---- */
+[data-theme=dark]{--paper:#0E1218;--panel:#171C25;--ink:#E7EBF1;--muted:#9AA4B5;--line:#2A3140;--soft:#1E2430;--grid:#232A36;--m1:#5C7CFF;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);color-scheme:dark}
+[data-theme=spin]{--paper:#FBF5FC;--panel:#FFFFFF;--ink:#2A1F33;--muted:#7C6B88;--line:#EBD7EF;--soft:#F8EDFA;--grid:#F2E5F5;--m1:#8A3FB5}
+[data-theme=dark] .composer .send:hover,[data-theme=dark] .btn.primary:hover{background:#4A68E8}
+[data-theme=spin] .composer .send:hover,[data-theme=spin] .btn.primary:hover{background:#70309A}
+.lbl-t{font-size:.88rem;color:var(--muted);margin-bottom:6px}
+.themes{display:flex;gap:6px;margin-bottom:12px}
+.themes button{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:6px 8px;font-size:.82rem;cursor:pointer;color:var(--ink)}
+.themes button i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none}
+.themes button[aria-pressed=true]{border-color:var(--m1);box-shadow:0 0 0 2px color-mix(in srgb,var(--m1) 25%,transparent)}
+
+/* ---- empty state: composer under the greeting, like Researcher ---- */
+.chat.is-empty{justify-content:center;align-items:center;overflow-y:auto}
+.chat.is-empty .log,.chat.is-empty .empty{display:contents}
+.chat.is-empty .empty>*{order:1;width:min(720px,calc(100% - 48px))}
+.chat.is-empty .empty>.hero{width:min(300px,60%)}
+.chat.is-empty .composer{order:2;width:min(720px,100%);flex:none}
+.chat.is-empty .empty>.skills-title,.chat.is-empty .empty>.starters{order:3}
+.chat.is-empty .empty>.skills-title{margin-top:18px}
+.chat.is-empty .empty{text-align:center}
+.chat.is-empty .empty>.starters{text-align:left}
+
+/* ---- run cards ---- */
+.runcard{max-width:68ch;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin:0 0 18px}
+.rc-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.rc-head .mono{font-weight:600}
+.rc-label{color:var(--muted);flex:1}
+.steps{list-style:none;margin:10px 0 6px;padding:0;display:grid;gap:5px;font-size:.9rem}
+.steps li{display:flex;align-items:center;gap:9px;color:var(--muted)}
+.steps .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.steps li.done{color:var(--ink)} .steps li.done .dot{background:var(--ok);border-color:var(--ok)}
+.steps li.done .dot::after{content:"";width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.steps li.active{color:var(--ink)} .steps li.active .dot{border-top-color:var(--m1);animation:spin .8s linear infinite}
+.steps li.bad{color:var(--err)} .steps li.bad .dot{border-color:var(--err)}
+.runcard .bar{margin:8px 0}
+.rc-plot{margin-top:8px;border-top:1px solid var(--grid);padding-top:10px}
+.rc-legend{display:flex;gap:14px;font-size:.82rem;margin-bottom:4px}
+.rc-meta{margin-top:6px;color:var(--muted);font-size:.78rem;white-space:pre-wrap}
+
+/* ---- workbench is toggled; default = chat only ---- */
+main{grid-template-columns:minmax(0,1fr)}
+.bench{display:none}
+body.bench-open main{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}
+body.bench-open .bench{display:block}
+.rail-btn[aria-pressed=true]{background:var(--soft);color:var(--m1)}
+.chat:not(.is-empty) .log{padding-left:max(24px,calc((100% - 780px)/2));padding-right:max(24px,calc((100% - 780px)/2))}
+.chat:not(.is-empty) .composer{width:min(830px,100%);align-self:center}
+.bench-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.bench-head h2{margin:0}
+.modelrow{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.modelrow select{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);color:var(--ink)}
+.modes{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:10px;width:fit-content;margin-bottom:14px}
+.modes button{border:none;background:none;border-radius:7px;padding:5px 16px;cursor:pointer;color:var(--muted)}
+.modes button[aria-pressed=true]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(16,24,40,.1)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.chips button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 12px;font-size:.84rem;cursor:pointer;color:var(--ink)}
+.chips button:hover{border-color:var(--m1);color:var(--m1)}
+.frow{display:grid;grid-template-columns:minmax(120px,1fr) 1.6fr 96px;gap:6px 12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--grid);font-size:.9rem}
+.frow input[type=range]{width:100%;accent-color:var(--m1)}
+.frow input[type=number],.frow input:not([type]),.frow select{width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--panel);color:var(--ink)}
+.frow input:not([type]){grid-column:2 / span 2}
+.frow select{grid-column:2 / span 2}
+.frow span:empty{display:none}
+.ftext{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:12px/1.5 var(--mono);white-space:pre-wrap;margin:12px 0}
+#fast .row{flex-wrap:wrap;align-items:center}
+#fast .row input{border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:200px;background:var(--panel)}
+
+@media (max-width:900px){
+  body{grid-template-columns:1fr;overflow:auto}
+  .rail{flex-direction:row;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:8px 12px}
+  .rail .mark{margin:0}
+  .popover{left:auto;right:0;top:calc(100% + 8px);bottom:auto}
+  main{height:auto}
+  .starters{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="mark">
-    <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true">
-      <circle r="11" fill="none" stroke="#CDD5DD"/>
-      <line x1="0" y1="0" x2="5" y2="-9" stroke="#1F4FD1" stroke-width="2.4" stroke-linecap="round"/>
-      <line x1="0" y1="0" x2="-5" y2="9" stroke="#B0127F" stroke-width="2.4" stroke-linecap="round"/>
+<header class="rail">
+  <div class="mark" title="Sublattice Agent">
+    <svg width="30" height="30" viewBox="-15 -15 30 30" aria-hidden="true">
+      <circle cx="-4" r="10" fill="#F6E9F8" stroke="#D9A6E6" stroke-dasharray="2 2"/>
+      <circle cx="4" r="10" fill="#F6E9F8" fill-opacity=".7" stroke="#D9A6E6" stroke-dasharray="2 2"/>
+      <circle cx="-5" cy="1" r="2.6" fill="#E5341B"/><line x1="-5" y1="1" x2="-3" y2="-6" stroke="#E5341B" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="5" cy="1" r="2.6" fill="#1D1DD8"/><line x1="5" y1="1" x2="3" y2="-6" stroke="#1D1DD8" stroke-width="1.8" stroke-linecap="round" transform="rotate(0)"/>
     </svg>
-    <h1>Sublattice Agent</h1>
   </div>
-  <div class="controls">
-    <button class="pill" id="keypill" type="button"><i></i><span id="keytext"></span></button>
-    <div class="settings">
-      <button class="btn" id="settingsbtn" type="button" aria-expanded="false" aria-controls="settingspanel">Settings</button>
-      <div class="popover" id="settingspanel" role="dialog" aria-label="Settings" hidden>
-        <label>Model <select id="model"></select></label>
-        <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
-        <p>The key stays in this browser tab and is sent only to your own server.</p>
+  <button class="rail-btn" id="newchat" type="button" title="New conversation" aria-label="New conversation">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+  </button>
+  <button class="rail-btn" id="benchbtn" type="button" title="Show / hide the workbench" aria-label="Show or hide the workbench" aria-pressed="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14 4v16"/></svg>
+  </button>
+  <div class="rail-sp"></div>
+  <button class="pill" id="keypill" type="button" title="API key status"><i></i><span id="keytext"></span></button>
+  <div class="settings">
+    <button class="rail-btn" id="settingsbtn" type="button" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settingspanel">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </button>
+    <div class="popover" id="settingspanel" role="dialog" aria-label="Settings" hidden>
+      <div class="lbl-t">Colour theme</div>
+      <div class="themes" id="themes">
+        <button type="button" data-theme="light" aria-pressed="true"><i style="background:#fff"></i>Light</button>
+        <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
+        <button type="button" data-theme="spin" aria-pressed="false"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
+      <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+      <p>The key stays in this browser tab and is sent only to your own server.</p>
     </div>
-    <button class="btn" id="newchat" type="button">New conversation</button>
   </div>
 </header>
 
@@ -200,39 +354,79 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:ca
     <div class="log" id="log" aria-live="polite"></div>
     <div class="composer" id="composer">
       <div class="pending" id="pending" hidden></div>
-      <div class="row">
-        <button class="btn" id="attach" type="button" title="Attach a parameter .txt file">Attach .txt</button>
-        <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
-        <textarea id="input" rows="1" placeholder="Describe a run or ask about a result" aria-label="Message"></textarea>
-        <button class="btn primary" id="send" type="button">Send</button>
+      <div class="box">
+        <textarea id="input" rows="1" placeholder="Describe a run, attach a parameter file, or ask about a result" aria-label="Message"></textarea>
+        <div class="row">
+          <button class="icon" id="attach" type="button" title="Attach a parameter .txt file" aria-label="Attach a parameter .txt file">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
+          </button>
+          <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
+          <span class="hint">Enter to send · drop a .txt anywhere here</span>
+          <button class="send" id="send" type="button" title="Send" aria-label="Send">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="hint">Enter sends, Shift+Enter adds a line. You can also drop a .txt file here.</div>
     </div>
   </section>
 
-  <section class="bench" aria-label="Runs">
-    <h2>Runs</h2>
+  <section class="bench" id="bench" aria-label="Workbench">
+    <div class="bench-head"><h2>Workbench</h2>
+      <button class="rail-btn" id="closebench" type="button" title="Hide the workbench" aria-label="Hide the workbench">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button></div>
     <ul class="runs" id="runs"><li class="nothing">No runs yet.</li></ul>
 
     <div class="tabs" role="tablist" aria-label="Workbench">
       <button role="tab" id="tab-result" aria-selected="true" aria-controls="panel-result" type="button">Result</button>
-      <button role="tab" id="tab-params" aria-selected="false" aria-controls="panel-params" type="button">Parameters</button>
+      <button role="tab" id="tab-params" aria-selected="false" aria-controls="panel-params" type="button">Setup</button>
     </div>
 
     <div id="panel-result" role="tabpanel" aria-labelledby="tab-result">
-      <div class="selected" id="selected"><div class="nothing">Pick a run from the list, or start one.</div></div>
+      <div class="selected" id="selected"><div class="nothing">Run something from the chat or from Setup and the result appears here.</div></div>
     </div>
 
-    <div id="panel-params" role="tabpanel" aria-labelledby="tab-params" class="editor" hidden>
-      <textarea id="params" spellcheck="false" aria-label="Parameter file" placeholder="--t=5e-9&#10;--SOT_DC_Amp=30e6"></textarea>
-      <div class="row">
-        <select id="examples"><option value="">Load an example</option></select>
-        <input id="label" placeholder="Label for the run" aria-label="Label for the run">
-        <button class="btn" id="check" type="button">Check</button>
-        <button class="btn primary" id="run" type="button">Run</button>
-        <button class="btn" id="save" type="button">Save as file</button>
+    <div id="panel-params" role="tabpanel" aria-labelledby="tab-params" hidden>
+      <label class="modelrow">Assistant model <select id="model"></select></label>
+      <div class="modes" role="group" aria-label="Setup mode">
+        <button type="button" id="mode-fast" aria-pressed="true">Fast</button>
+        <button type="button" id="mode-deep" aria-pressed="false">Deep (txt)</button>
       </div>
-      <div class="check" id="checkout"></div>
+
+      <div id="fast">
+        <div class="chips" id="fpresets" aria-label="Presets">
+          <button type="button" data-p="default">Defaults</button>
+          <button type="button" data-p="minus">Néel &minus;z, no current</button>
+          <button type="button" data-p="plus">Néel +z, no current</button>
+          <button type="button" data-p="sotp">SOT +</button>
+          <button type="button" data-p="sotn">SOT &minus;</button>
+        </div>
+        <div id="fform"></div>
+        <div class="frow"><label for="f-neel">Initial Néel vector</label>
+          <select id="f-neel"><option value="minus">&minus;z (default)</option><option value="plus">+z</option></select><span></span></div>
+        <div class="frow"><label for="f-extra">Quick extra txt</label>
+          <input id="f-extra" placeholder="e.g. --H=0.1 --SOT_pol=0,1,0" spellcheck="false"><span></span></div>
+        <pre class="ftext" id="ftext"></pre>
+        <div class="row">
+          <input id="f-label" placeholder="Label for the run" aria-label="Label for the run">
+          <button class="btn" id="fcheck" type="button">Check</button>
+          <button class="btn primary" id="frun" type="button">Run</button>
+          <button class="btn" id="fdeep" type="button">Edit as txt</button>
+        </div>
+        <div class="check" id="fcheckout"></div>
+      </div>
+
+      <div id="deep" class="editor" hidden>
+        <textarea id="params" spellcheck="false" aria-label="Parameter file" placeholder="--t=5e-9&#10;--SOT_DC_Amp=30e6"></textarea>
+        <div class="row">
+          <select id="examples"><option value="">Load an example</option></select>
+          <input id="label" placeholder="Label for the run" aria-label="Label for the run">
+          <button class="btn" id="check" type="button">Check</button>
+          <button class="btn primary" id="run" type="button">Run</button>
+          <button class="btn" id="save" type="button">Save as file</button>
+        </div>
+        <div class="check" id="checkout"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -240,7 +434,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:ca
 <script>
 const $ = s => document.querySelector(s);
 const state = {messages: [], live: [], busy: false, pending: null, selected: null, runs: [], sweeps: [],
-               config: {}, examples: [], error: null, discard: 0};
+               config: {}, examples: [], error: null, discard: 0, cards: []};
 
 // ---------------------------------------------------------------- api
 async function api(path, opts = {}) {
@@ -337,7 +531,9 @@ function chipFor(name, input, result, running) {
 
 function render() {
   const log = $("#log"); log.innerHTML = "";
-  if (!state.messages.length && !state.live.length && !state.busy) { log.appendChild(emptyState()); return; }
+  const isEmpty = !state.messages.length && !state.live.length && !state.busy && !state.cards.length;
+  $(".chat").classList.toggle("is-empty", isEmpty);
+  if (isEmpty) { log.appendChild(emptyState()); return; }
   const results = toolResults(state.messages);
   const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
   for (const m of state.messages) {
@@ -365,6 +561,7 @@ function render() {
       chips.appendChild(chipFor(it.name, it.input, it.event || {}, it.status === "running"));
     }
   }
+  for (const id of state.cards) log.appendChild(cardEls.get(id).el);
   if (state.busy && !state.live.some(x => x.status === "running"))
     add("thinking", `<span class="spin"></span>Working…`);
   if (state.error) add("error", esc(state.error));
@@ -383,17 +580,33 @@ function addUser(text) {
 
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
-  d.innerHTML = `<h2>Run a macrospin simulation</h2>
-    <p>Attach a parameter file, or describe the conditions in words. The assistant checks them with the
-    simulator's own parser, starts the run, and explains the result when it finishes.</p><div class="starters"></div>`;
+  d.innerHTML = `<svg class="hero" viewBox="0 0 340 200" aria-hidden="true">
+      <defs>
+        <radialGradient id="gr" cx="35%" cy="30%"><stop offset="0" stop-color="#FF7A5C"/><stop offset="1" stop-color="#C21B00"/></radialGradient>
+        <radialGradient id="gb" cx="35%" cy="30%"><stop offset="0" stop-color="#6A6AFF"/><stop offset="1" stop-color="#0A0A9E"/></radialGradient>
+        <clipPath id="lens"><circle cx="115" cy="100" r="92"/></clipPath>
+      </defs>
+      <circle cx="115" cy="100" r="92" fill="#F6E9F8" fill-opacity=".8" stroke="#D9A6E6" stroke-dasharray="5 4"/>
+      <circle cx="225" cy="100" r="92" fill="#F6E9F8" fill-opacity=".8" stroke="#D9A6E6" stroke-dasharray="5 4"/>
+      <circle cx="225" cy="100" r="92" fill="#E9C9F0" fill-opacity=".85" clip-path="url(#lens)"/>
+      <text x="108" y="38" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#2A2A33">S<tspan font-size="13" dy="4">1</tspan></text>
+      <text x="232" y="38" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#2A2A33">S<tspan font-size="13" dy="4">2</tspan></text>
+      <g class="s1"><line x1="102" y1="120" x2="116" y2="68" stroke="#E5341B" stroke-width="7" stroke-linecap="round"/><path d="M122 52 L103 70 L128 74Z" fill="#E5341B"/><circle cx="100" cy="112" r="14" fill="url(#gr)"/></g>
+      <g class="s2"><line x1="240" y1="120" x2="226" y2="68" stroke="#1D1DD8" stroke-width="7" stroke-linecap="round"/><path d="M220 52 L212 74 L238 70Z" fill="#1D1DD8"/><circle cx="242" cy="112" r="14" fill="url(#gb)"/></g>
+    </svg>
+    <h2>Hi, what shall we simulate?</h2>
+    <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model, and explains the result from the real dynamics.</p>
+    <div class="skills-title"><span>Find a skill</span></div>
+    <div class="starters"></div>`;
   const starters = [
-    "Explain which parameters I can set and their units.",
-    "Run 5 ns of SOT-driven dynamics with a DC current of 20e6 A/cm² and tell me if the Néel vector switches.",
-    "Cycle a FeRh layer through its transition (±40 K around 370 K at 1 GHz) for 2 ns.",
-    "Sweep the AC drive frequency from 10 to 40 GHz in 5 GHz steps and show where the response peaks.",
+    ["Parameters", "Explain which parameters I can set and their units."],
+    ["SOT switching", "Run 5 ns of SOT-driven dynamics with a DC current of 20e6 A/cm² and tell me if the Néel vector switches."],
+    ["FeRh transition", "Cycle a FeRh layer through its transition (±40 K around 370 K at 1 GHz) for 2 ns."],
+    ["Frequency sweep", "Sweep the AC drive frequency from 10 to 40 GHz in 5 GHz steps and show where the response peaks."],
   ];
-  for (const s of starters) {
-    const b = document.createElement("button"); b.type = "button"; b.textContent = s;
+  for (const [title, s] of starters) {
+    const b = document.createElement("button"); b.type = "button";
+    b.innerHTML = `<b>${esc(title)}</b><span>${esc(s)}</span>`;
     b.onclick = () => { $("#input").value = s; send(); };
     d.querySelector(".starters").appendChild(b);
   }
@@ -409,7 +622,7 @@ $("#log").addEventListener("click", async e => {
     catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove(); }
     const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = old, 1200);
   } else {
-    $("#params").value = text; showTab("params"); $("#check").click(); $("#params").focus();
+    $("#params").value = text; showTab("params"); setBench(true); setMode("deep"); $("#check").click(); $("#params").focus();
   }
 });
 
@@ -428,7 +641,7 @@ function onEvent(ev) {
     const it = state.live.find(x => x.id === ev.id);
     if (it) { it.status = "done"; it.event = ev.event; }
     const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
-    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) { select(target); refreshRuns(); }
+    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) { select(target); refreshRuns(); if (ev.event.run_id) trackRun(ev.event.run_id); }
   }
   else if (ev.type === "done") { state.messages = ev.messages; state.live = []; state.finished = true; }
   else if (ev.type === "error") { throw new Error(ev.error); }
@@ -499,7 +712,7 @@ function autosize() { const t = $("#input"); t.style.height = "auto"; t.style.he
 $("#input").addEventListener("input", autosize);
 $("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
 $("#send").onclick = send;
-$("#newchat").onclick = () => { state.messages = []; state.live = []; state.error = null; persist(); render(); };
+$("#newchat").onclick = () => { clearCards(); state.messages = []; state.live = []; state.error = null; persist(); render(); };
 
 // ---------------------------------------------------------------- chart (canvas)
 function niceTicks(lo, hi, n = 6) {
@@ -511,6 +724,7 @@ function niceTicks(lo, hi, n = 6) {
 const fmtTick = (v, step) => Math.abs(v) < step * 1e-9 ? "0" : v.toFixed(Math.min(6, Math.max(0, Math.ceil(-Math.log10(step) - 1e-9))));
 const eng = v => v === 0 ? "0" : (Math.abs(v) >= 1e5 || Math.abs(v) < 1e-3) ? v.toExponential(1).replace("e+", "e") : String(+v.toPrecision(4));
 
+const tc = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 class Chart {
   constructor(canvas, o) {
     this.cv = canvas; this.ctx = canvas.getContext("2d");
@@ -578,24 +792,24 @@ class Chart {
     // left margin follows the widest tick label so the axis title never collides with the numbers
     this.o.pad.l = Math.max(52, Math.ceil(Math.max(...yt.ticks.map(v => c.measureText(fmtTick(v, yt.step)).width))) + 28);
     const {l, r, t, b} = this.o.pad;
-    c.strokeStyle = "#E3E8ED"; c.fillStyle = "#5A6875"; c.textAlign = "right"; c.textBaseline = "middle";
+    c.strokeStyle = tc("--grid"); c.fillStyle = tc("--muted"); c.textAlign = "right"; c.textBaseline = "middle";
     for (const v of yt.ticks) { const y = Math.round(this.py(v)) + .5; c.beginPath(); c.moveTo(l, y); c.lineTo(W - r, y); c.stroke(); c.fillText(fmtTick(v, yt.step), l - 6, y); }
     c.textAlign = "center"; c.textBaseline = "top";
     for (const v of xt.ticks) { const x = Math.round(this.px(v)) + .5; c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); c.fillText(this.o.xFmt ? this.o.xFmt(v) : fmtTick(v, xt.step), x, H - b + 6); }
-    c.strokeStyle = "#CDD5DD"; c.strokeRect(l + .5, t + .5, W - l - r, H - t - b);
-    c.fillStyle = "#17212B"; c.textBaseline = "alphabetic"; c.fillText(this.o.xLabel, (l + W - r) / 2, H - 6);
+    c.strokeStyle = tc("--line"); c.strokeRect(l + .5, t + .5, W - l - r, H - t - b);
+    c.fillStyle = tc("--ink"); c.textBaseline = "alphabetic"; c.fillText(this.o.xLabel, (l + W - r) / 2, H - 6);
     c.save(); c.translate(12, (t + H - b) / 2); c.rotate(-Math.PI / 2); c.fillText(this.o.yLabel, 0, 0); c.restore();
     c.save(); c.beginPath(); c.rect(l, t, W - l - r, H - t - b); c.clip();
     for (const s of this.series) {
       if (s.visible === false) continue;
-      c.strokeStyle = s.c; c.fillStyle = s.c; c.lineWidth = s.width || 1.4; c.setLineDash(this.o.points ? [] : (s.dash || []));
+      const col = s.c === "#17212B" ? tc("--ink") : s.c; c.strokeStyle = col; c.fillStyle = col; c.lineWidth = s.width || 1.4; c.setLineDash(this.o.points ? [] : (s.dash || []));
       c.beginPath();
       for (let i = 0; i < this.x.length; i++) { const X = this.px(this.x[i]), Y = this.py(s.y[i]); i ? c.lineTo(X, Y) : c.moveTo(X, Y); }
       c.stroke(); c.setLineDash([]);
       if (this.o.points) for (let i = 0; i < this.x.length; i++) { c.beginPath(); c.arc(this.px(this.x[i]), this.py(s.y[i]), i === this.hover ? 5 : 3, 0, 7); c.fill(); }
     }
-    if (this.playhead !== null) { const x = Math.round(this.px(this.playhead)) + .5; c.strokeStyle = "#17212B"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); }
-    if (this.hover !== null && !this.o.points) { const x = Math.round(this.px(this.x[this.hover])) + .5; c.strokeStyle = "rgba(23,33,43,.35)"; c.lineWidth = 1; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); c.setLineDash([]); }
+    if (this.playhead !== null) { const x = Math.round(this.px(this.playhead)) + .5; c.strokeStyle = tc("--ink"); c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); }
+    if (this.hover !== null && !this.o.points) { const x = Math.round(this.px(this.x[this.hover])) + .5; c.strokeStyle = tc("--muted"); c.lineWidth = 1; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); c.setLineDash([]); }
     if (this.sel) { const a = Math.min(...this.sel), z = Math.max(...this.sel); c.fillStyle = "rgba(31,79,209,.12)"; c.fillRect(a, t, z - a, H - t - b); c.strokeStyle = "#1F4FD1"; c.strokeRect(a + .5, t + .5, z - a, H - t - b); }
     c.restore();
   }
@@ -620,11 +834,11 @@ function resetView() {
 }
 
 const dialSVG = () => `<svg viewBox="-90 -90 180 180" role="img" aria-label="Sublattice orientations in the x–z plane" id="dialsvg">
-  <circle r="${R}" fill="none" stroke="#CDD5DD"/><line x1="-${R}" y1="0" x2="${R}" y2="0" stroke="#E3E8ED"/><line x1="0" y1="-${R}" x2="0" y2="${R}" stroke="#E3E8ED"/>
-  <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" fill="#5A6875">+z</text><text x="${R + 6}" y="3" font-size="10" fill="#5A6875">+x</text>
+  <circle r="${R}" fill="none" style="stroke:var(--line)"/><line x1="-${R}" y1="0" x2="${R}" y2="0" style="stroke:var(--grid)"/><line x1="0" y1="-${R}" x2="0" y2="${R}" style="stroke:var(--grid)"/>
+  <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" style="fill:var(--muted)">+z</text><text x="${R + 6}" y="3" font-size="10" style="fill:var(--muted)">+x</text>
   <path id="trail1" d="" fill="none" stroke="#1F4FD1" stroke-opacity=".4" stroke-width="1"/>
   <path id="trail2" d="" fill="none" stroke="#B0127F" stroke-opacity=".4" stroke-width="1"/>
-  <line id="nl" x1="0" y1="0" x2="0" y2="0" stroke="#17212B" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <line id="nl" x1="0" y1="0" x2="0" y2="0" style="stroke:var(--ink)" stroke-width="1.2" stroke-dasharray="4 4"/>
   <line id="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><circle id="d1" r="4.7" fill="#1F4FD1"/>
   <line id="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><circle id="d2" r="4.7" fill="#B0127F"/></svg>`;
 
@@ -724,7 +938,7 @@ function buildRunViewer(box, r) {
   box.querySelector("#viewer").innerHTML = `
     <div class="top">
       <div><div class="dial">${dialSVG()}</div>
-        <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:#17212B;border-top-style:dashed"></b>n</span></div></div>
+        <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:currentColor;border-top-style:dashed"></b>n</span></div></div>
       <dl class="figures">
         <dt>m₁ final</dt><dd>${vec(s.m1_final)}</dd>
         <dt>m₂ final</dt><dd>${vec(s.m2_final)}</dd>
@@ -740,7 +954,7 @@ function buildRunViewer(box, r) {
         <div class="presets" role="group" aria-label="Quantities to show">
           <button type="button" data-preset="m">m₁, m₂</button><button type="button" data-preset="z">z only</button><button type="button" data-preset="n">Néel n</button></div>
         <div class="legend" id="legend">${CH.map(ch => `<button type="button" data-k="${ch.k}" aria-pressed="${prefs[ch.k]}">
-          <svg viewBox="0 0 20 8" aria-hidden="true"><line x1="0" y1="4" x2="20" y2="4" stroke="${ch.c}" stroke-width="2" stroke-dasharray="${ch.dash.length ? ch.dash.map(v => v * 1.2).join(" ") : "none"}"/></svg><span>${ch.name}</span></button>`).join("")}</div>
+          <svg viewBox="0 0 20 8" aria-hidden="true"><line x1="0" y1="4" x2="20" y2="4" stroke="${ch.c === "#17212B" ? "currentColor" : ch.c}" stroke-width="2" stroke-dasharray="${ch.dash.length ? ch.dash.map(v => v * 1.2).join(" ") : "none"}"/></svg><span>${ch.name}</span></button>`).join("")}</div>
       </div>
       <div class="canvaswrap"><canvas id="chart" role="img" aria-label="Magnetization components of ${r.id} versus time"></canvas></div>
       <div class="readout mono" id="readout"></div>
@@ -792,7 +1006,7 @@ function renderRun(box, r) {
   if (r.status === "done" && r.summary) buildRunViewer(box, r);
   const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse run ${r.id}.`; send(); };
   const c = $("#cancel"); if (c) c.onclick = async () => { await postJson(`/api/runs/${r.id}/cancel`, {}); await refreshRuns(); renderSelected(true); };
-  $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; showTab("params"); $("#check").click(); };
+  $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; showTab("params"); setMode("deep"); $("#check").click(); };
 }
 
 function renderSweep(box, s) {
@@ -843,7 +1057,7 @@ async function renderSelected(force = false) {
 async function refreshRuns() {
   try {
     const out = await api("/api/runs");
-    state.runs = out.runs; state.sweeps = out.sweeps; renderRuns();
+    state.runs = out.runs; state.sweeps = out.sweeps; renderRuns(); updateCards();
     if (state.selected) await renderSelected();
   } catch {}
 }
@@ -868,6 +1082,7 @@ function renderRuns() {
 }
 async function select(id) {
   const changed = state.selected !== id;
+  setBench(true);
   if (changed) { resetView(); state.selected = id; }
   showTab("result"); renderRuns(); await renderSelected(changed);
 }
@@ -886,8 +1101,7 @@ document.querySelector(".tabs").addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") { showTab("result"); $("#tab-result").focus(); }
 });
 
-function showCheck(r) {
-  const el = $("#checkout");
+function showCheck(r, el = $("#checkout")) {
   if (!r) { el.className = "check"; el.textContent = ""; return; }
   if (!r.ok) { el.className = "check bad"; el.textContent = r.error; return; }
   el.className = "check ok";
@@ -897,12 +1111,15 @@ function showCheck(r) {
     (r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("");
 }
 $("#check").onclick = async () => { try { showCheck(await postJson("/api/validate", {parameters_text: $("#params").value})); } catch (e) { showCheck({ok: false, error: e.message}); } };
-$("#run").onclick = async () => {
+async function runText(text, label, show) {
   try {
-    const out = await postJson("/api/runs", {parameters_text: $("#params").value, label: $("#label").value});
-    await refreshRuns(); select(out.run_id);
-  } catch (e) { showCheck({ok: false, error: e.message}); }
-};
+    const chk = await postJson("/api/validate", {parameters_text: text}); show(chk);
+    if (!chk.ok) return;
+    const out = await postJson("/api/runs", {parameters_text: text, label});
+    trackRun(out.run_id, label); await refreshRuns(); select(out.run_id);
+  } catch (e) { show({ok: false, error: e.message}); }
+}
+$("#run").onclick = () => runText($("#params").value, $("#label").value, r => showCheck(r));
 $("#save").onclick = async () => {
   const name = prompt("File name", ($("#label").value || "parameters").replace(/\s+/g, "_") + ".txt");
   if (!name) return;
@@ -914,6 +1131,128 @@ $("#examples").onchange = e => {
   if (ex) { $("#params").value = ex.text; $("#label").value = ex.name.replace(".txt", "").replace(/_/g, " "); showCheck(null); }
   e.target.value = "";
 };
+
+
+// ---------------------------------------------------------------- run cards in the chat (process, then graph)
+const cardEls = new Map();
+const CARD_SERIES = [{k: "m1z", c: "#1F4FD1"}, {k: "m2z", c: "#B0127F"}, {k: "nz", c: "#17212B"}];
+function trackRun(id, label) {
+  if (cardEls.has(id)) return;
+  setBench(true);
+  const el = document.createElement("div"); el.className = "runcard";
+  el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label">${esc(label || "")}</span><span class="status" data-r="st"></span></div>
+    <ul class="steps"><li data-s="check"></li><li data-s="start"></li><li data-s="sim"></li><li data-s="plot"></li></ul>
+    <div class="bar"><i data-r="bar" style="width:0"></i></div>
+    <div class="rc-plot" hidden><div class="rc-legend"><span style="color:#1F4FD1">m<sub>1z</sub></span><span style="color:#B0127F">m<sub>2z</sub></span><span>n<sub>z</sub></span></div>
+      <div class="canvaswrap"><canvas role="img" aria-label="Trajectory of ${id}"></canvas></div><div class="rc-meta mono"></div></div>
+    <div class="actions"><button class="btn small" type="button" data-r="open">Open full viewer</button></div>`;
+  el.querySelector("[data-r=open]").onclick = () => select(id);
+  cardEls.set(id, {el, chart: null, final: false}); state.cards.push(id);
+  setStep(el, "check", "done", "Parameters checked"); setStep(el, "start", "done", `Run ${id} started`);
+  setStep(el, "sim", "active", "Waiting for the solver"); setStep(el, "plot", "wait", "Plot the trajectory");
+  render(); updateCards();
+}
+function setStep(el, k, st, text) { const li = el.querySelector(`[data-s=${k}]`); li.className = st; li.innerHTML = `<span class="dot"></span>${text}`; }
+function clearCards() { for (const c of cardEls.values()) c.chart && c.chart.destroy(); cardEls.clear(); state.cards = []; }
+async function updateCards() {
+  for (const id of state.cards) {
+    const c = cardEls.get(id); if (!c || c.final || c.busy) continue;
+    c.busy = true;
+    try { await paintCard(id, c, await api(`/api/runs/${id}`)); } catch {}
+    c.busy = false;
+  }
+}
+async function paintCard(id, c, r) {
+  const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
+  st.textContent = statusText(r); st.className = "status " + r.status;
+  bar.style.width = (r.status === "done" ? 100 : r.progress * 100).toFixed(1) + "%";
+  if (r.status === "queued") setStep(el, "sim", "active", `Queued, estimated ${dur(r.estimated_runtime_s)}`);
+  else if (r.status === "running") setStep(el, "sim", "active", `Simulating, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`);
+  else if (r.status === "done") setStep(el, "sim", "done", `Simulated${r.summary ? " in " + dur(r.summary.runtime_s) : ""}`);
+  else { setStep(el, "sim", "bad", "Run " + r.status); setStep(el, "plot", "bad", "No trajectory"); c.final = true; return; }
+  if (r.status !== "done" || !r.summary) return;
+  c.final = true;
+  setStep(el, "plot", "active", "Plotting the trajectory");
+  const plot = el.querySelector(".rc-plot"); plot.hidden = false;
+  try {
+    const d = await api(`/api/runs/${id}/series?points=1200`);
+    const cols = {m1z: d.m1z, m2z: d.m2z, nz: d.m1z.map((v, i) => (v - d.m2z[i]) / 2)};
+    c.chart = new Chart(plot.querySelector("canvas"), {height: 210, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05});
+    c.chart.setData(d.t_ns, CARD_SERIES.map(s => ({...s, y: cols[s.k]})));
+    setStep(el, "plot", "done", "Trajectory ready");
+    const s = r.summary;
+    plot.querySelector(".rc-meta").textContent = `mean |nz| = ${fmt(s.neel_z_abs_mean)}   nz sign changes = ${s.neel_z_sign_changes}   n final = ${vec(s.neel_final)}`;
+  } catch (e) { setStep(el, "plot", "bad", "Trajectory not available: " + esc(e.message)); }
+}
+
+
+// ---------------------------------------------------------------- workbench toggle, fast / deep setup
+function setBench(open) {
+  document.body.classList.toggle("bench-open", open);
+  $("#benchbtn").setAttribute("aria-pressed", String(open));
+}
+$("#benchbtn").onclick = () => setBench(!document.body.classList.contains("bench-open"));
+$("#closebench").onclick = () => setBench(false);
+
+const FAST = [
+  {k: "t", label: "Duration (ns)", scale: 1e-9, min: 0.5, max: 30, step: 0.5},
+  {k: "Ms", label: "Saturation Ms (kA/m)", scale: 1e3, min: 100, max: 1200, step: 1},
+  {k: "A0", label: "Exchange A0 (pJ/m)", scale: 1e-12, min: -1.2, max: -0.02, step: 0.002},
+  {k: "Ku", label: "Anisotropy Ku (10\u2074 J/m\u00b3)", scale: 1e4, min: 0.2, max: 10, step: 0.01},
+  {k: "a", label: "Damping \u03b1", scale: 1, min: 0.005, max: 0.3, step: 0.005},
+  {k: "Temp", label: "Temperature (K)", scale: 1, min: 0, max: 400, step: 5},
+  {k: "SOT_DC_Amp", label: "SOT current (10\u2076 A/cm\u00b2)", scale: 1e6, min: -300, max: 300, step: 1},
+];
+const fnum = v => String(+Number(v).toPrecision(6));
+function buildFast() {
+  const D = state.config.defaults || {}, form = $("#fform"); form.innerHTML = "";
+  for (const f of FAST) {
+    const def = (D[f.k] ?? 0) / f.scale, row = document.createElement("div"); row.className = "frow";
+    row.innerHTML = `<label for="f-${f.k}">${f.label}</label>
+      <input type="range" id="r-${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${fnum(def)}" aria-label="${f.label} slider">
+      <input type="number" id="f-${f.k}" step="any" value="${fnum(def)}">`;
+    const r = row.querySelector("[type=range]"), n = row.querySelector("[type=number]");
+    r.oninput = () => { n.value = fnum(r.value); fastUpdate(); };
+    n.oninput = () => { r.value = n.value; fastUpdate(); };
+    form.appendChild(row);
+  }
+  $("#f-neel").onchange = fastUpdate; $("#f-extra").oninput = fastUpdate; fastUpdate();
+}
+function fastSet(k, v) { const n = $("#f-" + k), r = $("#r-" + k); n.value = fnum(v); r.value = n.value; }
+function fastText() {
+  const D = state.config.defaults || {}, lines = ["# fast mode: only values that differ from the defaults"];
+  for (const f of FAST) {
+    const v = parseFloat($("#f-" + f.k).value); if (!isFinite(v)) continue;
+    const def = (D[f.k] ?? 0) / f.scale;
+    if (Math.abs(v - def) > 1e-9 * Math.max(1, Math.abs(def))) lines.push(`--${f.k}=${+(v * f.scale).toPrecision(8)}`);
+  }
+  if (parseFloat($("#f-Temp").value) > 0) lines.push("--flag0");
+  if ($("#f-neel").value === "plus") lines.push("--m1=0.25,0.0,0.968", "--m2=-0.256,0.0,-0.965");
+  const extra = $("#f-extra").value.trim(); if (extra) lines.push(...extra.split(/\s+(?=--)/));
+  return lines.join("\n") + "\n";
+}
+function fastUpdate() { $("#ftext").textContent = fastText(); $("#fcheckout").textContent = ""; $("#fcheckout").className = "check"; }
+const PRESETS_FAST = {
+  default: () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; },
+  minus: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 0); },
+  plus: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 0); $("#f-neel").value = "plus"; },
+  sotp: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", 30); },
+  sotn: () => { PRESETS_FAST.default(); fastSet("SOT_DC_Amp", -30); },
+};
+document.querySelectorAll("#fpresets button").forEach(b => b.onclick = () => {
+  PRESETS_FAST[b.dataset.p](); fastUpdate();
+  $("#f-label").value = b.textContent.replace(/\s+/g, " ").trim();
+});
+$("#fcheck").onclick = async () => { try { showCheck(await postJson("/api/validate", {parameters_text: fastText()}), $("#fcheckout")); } catch (e) { showCheck({ok: false, error: e.message}, $("#fcheckout")); } };
+$("#frun").onclick = () => runText(fastText(), $("#f-label").value, r => showCheck(r, $("#fcheckout")));
+$("#fdeep").onclick = () => { $("#params").value = fastText(); $("#label").value = $("#f-label").value; setMode("deep"); showCheck(null); };
+function setMode(m) {
+  $("#fast").hidden = m !== "fast"; $("#deep").hidden = m !== "deep";
+  $("#mode-fast").setAttribute("aria-pressed", String(m === "fast")); $("#mode-deep").setAttribute("aria-pressed", String(m === "deep"));
+  try { localStorage.setItem("sublattice.mode", m); } catch {}
+}
+$("#mode-fast").onclick = () => setMode("fast");
+$("#mode-deep").onclick = () => setMode("deep");
 
 // ---------------------------------------------------------------- settings
 function keyState() {
@@ -933,13 +1272,38 @@ document.addEventListener("click", e => { if (!e.target.closest(".settings") && 
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleSettings(false); });
 $("#apikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.key", $("#apikey").value.trim()); keyState(); });
 
+function setTheme(t) {
+  if (!["light", "dark", "spin"].includes(t)) t = "light";
+  document.documentElement.dataset.theme = t; try { localStorage.setItem("sublattice.theme", t); } catch {}
+  document.querySelectorAll("#themes button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
+  if (view.chart) view.chart.draw();
+  if (view.sweepChart) view.sweepChart.draw();
+  for (const c of cardEls.values()) c.chart && c.chart.draw();
+}
+document.querySelectorAll("#themes button").forEach(b => b.onclick = () => setTheme(b.dataset.theme));
+
+async function loadModels() {
+  try {
+    const headers = {}, k = $("#apikey").value.trim(); if (k) headers["X-Api-Key"] = k;
+    const out = await api("/api/models", {headers}); if (!out.models || !out.models.length) return;
+    const sel = $("#model"), keep = localStorage.getItem("sublattice.model") || sel.value || out.default;
+    sel.innerHTML = "";
+    for (const m of out.models) { const o = document.createElement("option"); o.value = m.id; o.textContent = m.name && m.name !== m.id ? `${m.name} (${m.id})` : m.id; sel.appendChild(o); }
+    sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
+  } catch {}
+}
+let modelTimer;
+$("#apikey").addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
+
 async function init() {
+  setTheme(document.documentElement.dataset.theme);
   state.config = await api("/api/config");
+  buildFast(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
   sel.value = localStorage.getItem("sublattice.model") || state.config.model;
   sel.onchange = () => localStorage.setItem("sublattice.model", sel.value);
-  $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState();
+  $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState(); loadModels();
   if ($("#keypill").classList.contains("need")) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
