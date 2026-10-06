@@ -28,6 +28,14 @@ def list_models(api_key=None):
     return [{"id": m, "name": m} for m in MODELS], "configured"
 
 
+MODE_NOTES = {
+    "fast": ("Mode: FAST. Use the default parameters and change only what the user names (typically exchange A0, "
+             "anisotropy Ku, Ms, damping, duration, SOT current). Do not ask clarifying questions you can answer "
+             "with defaults; state the few values you chose, start the run and give a short result."),
+    "deep": ("Mode: DEEP. Work from the full parameter set or an attached txt file. Check every parameter, "
+             "mention the known caveats that apply, consider sweeps when they answer the question, and give a "
+             "thorough, quantitative explanation of the dynamics."),
+}
 MAX_TOKENS = int(os.environ.get("CLAUDE_MAX_TOKENS", "4096"))
 MAX_STEPS = 12
 
@@ -59,7 +67,7 @@ def _dump(block):
     return d
 
 
-def chat_stream(messages, api_key=None, model=None):
+def chat_stream(messages, api_key=None, model=None, mode=None):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -73,6 +81,8 @@ def chat_stream(messages, api_key=None, model=None):
     model = model or DEFAULT_MODEL
     messages = list(messages)
     system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+    if mode in MODE_NOTES:
+        system.append({"type": "text", "text": MODE_NOTES[mode]})
 
     for _ in range(MAX_STEPS):
         try:

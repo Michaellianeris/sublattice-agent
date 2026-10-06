@@ -23,6 +23,7 @@ S.recover_interrupted()
 class ChatIn(BaseModel):
     messages: list
     model: str | None = None
+    mode: str | None = None
 
 
 class ParamsIn(BaseModel):
@@ -64,7 +65,7 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
 
     def stream():
         try:
-            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model):
+            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model, mode=body.mode):
                 yield json.dumps(ev, default=str) + "\n"
         except Exception as e:  # keep the stream well-formed for the page
             yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"
