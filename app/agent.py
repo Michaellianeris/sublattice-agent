@@ -12,6 +12,22 @@ MODELS = [m.strip() for m in (os.environ.get("CLAUDE_MODELS")
           or "claude-sonnet-5,claude-opus-5-5,claude-haiku-4-5-20251001").split(",") if m.strip()]
 if DEFAULT_MODEL not in MODELS:
     MODELS.insert(0, DEFAULT_MODEL)
+
+
+def list_models(api_key=None):
+    """Every model the key can use (Sonnet, Opus, Haiku and any other), falling back to the configured list."""
+    key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if key:
+        try:
+            found = [{"id": m.id, "name": getattr(m, "display_name", None) or m.id}
+                     for m in anthropic.Anthropic(api_key=key).models.list(limit=1000)]
+            if found:
+                return found, "api"
+        except Exception:
+            pass
+    return [{"id": m, "name": m} for m in MODELS], "configured"
+
+
 MAX_TOKENS = int(os.environ.get("CLAUDE_MAX_TOKENS", "4096"))
 MAX_STEPS = 12
 
