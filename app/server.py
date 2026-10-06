@@ -1,9 +1,10 @@
 """HTTP API and static UI."""
+import json
 import os
 from pathlib import Path
 
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 
 from . import agent
@@ -47,13 +48,22 @@ def config():
 
 @app.post("/api/chat")
 def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
+    """Streams newline-delimited JSON events while Claude works."""
     if body.model and body.model not in agent.MODELS:
         raise HTTPException(400, f"unknown model {body.model}")
-    try:
-        messages, events = agent.chat(body.messages, api_key=x_api_key, model=body.model)
-    except agent.AgentError as e:
-        return JSONResponse({"error": str(e)}, status_code=e.status)
-    return {"messages": messages, "events": events}
+    if not (x_api_key or os.environ.get("ANTHROPIC_API_KEY")):
+        return JSONResponse({"error": "No API key. Paste a key from console.anthropic.com "
+                                      "or set ANTHROPIC_API_KEY."}, status_code=401)
+
+    def stream():
+        try:
+            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model):
+                yield json.dumps(ev, default=str) + "\n"
+        except Exception as e:  # keep the stream well-formed for the page
+            yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # ---- parameter files
@@ -127,6 +137,14 @@ def run(run_id: str):
 @app.post("/api/runs/{run_id}/cancel")
 def cancel(run_id: str):
     return S.cancel(run_id)
+
+
+@app.get("/api/runs/{run_id}/series")
+def run_series(run_id: str, points: int = 1200, t0_ns: float | None = None, t1_ns: float | None = None):
+    out = S.run_series(run_id, points, t0_ns, t1_ns)
+    if out is None:
+        raise HTTPException(404, "no trajectory for this run")
+    return out
 
 
 @app.get("/api/runs/{run_id}/files/{name}")

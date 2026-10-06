@@ -52,12 +52,19 @@ Lines starting with `#` are comments (stripped before the run).
 
 ## What you can do
 
-- **Chat**: attach a `.txt` (button or drag and drop) or describe a run. The assistant validates,
-  reports step count and estimated runtime, starts the run, and analyses it when asked. It receives
-  the dynamics plot as an image, so its comments are based on the actual curves.
+- **Chat**: attach a `.txt` (button or drag and drop) or describe a run. The assistant validates, reports
+  step count and estimated runtime, starts the run, and analyses it when asked. Its steps appear live
+  as they happen (checking, starting, looking at a run). It receives the dynamics plot as an image, so
+  its comments are based on the actual curves. Parameter files it writes have **Copy** and
+  **Open in editor** buttons.
+- **Trajectory viewer**: a finished run opens an interactive plot of m₁, m₂ and the Néel vector.
+  Toggle components, click to move a playhead, drag to zoom (the window is re-read from the raw data,
+  so fast oscillations that look blurred in the full view resolve), double-click to reset. A dial shows
+  the sublattice orientations in the x–z plane at the playhead, and **Play** animates the run.
 - **Sweeps**: "sweep Fr from 10 to 40 GHz in 5 GHz steps" starts one run per value (the original
-  `prepare.py` / `run_sim.py` / `avg_neel.py` workflow) and returns mean |n_z| against the parameter.
-- **Without the assistant**: the right panel has a parameter editor with Check and Run, so the app is
+  `prepare.py` / `run_sim.py` / `avg_neel.py` workflow) and plots mean |n_z| against the parameter.
+  Click a point to open that run; the transient can be excluded from the average.
+- **Without the assistant**: the Parameters tab has an editor with Check and Run, so the app is
   usable even with no API key.
 
 Each run gets its own folder with the original outputs (`output1.dat`, `output2.dat`,
@@ -68,7 +75,7 @@ mean |n_z|, n_z sign changes (switching) and the dominant oscillation frequency.
 
 ```
 browser (web/index.html)
-   │  conversation kept in the page, sent each turn
+   │  conversation kept in the page, sent each turn; answer streamed back as events
    ▼
 FastAPI (app/server.py) ──► Claude tool-use loop (app/agent.py, app/tools.py)
    │                                   │ validate / start / sweep / get_run / cancel

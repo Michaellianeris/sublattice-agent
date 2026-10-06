@@ -25,6 +25,9 @@ RESULT_FILES = ["Two_Spin_Dynamics.png", "output1.dat", "output2.dat", "neel_z.d
                 "parameters.txt", "summary.json", "simulation_parameters.log", "stderr.log"]
 
 _lock = threading.Lock()
+_neel_cache = {}      # (run_id, discard) -> mean |n_z|; finished runs do not change
+_plot_key = {}        # sweep_id -> (done count, discard) of the last plot drawn
+_series_cache = {}    # run_id -> (mtime key, array); newest few only
 _procs = {}
 _pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL)
 
@@ -181,6 +184,55 @@ def run_file(run_id, name):
     return path if path.exists() else None
 
 
+# ---------- trajectories for the viewer
+
+def _load_series(run_id):
+    import numpy as np
+    d = RUNS / run_id
+    f1, f2 = d / "output1.dat", d / "output2.dat"
+    if not (f1.exists() and f2.exists()):
+        return None
+    key = (f1.stat().st_mtime_ns, f2.stat().st_mtime_ns)
+    with _lock:
+        hit = _series_cache.get(run_id)
+        if hit and hit[0] == key:
+            return hit[1]
+    a, b = np.loadtxt(f1), np.loadtxt(f2)
+    data = np.column_stack((a[:, 0], a[:, 1:4], b[:, 1:4]))
+    with _lock:
+        _series_cache[run_id] = (key, data)
+        while len(_series_cache) > 4:
+            _series_cache.pop(next(iter(_series_cache)))
+    return data
+
+
+def run_series(run_id, points=1200, t0_ns=None, t1_ns=None):
+    """Down-sampled m1, m2 (columns) for a time window; zooming asks for a narrower window."""
+    import numpy as np
+    if not _valid(run_id, "r"):
+        return None
+    data = _load_series(run_id)
+    if data is None:
+        return None
+    t = data[:, 0]
+    lo = 0 if t0_ns is None else int(np.searchsorted(t, t0_ns * 1e-9, "left"))
+    hi = len(t) if t1_ns is None else int(np.searchsorted(t, t1_ns * 1e-9, "right"))
+    lo = max(0, min(lo, len(t) - 2))
+    hi = max(lo + 2, min(hi, len(t)))
+    points = max(50, min(int(points), 5000))
+    n = hi - lo
+    idx = (np.unique(np.linspace(lo, hi - 1, points).round().astype(int))
+           if n > points else np.arange(lo, hi))
+    part = data[idx]
+
+    def col(i, scale=1.0):
+        return np.round(part[:, i] * scale, 6).tolist()
+
+    return {"n_total": int(len(t)), "n_window": int(n), "n_returned": int(len(idx)),
+            "t_ns": col(0, 1e9), "m1x": col(1), "m1y": col(2), "m1z": col(3),
+            "m2x": col(4), "m2y": col(5), "m2z": col(6)}
+
+
 # ---------- sweeps
 
 def start_sweep(parameters_text, parameter, values, label=""):
@@ -229,15 +281,23 @@ def sweep_info(sweep_id, discard_fraction=0.0):
         rows.append(row)
     info = dict(m, status_counts=counts, rows=rows, discard_fraction=discard_fraction)
     if counts.get("done") and not counts.get("running") and not counts.get("queued"):
-        info["plot"] = _sweep_plot(sweep_id, m["parameter"], rows)
+        key = (counts["done"], round(float(discard_fraction), 3))
+        if _plot_key.get(sweep_id) != key or not (SWEEPS / sweep_id / "sweep_neel_z.png").exists():
+            _sweep_plot(sweep_id, m["parameter"], rows)
+            _plot_key[sweep_id] = key
+        info["plot"] = "sweep_neel_z.png"
     return info
 
 
 def _neel_mean(run_id, discard_fraction):
     import numpy as np
+    key = (run_id, round(float(discard_fraction), 3))
+    if key in _neel_cache:
+        return _neel_cache[key]
     data = np.loadtxt(RUNS / run_id / "neel_z.dat")
     start = int(len(data) * max(0.0, min(discard_fraction, 0.95)))
-    return float(np.mean(data[start:, 1]))
+    _neel_cache[key] = float(np.mean(data[start:, 1]))
+    return _neel_cache[key]
 
 
 def _sweep_plot(sweep_id, parameter, rows):

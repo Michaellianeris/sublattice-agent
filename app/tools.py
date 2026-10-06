@@ -137,7 +137,7 @@ def call(name, args):
         out = {"error": f"unknown tool {name}"}
 
     event = {"tool": name}
-    for key in ("run_id", "sweep_id", "saved", "ok", "error"):
+    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error"):
         if isinstance(out, dict) and key in out:
             event[key] = out[key]
     if name == "get_run" and isinstance(out, dict) and "id" in out:

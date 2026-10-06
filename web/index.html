@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#EDF0F3; --panel:#FFFFFF; --ink:#17212B; --muted:#5A6875; --line:#CDD5DD; --soft:#F5F7F9;
+  --paper:#EDF0F3; --panel:#FFFFFF; --ink:#17212B; --muted:#5A6875; --line:#CDD5DD; --soft:#F5F7F9; --grid:#E3E8ED;
   --m1:#1F4FD1; --m2:#B0127F; --ok:#2E7D4F; --warn:#9A5B00; --err:#B42318;
   --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -20,42 +20,55 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--seri
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--m1);outline-offset:2px}
 .mono{font-family:var(--mono);font-size:.86em}
+[hidden]{display:none!important}
+sub{font-size:.75em;line-height:0}
 
 /* header */
-header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel);position:relative;z-index:5}
 .mark{display:flex;align-items:center;gap:10px}
-.mark h1{white-space:nowrap;margin:0;font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
-.controls{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.controls label{color:var(--muted);font-size:.9rem;display:flex;align-items:center;gap:6px}
-.controls select,.controls input{border:1px solid var(--line);border-radius:4px;padding:4px 8px;background:var(--panel)}
-.controls input{width:220px}
-.keystate{font-size:.85rem;color:var(--muted)}
-.keystate.good{color:var(--ok)}
+.mark h1{margin:0;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.controls{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:3px 12px;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.pill.good{color:var(--ink)} .pill.good i{background:var(--ok)}
+.pill.need{color:var(--warn);border-color:#E6CFA3;background:#FBF4E4} .pill.need i{background:var(--warn)}
+.settings{position:relative}
+.popover{position:absolute;right:0;top:calc(100% + 8px);width:320px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;box-shadow:0 10px 28px rgba(23,33,43,.14)}
+.popover label{display:block;font-size:.88rem;color:var(--muted);margin-bottom:10px}
+.popover select,.popover input{display:block;width:100%;margin-top:3px;border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:var(--panel);color:var(--ink)}
+.popover p{margin:2px 0 0;font-size:.82rem;color:var(--muted)}
 
 /* layout */
-main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:calc(100vh - 57px)}
+main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:calc(100vh - 57px)}
 .chat{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
 .bench{overflow-y:auto;padding:20px 24px 40px}
 
 /* conversation */
 .log{flex:1;overflow-y:auto;padding:24px 28px}
 .msg{max-width:72ch;margin:0 0 18px}
-.msg.user{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px 10px 2px 10px;padding:10px 14px;width:fit-content;max-width:62ch}
+.msg.user{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px 10px 2px 10px;padding:10px 14px;width:fit-content;max-width:62ch;white-space:pre-wrap}
 .msg.assistant p{margin:.45em 0}
-.msg pre{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:10px 12px;overflow-x:auto;font:13px/1.5 var(--mono)}
 .msg code{font-family:var(--mono);font-size:.86em;background:var(--soft);padding:1px 4px;border-radius:3px}
-.msg pre code{background:none;padding:0}
 .msg table{border-collapse:collapse;margin:.6em 0;font-size:.92rem}
 .msg td,.msg th{border-bottom:1px solid var(--line);padding:4px 10px;text-align:left}
-.msg h3,.msg h4{margin:.8em 0 .2em;font-size:1.02rem}
+.msg h4{margin:.8em 0 .2em;font-size:1.02rem}
 .msg ul,.msg ol{padding-left:1.3em;margin:.4em 0}
+.codeblock{border:1px solid var(--line);border-radius:6px;margin:.6em 0;background:var(--soft);overflow:hidden}
+.codebar{display:flex;align-items:center;gap:6px;padding:3px 8px;border-bottom:1px solid var(--line);font-size:.78rem;color:var(--muted);font-family:var(--mono)}
+.codebar .sp{flex:1}
+.codebar button{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:1px 8px;font:inherit;cursor:pointer;color:var(--ink)}
+.codebar button:hover{border-color:var(--m1)}
+.codeblock pre{margin:0;padding:10px 12px;overflow-x:auto;font:13px/1.55 var(--mono)}
+.codeblock code{background:none;padding:0;font:inherit}
 .attachment{font-family:var(--mono);font-size:.8rem;color:var(--muted);margin-top:6px}
 .tools{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
-.chip{font-size:.85rem;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:2px 10px;color:var(--muted)}
 .chip.link{cursor:pointer;color:var(--ink)}
 .chip.link:hover{border-color:var(--m1)}
 .chip.bad{color:var(--err);border-color:#E7B8B3}
-.thinking{color:var(--muted);font-style:italic;margin:0 0 18px}
+.spin{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--m1);border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-style:italic;margin:0 0 18px}
 .error{color:var(--err);border-left:3px solid var(--err);padding:4px 10px;margin:0 0 18px;max-width:72ch}
 
 .empty{max-width:56ch;margin:8vh auto 0;color:var(--muted)}
@@ -71,54 +84,80 @@ main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:ca
 .pending button{border:none;background:none;cursor:pointer;color:var(--muted)}
 .row{display:flex;gap:10px;align-items:flex-end}
 .row textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-height:44px;max-height:180px;background:var(--panel)}
-.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:8px 14px;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 14px;cursor:pointer}
 .btn:hover{border-color:var(--ink)}
 .btn.primary{background:var(--m1);border-color:var(--m1);color:#fff}
 .btn.primary:hover{background:#173FAA}
+.btn.small{padding:3px 10px;font-size:.86rem}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .hint{font-size:.8rem;color:var(--muted);margin-top:6px}
 
 /* bench */
-.bench h2{font-size:1.1rem;font-weight:600;margin:28px 0 10px}
-.bench h2:first-child{margin-top:0}
+.bench h2{font-size:1.1rem;font-weight:600;margin:0 0 10px}
+.runs{list-style:none;margin:0 0 22px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:190px;overflow-y:auto}
+.runs li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--soft);cursor:pointer}
+.runs li:last-child{border-bottom:none}
+.runs li:hover{background:var(--soft)}
+.runs li.active{box-shadow:inset 3px 0 0 var(--m1);background:var(--soft)}
+.runs .id{font-family:var(--mono);font-size:.82rem}
+.runs .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92rem}
+.runs .mini{width:60px;height:3px;background:var(--grid);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.runs .mini i{display:block;height:100%;background:var(--m1)}
+.nothing{color:var(--muted);font-size:.92rem;padding:12px}
+.status{font-size:.88rem;color:var(--muted)}
+.status.done{color:var(--ok)} .status.failed,.status.interrupted{color:var(--err)} .status.running{color:var(--m1)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{border:none;background:none;padding:8px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--m1);font-weight:600}
+
 .selected{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
 .sel-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sel-head strong{font-size:1.15rem}
-.status{font-size:.88rem;color:var(--muted)}
-.status.done{color:var(--ok)} .status.failed,.status.interrupted{color:var(--err)} .status.running{color:var(--m1)}
-.bar{height:4px;background:var(--soft);border-radius:2px;margin:10px 0 4px;overflow:hidden}
+.bar{height:4px;background:var(--grid);border-radius:2px;margin:10px 0 4px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--m1);transition:width .6s}
+.warn{color:var(--warn);font-size:.9rem;margin:6px 0 0}
 
-.state{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center;margin:14px 0}
-.dial svg{width:170px;height:170px;display:block}
-.dial .arrow{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
-.figures{display:grid;grid-template-columns:auto auto;gap:4px 14px;font-size:.92rem}
+.top{display:grid;grid-template-columns:190px 1fr;gap:20px;align-items:center;margin:14px 0 6px}
+.dial svg{width:190px;height:190px;display:block}
+.dial-legend{display:flex;gap:12px;font-size:.8rem;color:var(--muted);justify-content:center;margin-top:2px}
+.dial-legend b{display:inline-block;width:14px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
+.figures{display:grid;grid-template-columns:auto auto;gap:4px 14px;font-size:.92rem;margin:0}
 .figures dt{color:var(--muted)}
 .figures dd{margin:0;font-family:var(--mono);font-size:.84rem;text-align:right}
-.legend{display:flex;gap:14px;font-size:.85rem;color:var(--muted);margin-top:6px}
-.legend b{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
-.plot{width:100%;border:1px solid var(--line);border-radius:4px;margin-top:10px;background:#fff}
-.files{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:.9rem}
+
+.plotbox{margin-top:12px;border-top:1px solid var(--grid);padding-top:12px}
+.plot-tools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:6px}
+.presets{display:flex;gap:4px}
+.presets button{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:1px 9px;font-size:.84rem;cursor:pointer}
+.presets button:hover{border-color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 6px}
+.legend button{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 9px;font-size:.82rem;cursor:pointer;color:var(--ink)}
+.legend button[aria-pressed=false]{color:var(--muted);background:var(--soft)}
+.legend button[aria-pressed=false] svg{opacity:.3}
+.legend svg{width:20px;height:8px}
+.canvaswrap{width:100%;position:relative}
+.canvaswrap canvas{display:block;touch-action:pan-y;cursor:crosshair;border:1px solid var(--line);border-radius:4px;background:#fff}
+.readout{display:flex;flex-wrap:wrap;gap:2px 16px;margin-top:6px;min-height:2.6em;color:var(--ink)}
+.readout em{font-style:normal;color:var(--muted)}
+.transport{display:flex;align-items:center;gap:8px;margin-top:6px}
+.transport input[type=range]{flex:1;min-width:60px;accent-color:var(--m1)}
+.transport select{border:1px solid var(--line);border-radius:6px;padding:5px 6px;background:var(--panel)}
+.note{font-size:.8rem;color:var(--muted);margin-top:4px}
+
+.files{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:.9rem}
 .files a{color:var(--m1)}
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.warn{color:var(--warn);font-size:.9rem;margin:6px 0 0}
-.sweep-table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px}
-.sweep-table td{padding:2px 6px;border-bottom:1px solid var(--soft);font-family:var(--mono);font-size:.8rem}
+.sweep-table{width:100%;border-collapse:collapse;margin-top:10px}
+.sweep-table td,.sweep-table th{padding:2px 6px;border-bottom:1px solid var(--soft);font-family:var(--mono);font-size:.8rem;text-align:left}
+.sweep-table th{color:var(--muted);font-weight:400}
+.inline{font-size:.88rem;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:8px}
+.inline input{width:64px;border:1px solid var(--line);border-radius:5px;padding:2px 6px}
 
-.runs{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:300px;overflow-y:auto}
-.runs li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--soft);cursor:pointer}
-.runs li:last-child{border-bottom:none}
-.runs li:hover{background:var(--soft)}
-.runs li.active{box-shadow:inset 3px 0 0 var(--m1)}
-.runs .id{font-family:var(--mono);font-size:.82rem}
-.runs .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92rem}
-.runs .mini{width:60px;height:3px;background:var(--soft);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
-.runs .mini i{display:block;height:100%;background:var(--m1)}
-.nothing{color:var(--muted);font-size:.92rem;padding:12px}
-
-.editor textarea{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font:13px/1.6 var(--mono);background:var(--panel)}
+.editor textarea{width:100%;min-height:200px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font:13px/1.6 var(--mono);background:var(--panel)}
 .editor .row{align-items:center;flex-wrap:wrap;margin-top:8px}
-.editor input{border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:200px}
+.editor .row select{border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:var(--panel)}
+.editor input{border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:200px;background:var(--panel)}
 .check{font-size:.9rem;margin-top:8px}
 .check.ok{color:var(--ok)} .check.bad{color:var(--err)}
 
@@ -126,9 +165,10 @@ main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:ca
   main{grid-template-columns:1fr;height:auto}
   .chat{height:80vh;border-right:none;border-bottom:1px solid var(--line)}
   .controls{margin-left:0;width:100%}
-  .controls input{width:150px}
+  .top{grid-template-columns:1fr;justify-items:center}
+  .popover{left:0;right:auto}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -142,10 +182,16 @@ main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:ca
     <h1>Sublattice Agent</h1>
   </div>
   <div class="controls">
-    <label>Model <select id="model"></select></label>
-    <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
-    <span id="keystate" class="keystate"></span>
-    <button class="btn" id="newchat">New conversation</button>
+    <button class="pill" id="keypill" type="button"><i></i><span id="keytext"></span></button>
+    <div class="settings">
+      <button class="btn" id="settingsbtn" type="button" aria-expanded="false" aria-controls="settingspanel">Settings</button>
+      <div class="popover" id="settingspanel" role="dialog" aria-label="Settings" hidden>
+        <label>Model <select id="model"></select></label>
+        <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+        <p>The key stays in this browser tab and is sent only to your own server.</p>
+      </div>
+    </div>
+    <button class="btn" id="newchat" type="button">New conversation</button>
   </div>
 </header>
 
@@ -155,31 +201,36 @@ main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:ca
     <div class="composer" id="composer">
       <div class="pending" id="pending" hidden></div>
       <div class="row">
-        <button class="btn" id="attach" title="Attach a parameter .txt file">Attach .txt</button>
+        <button class="btn" id="attach" type="button" title="Attach a parameter .txt file">Attach .txt</button>
         <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
-        <textarea id="input" rows="1" placeholder="Describe a run or ask about a result"></textarea>
-        <button class="btn primary" id="send">Send</button>
+        <textarea id="input" rows="1" placeholder="Describe a run or ask about a result" aria-label="Message"></textarea>
+        <button class="btn primary" id="send" type="button">Send</button>
       </div>
       <div class="hint">Enter sends, Shift+Enter adds a line. You can also drop a .txt file here.</div>
     </div>
   </section>
 
   <section class="bench" aria-label="Runs">
-    <h2>Selected run</h2>
-    <div class="selected" id="selected"><div class="nothing">Pick a run from the list, or start one.</div></div>
-
     <h2>Runs</h2>
     <ul class="runs" id="runs"><li class="nothing">No runs yet.</li></ul>
 
-    <h2>Parameter file</h2>
-    <div class="editor">
-      <textarea id="params" spellcheck="false" placeholder="--t=5e-9&#10;--SOT_DC_Amp=30e6"></textarea>
+    <div class="tabs" role="tablist" aria-label="Workbench">
+      <button role="tab" id="tab-result" aria-selected="true" aria-controls="panel-result" type="button">Result</button>
+      <button role="tab" id="tab-params" aria-selected="false" aria-controls="panel-params" type="button">Parameters</button>
+    </div>
+
+    <div id="panel-result" role="tabpanel" aria-labelledby="tab-result">
+      <div class="selected" id="selected"><div class="nothing">Pick a run from the list, or start one.</div></div>
+    </div>
+
+    <div id="panel-params" role="tabpanel" aria-labelledby="tab-params" class="editor" hidden>
+      <textarea id="params" spellcheck="false" aria-label="Parameter file" placeholder="--t=5e-9&#10;--SOT_DC_Amp=30e6"></textarea>
       <div class="row">
-        <select id="examples" class="btn"><option value="">Load an example</option></select>
-        <input id="label" placeholder="Label for the run">
-        <button class="btn" id="check">Check</button>
-        <button class="btn primary" id="run">Run</button>
-        <button class="btn" id="save">Save as file</button>
+        <select id="examples"><option value="">Load an example</option></select>
+        <input id="label" placeholder="Label for the run" aria-label="Label for the run">
+        <button class="btn" id="check" type="button">Check</button>
+        <button class="btn primary" id="run" type="button">Run</button>
+        <button class="btn" id="save" type="button">Save as file</button>
       </div>
       <div class="check" id="checkout"></div>
     </div>
@@ -188,9 +239,10 @@ main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);height:ca
 
 <script>
 const $ = s => document.querySelector(s);
-const state = {messages: [], busy: false, pending: null, selected: null, runs: [], sweeps: [], config: {}};
+const state = {messages: [], live: [], busy: false, pending: null, selected: null, runs: [], sweeps: [],
+               config: {}, examples: [], error: null, discard: 0};
 
-// ---------- api
+// ---------------------------------------------------------------- api
 async function api(path, opts = {}) {
   const res = await fetch(path, opts);
   const isJson = (res.headers.get("content-type") || "").includes("json");
@@ -198,11 +250,11 @@ async function api(path, opts = {}) {
   if (!res.ok) throw new Error((body && (body.error || body.detail)) || res.statusText);
   return body;
 }
-const postJson = (path, data, headers = {}) =>
-  api(path, {method: "POST", headers: {"Content-Type": "application/json", ...headers}, body: JSON.stringify(data)});
+const postJson = (path, data) =>
+  api(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
 
-// ---------- tiny markdown
-function esc(s) { return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+// ---------------------------------------------------------------- small markdown
+function esc(s) { return s.replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c])); }
 function inline(s) {
   return s.replace(/`([^`]+)`/g, "<code>$1</code>")
           .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
@@ -213,9 +265,14 @@ function md(text) {
   while (i < lines.length) {
     const l = lines[i];
     if (l.startsWith("```")) {
-      const buf = []; i++;
+      const lang = l.slice(3).trim(); const buf = []; i++;
       while (i < lines.length && !lines[i].startsWith("```")) buf.push(lines[i++]);
-      out.push(`<pre><code>${buf.join("\n")}</code></pre>`); i++; continue;
+      i++;
+      const isParams = buf.some(x => x.trim()) && buf.every(x => !x.trim() || /^\s*(--|#)/.test(x));
+      out.push(`<div class="codeblock"><div class="codebar"><span>${lang || "text"}</span><span class="sp"></span>` +
+        (isParams ? `<button type="button" data-act="editor">Open in editor</button>` : "") +
+        `<button type="button" data-act="copy">Copy</button></div><pre><code>${buf.join("\n")}</code></pre></div>`);
+      continue;
     }
     if (/^\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
       const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim()));
@@ -238,29 +295,51 @@ function md(text) {
   return out.join("");
 }
 
-// ---------- conversation rendering
-const TOOL_LABEL = {
-  list_input_files: () => "Listed files", read_input_file: a => `Read ${a.name}`,
-  save_input_file: a => `Saved ${a.name}`, validate_parameters: () => "Checked parameters",
-  start_simulation: () => "Started run", start_sweep: a => `Started sweep of ${a.parameter}`,
-  get_run: a => `Looked at ${a.run_id}`, get_sweep: a => `Looked at ${a.sweep_id}`,
-  list_runs: () => "Listed runs", cancel_run: a => `Cancelled ${a.run_id}`,
+// ---------------------------------------------------------------- conversation
+const TOOL_UI = {
+  list_input_files: {run: () => "Listing files", done: () => "Listed files"},
+  read_input_file: {run: a => `Reading ${a.name}`, done: a => `Read ${a.name}`},
+  save_input_file: {run: a => `Saving ${a.name}`, done: a => `Saved ${a.name}`},
+  validate_parameters: {run: () => "Checking parameters", done: () => "Checked parameters"},
+  start_simulation: {run: () => "Starting run", done: (a, r) => r.run_id ? `Started ${r.run_id}` : "Started run"},
+  start_sweep: {run: a => `Starting sweep of ${a.parameter}`, done: (a, r) => r.sweep_id ? `Started ${r.sweep_id} (${r.runs} runs)` : `Started sweep of ${a.parameter}`},
+  get_run: {run: a => `Looking at ${a.run_id}`, done: a => `Looked at ${a.run_id}`},
+  get_sweep: {run: a => `Looking at ${a.sweep_id}`, done: a => `Looked at ${a.sweep_id}`},
+  list_runs: {run: () => "Listing runs", done: () => "Listed runs"},
+  cancel_run: {run: a => `Cancelling ${a.run_id}`, done: a => `Cancelled ${a.run_id}`},
 };
 
 function toolResults(messages) {
   const map = {};
   for (const m of messages) if (m.role === "user" && Array.isArray(m.content))
     for (const b of m.content) if (b.type === "tool_result") {
-      let txt = typeof b.content === "string" ? b.content : (b.content.find(x => x.type === "text") || {}).text || "";
+      const txt = typeof b.content === "string" ? b.content : (b.content.find(x => x.type === "text") || {}).text || "";
       try { map[b.tool_use_id] = JSON.parse(txt); } catch { map[b.tool_use_id] = {}; }
     }
   return map;
 }
 
+function chipFor(name, input, result, running) {
+  const ui = TOOL_UI[name] || {run: () => name, done: () => name};
+  const c = document.createElement("span"); c.className = "chip";
+  if (running) {
+    c.innerHTML = `<span class="spin"></span>`;
+    c.appendChild(document.createTextNode(ui.run(input) + "…"));
+    return c;
+  }
+  let label = ui.done(input, result);
+  const target = result.run_id || result.sweep_id || input.run_id || input.sweep_id;
+  if (result.ok === false || result.error) { c.classList.add("bad"); label += ": " + (result.error || "failed"); }
+  c.textContent = label;
+  if (target && !result.error && result.ok !== false) { c.classList.add("link"); c.tabIndex = 0; c.onclick = () => select(target); c.onkeydown = e => { if (e.key === "Enter") select(target); }; }
+  return c;
+}
+
 function render() {
   const log = $("#log"); log.innerHTML = "";
-  if (!state.messages.length && !state.busy) { log.appendChild(emptyState()); return; }
+  if (!state.messages.length && !state.live.length && !state.busy) { log.appendChild(emptyState()); return; }
   const results = toolResults(state.messages);
+  const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
   for (const m of state.messages) {
     if (m.role === "user") {
       if (typeof m.content === "string") { addUser(m.content); continue; }
@@ -271,17 +350,24 @@ function render() {
     const blocks = Array.isArray(m.content) ? m.content : [{type: "text", text: m.content}];
     let chips = null;
     for (const b of blocks) {
-      if (b.type === "text" && b.text.trim()) {
-        chips = null;
-        const d = document.createElement("div"); d.className = "msg assistant"; d.innerHTML = md(b.text); log.appendChild(d);
-      } else if (b.type === "tool_use") {
+      if (b.type === "text" && b.text.trim()) { chips = null; add("msg assistant", md(b.text)); }
+      else if (b.type === "tool_use") {
         if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
-        chips.appendChild(toolChip(b, results[b.id] || {}));
+        chips.appendChild(chipFor(b.name, b.input || {}, results[b.id] || {}, false));
       }
     }
   }
-  if (state.busy) { const t = document.createElement("div"); t.className = "thinking"; t.textContent = "Working…"; log.appendChild(t); }
-  if (state.error) { const e = document.createElement("div"); e.className = "error"; e.textContent = state.error; log.appendChild(e); }
+  let chips = null;
+  for (const it of state.live) {
+    if (it.kind === "text") { chips = null; add("msg assistant", md(it.text)); }
+    else {
+      if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
+      chips.appendChild(chipFor(it.name, it.input, it.event || {}, it.status === "running"));
+    }
+  }
+  if (state.busy && !state.live.some(x => x.status === "running"))
+    add("thinking", `<span class="spin"></span>Working…`);
+  if (state.error) add("error", esc(state.error));
   log.scrollTop = log.scrollHeight;
 }
 
@@ -295,25 +381,11 @@ function addUser(text) {
   $("#log").appendChild(d);
 }
 
-function toolChip(block, result) {
-  const c = document.createElement("span"); c.className = "chip";
-  const a = block.input || {};
-  let label = (TOOL_LABEL[block.name] || (() => block.name))(a);
-  const target = result.run_id || result.sweep_id || a.run_id || a.sweep_id;
-  if (block.name === "start_simulation" && result.run_id) label = `Started ${result.run_id}`;
-  if (block.name === "start_sweep" && result.sweep_id) label = `Started ${result.sweep_id} (${result.runs} runs)`;
-  if (result.ok === false || result.error) { c.classList.add("bad"); label += ": " + (result.error || "failed"); }
-  c.textContent = label;
-  if (target && !result.error) { c.classList.add("link"); c.tabIndex = 0; c.onclick = () => select(target); }
-  return c;
-}
-
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
   d.innerHTML = `<h2>Run a macrospin simulation</h2>
     <p>Attach a parameter file, or describe the conditions in words. The assistant checks them with the
-    simulator's own parser, starts the run, and explains the result when it finishes.</p>
-    <div class="starters"></div>`;
+    simulator's own parser, starts the run, and explains the result when it finishes.</p><div class="starters"></div>`;
   const starters = [
     "Explain which parameters I can set and their units.",
     "Run 5 ns of SOT-driven dynamics with a DC current of 20e6 A/cm² and tell me if the Néel vector switches.",
@@ -321,19 +393,62 @@ function emptyState() {
     "Sweep the AC drive frequency from 10 to 40 GHz in 5 GHz steps and show where the response peaks.",
   ];
   for (const s of starters) {
-    const b = document.createElement("button"); b.textContent = s; b.onclick = () => { $("#input").value = s; send(); };
+    const b = document.createElement("button"); b.type = "button"; b.textContent = s;
+    b.onclick = () => { $("#input").value = s; send(); };
     d.querySelector(".starters").appendChild(b);
   }
   return d;
 }
 
-// ---------- sending
+// code blocks in the chat: copy / open in editor
+$("#log").addEventListener("click", async e => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const text = btn.closest(".codeblock").querySelector("code").textContent;
+  if (btn.dataset.act === "copy") {
+    try { await navigator.clipboard.writeText(text); }
+    catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove(); }
+    const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = old, 1200);
+  } else {
+    $("#params").value = text; showTab("params"); $("#check").click(); $("#params").focus();
+  }
+});
+
+// ---------------------------------------------------------------- sending (streamed)
 function stripImages(messages) {
   return messages.map(m => !Array.isArray(m.content) ? m : {...m, content: m.content.map(b =>
     b.type === "tool_result" && Array.isArray(b.content)
       ? {...b, content: b.content.map(x => x.type === "image" ? {type: "text", text: "[plot shown earlier]"} : x)} : b)});
 }
-function persist() { try { localStorage.setItem("macrospin.chat", JSON.stringify(stripImages(state.messages))); } catch {} }
+function persist() { try { localStorage.setItem("sublattice.chat", JSON.stringify(stripImages(state.messages))); } catch {} }
+
+function onEvent(ev) {
+  if (ev.type === "text") { state.live.push({kind: "text", text: ev.text}); }
+  else if (ev.type === "tool_start") { state.live.push({kind: "tool", id: ev.id, name: ev.name, input: ev.input, status: "running"}); }
+  else if (ev.type === "tool_done") {
+    const it = state.live.find(x => x.id === ev.id);
+    if (it) { it.status = "done"; it.event = ev.event; }
+    const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
+    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) { select(target); refreshRuns(); }
+  }
+  else if (ev.type === "done") { state.messages = ev.messages; state.live = []; state.finished = true; }
+  else if (ev.type === "error") { throw new Error(ev.error); }
+  render();
+}
+
+async function readStream(res) {
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  for (;;) {
+    const {value, done} = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, {stream: true});
+    let nl;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+      if (line) onEvent(JSON.parse(line));
+    }
+  }
+  if (buf.trim()) onEvent(JSON.parse(buf));
+}
 
 async function send() {
   const text = $("#input").value.trim();
@@ -342,25 +457,27 @@ async function send() {
   if (state.pending) content = "Attached parameter file `" + state.pending.name + "`:\n```\n" + state.pending.text.trim() + "\n```\n" + text;
   state.messages.push({role: "user", content});
   $("#input").value = ""; autosize(); setPending(null);
-  state.busy = true; state.error = null; render(); toggle();
+  state.busy = true; state.error = null; state.live = []; state.finished = false; render(); toggle();
   try {
-    const headers = {}; const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
-    const out = await postJson("/api/chat", {messages: state.messages, model: $("#model").value}, headers);
-    state.messages = out.messages;
-    const started = [...out.events].reverse().find(e => e.run_id || e.sweep_id);
-    if (started) select(started.run_id || started.sweep_id);
+    const headers = {"Content-Type": "application/json"};
+    const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value})});
+    if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
+    await readStream(res);
+    if (!state.finished) throw new Error("The connection closed before the answer was complete.");
   } catch (e) {
-    state.messages.pop(); $("#input").value = text; state.error = e.message;
+    if (state.messages.length && state.messages[state.messages.length - 1].role === "user") state.messages.pop();
+    $("#input").value = text; state.live = []; state.error = e.message;
   }
   state.busy = false; persist(); render(); toggle(); refreshRuns();
 }
 function toggle() { $("#send").disabled = state.busy; }
 
-// ---------- attachments
+// ---------------------------------------------------------------- attachments
 function setPending(p) {
   state.pending = p; const el = $("#pending");
   if (!p) { el.hidden = true; el.innerHTML = ""; return; }
-  el.hidden = false; el.innerHTML = `<span>${esc(p.name)}</span><button title="Remove attachment" aria-label="Remove attachment">✕</button>`;
+  el.hidden = false; el.innerHTML = `<span>${esc(p.name)}</span><button type="button" title="Remove attachment" aria-label="Remove attachment">✕</button>`;
   el.querySelector("button").onclick = () => setPending(null);
 }
 async function uploadFile(file) {
@@ -378,14 +495,351 @@ const comp = $("#composer");
 comp.addEventListener("dragover", e => { e.preventDefault(); comp.classList.add("drag"); });
 comp.addEventListener("dragleave", () => comp.classList.remove("drag"));
 comp.addEventListener("drop", e => { e.preventDefault(); comp.classList.remove("drag"); uploadFile(e.dataTransfer.files[0]); });
-
 function autosize() { const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 180) + "px"; }
 $("#input").addEventListener("input", autosize);
 $("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
 $("#send").onclick = send;
-$("#newchat").onclick = () => { state.messages = []; state.error = null; persist(); render(); };
+$("#newchat").onclick = () => { state.messages = []; state.live = []; state.error = null; persist(); render(); };
 
-// ---------- runs
+// ---------------------------------------------------------------- chart (canvas)
+function niceTicks(lo, hi, n = 6) {
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+  const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  const ticks = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) ticks.push(+v.toPrecision(12));
+  return {ticks, step};
+}
+const fmtTick = (v, step) => Math.abs(v) < step * 1e-9 ? "0" : v.toFixed(Math.min(6, Math.max(0, Math.ceil(-Math.log10(step) - 1e-9))));
+const eng = v => v === 0 ? "0" : (Math.abs(v) >= 1e5 || Math.abs(v) < 1e-3) ? v.toExponential(1).replace("e+", "e") : String(+v.toPrecision(4));
+
+class Chart {
+  constructor(canvas, o) {
+    this.cv = canvas; this.ctx = canvas.getContext("2d");
+    this.o = Object.assign({height: 250, pad: {l: 52, r: 14, t: 10, b: 34}, xLabel: "", yLabel: "", yMin: null, yMax: null, points: false, xFmt: null}, o);
+    this.x = []; this.series = []; this.playhead = null; this.hover = null; this.sel = null; this.down = null;
+    this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(canvas.parentElement);
+    canvas.addEventListener("pointermove", e => this.move(e));
+    canvas.addEventListener("pointerdown", e => this.press(e));
+    canvas.addEventListener("pointerup", e => this.release(e));
+    canvas.addEventListener("pointercancel", () => { this.down = null; this.sel = null; this.draw(); });
+    canvas.addEventListener("pointerleave", () => { if (this.down === null) { this.hover = null; this.o.onHover && this.o.onHover(null); this.draw(); } });
+    canvas.addEventListener("dblclick", () => this.o.onReset && this.o.onReset());
+    this.resize();
+  }
+  destroy() { this.ro.disconnect(); }
+  resize() {
+    const w = this.cv.parentElement.clientWidth; if (!w) return;
+    const h = this.o.height, dpr = window.devicePixelRatio || 1;
+    this.cv.style.width = w + "px"; this.cv.style.height = h + "px";
+    this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.w = w; this.h = h; this.draw();
+  }
+  setData(x, series) { this.x = x; this.series = series; this.range(); this.draw(); }
+  setPlayhead(v) { this.playhead = v; this.draw(); }
+  range() {
+    const xs = this.x; this.x0 = xs[0]; this.x1 = xs[xs.length - 1];
+    if (this.x1 === this.x0) { this.x0 -= 0.5; this.x1 += 0.5; }
+    else if (this.o.points) { const p = (this.x1 - this.x0) * 0.05; this.x0 -= p; this.x1 += p; }
+    if (this.o.yMin != null && this.o.yMax != null) { this.y0 = this.o.yMin; this.y1 = this.o.yMax; return; }
+    let lo = Infinity, hi = -Infinity;
+    for (const s of this.series) for (const v of s.y) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    if (!isFinite(lo)) { lo = -1; hi = 1; }
+    if (hi - lo < 1e-9) { lo -= 0.5; hi += 0.5; }
+    const pad = (hi - lo) * 0.1; this.y0 = lo - pad; this.y1 = hi + pad;
+  }
+  px(v) { const {l, r} = this.o.pad; return l + (v - this.x0) / (this.x1 - this.x0) * (this.w - l - r); }
+  py(v) { const {t, b} = this.o.pad; return t + (1 - (v - this.y0) / (this.y1 - this.y0)) * (this.h - t - b); }
+  xAt(p) { const {l, r} = this.o.pad; const q = Math.max(l, Math.min(this.w - r, p)); return this.x0 + (q - l) / (this.w - l - r) * (this.x1 - this.x0); }
+  nearest(v) {
+    const a = this.x; let lo = 0, hi = a.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (a[m] < v) lo = m; else hi = m; }
+    return Math.abs(a[lo] - v) <= Math.abs(a[hi] - v) ? lo : hi;
+  }
+  local(e) { const r = this.cv.getBoundingClientRect(); return e.clientX - r.left; }
+  move(e) {
+    if (!this.x.length) return;
+    const px = this.local(e);
+    if (this.down !== null) { if (this.o.onZoom) { this.sel = [this.down, Math.max(this.o.pad.l, Math.min(this.w - this.o.pad.r, px))]; this.draw(); } return; }
+    this.hover = this.nearest(this.xAt(px)); this.o.onHover && this.o.onHover(this.hover); this.draw();
+  }
+  press(e) { if (e.pointerType === "mouse" && e.button !== 0) return; this.down = this.local(e); this.sel = null; this.cv.setPointerCapture && this.cv.setPointerCapture(e.pointerId); }
+  release(e) {
+    if (this.down === null || !this.x.length) { this.down = null; return; }
+    const px = this.local(e), d = this.down; this.down = null; this.sel = null;
+    if (Math.abs(px - d) < 5) { this.o.onClick && this.o.onClick(this.nearest(this.xAt(px))); }
+    else if (this.o.onZoom) { this.o.onZoom(this.xAt(Math.min(px, d)), this.xAt(Math.max(px, d))); }
+    this.draw();
+  }
+  draw() {
+    if (!this.w || !this.x.length) return;
+    const c = this.ctx, W = this.w, H = this.h;
+    c.clearRect(0, 0, W, H);
+    c.font = '11px "JetBrains Mono", ui-monospace, monospace'; c.lineWidth = 1;
+    const yt = niceTicks(this.y0, this.y1, 5), xt = niceTicks(this.x0, this.x1, 6);
+    // left margin follows the widest tick label so the axis title never collides with the numbers
+    this.o.pad.l = Math.max(52, Math.ceil(Math.max(...yt.ticks.map(v => c.measureText(fmtTick(v, yt.step)).width))) + 28);
+    const {l, r, t, b} = this.o.pad;
+    c.strokeStyle = "#E3E8ED"; c.fillStyle = "#5A6875"; c.textAlign = "right"; c.textBaseline = "middle";
+    for (const v of yt.ticks) { const y = Math.round(this.py(v)) + .5; c.beginPath(); c.moveTo(l, y); c.lineTo(W - r, y); c.stroke(); c.fillText(fmtTick(v, yt.step), l - 6, y); }
+    c.textAlign = "center"; c.textBaseline = "top";
+    for (const v of xt.ticks) { const x = Math.round(this.px(v)) + .5; c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); c.fillText(this.o.xFmt ? this.o.xFmt(v) : fmtTick(v, xt.step), x, H - b + 6); }
+    c.strokeStyle = "#CDD5DD"; c.strokeRect(l + .5, t + .5, W - l - r, H - t - b);
+    c.fillStyle = "#17212B"; c.textBaseline = "alphabetic"; c.fillText(this.o.xLabel, (l + W - r) / 2, H - 6);
+    c.save(); c.translate(12, (t + H - b) / 2); c.rotate(-Math.PI / 2); c.fillText(this.o.yLabel, 0, 0); c.restore();
+    c.save(); c.beginPath(); c.rect(l, t, W - l - r, H - t - b); c.clip();
+    for (const s of this.series) {
+      if (s.visible === false) continue;
+      c.strokeStyle = s.c; c.fillStyle = s.c; c.lineWidth = s.width || 1.4; c.setLineDash(this.o.points ? [] : (s.dash || []));
+      c.beginPath();
+      for (let i = 0; i < this.x.length; i++) { const X = this.px(this.x[i]), Y = this.py(s.y[i]); i ? c.lineTo(X, Y) : c.moveTo(X, Y); }
+      c.stroke(); c.setLineDash([]);
+      if (this.o.points) for (let i = 0; i < this.x.length; i++) { c.beginPath(); c.arc(this.px(this.x[i]), this.py(s.y[i]), i === this.hover ? 5 : 3, 0, 7); c.fill(); }
+    }
+    if (this.playhead !== null) { const x = Math.round(this.px(this.playhead)) + .5; c.strokeStyle = "#17212B"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); }
+    if (this.hover !== null && !this.o.points) { const x = Math.round(this.px(this.x[this.hover])) + .5; c.strokeStyle = "rgba(23,33,43,.35)"; c.lineWidth = 1; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(x, t); c.lineTo(x, H - b); c.stroke(); c.setLineDash([]); }
+    if (this.sel) { const a = Math.min(...this.sel), z = Math.max(...this.sel); c.fillStyle = "rgba(31,79,209,.12)"; c.fillRect(a, t, z - a, H - t - b); c.strokeStyle = "#1F4FD1"; c.strokeRect(a + .5, t + .5, z - a, H - t - b); }
+    c.restore();
+  }
+}
+
+// ---------------------------------------------------------------- run viewer
+const CH = [
+  {k: "m1x", name: "m<sub>1x</sub>", c: "#1F4FD1", dash: [5, 3]}, {k: "m1y", name: "m<sub>1y</sub>", c: "#1F4FD1", dash: [1.5, 3]}, {k: "m1z", name: "m<sub>1z</sub>", c: "#1F4FD1", dash: []},
+  {k: "m2x", name: "m<sub>2x</sub>", c: "#B0127F", dash: [5, 3]}, {k: "m2y", name: "m<sub>2y</sub>", c: "#B0127F", dash: [1.5, 3]}, {k: "m2z", name: "m<sub>2z</sub>", c: "#B0127F", dash: []},
+  {k: "nx", name: "n<sub>x</sub>", c: "#17212B", dash: [5, 3]}, {k: "ny", name: "n<sub>y</sub>", c: "#17212B", dash: [1.5, 3]}, {k: "nz", name: "n<sub>z</sub>", c: "#17212B", dash: []},
+];
+const PRESETS = {m: ["m1x", "m1y", "m1z", "m2x", "m2y", "m2z"], z: ["m1z", "m2z", "nz"], n: ["nx", "ny", "nz"]};
+let prefs; try { prefs = JSON.parse(localStorage.getItem("sublattice.channels")); } catch {}
+if (!prefs) prefs = Object.fromEntries(CH.map(c => [c.k, PRESETS.m.includes(c.k)]));
+
+const view = {id: null, sig: null, token: 0, chart: null, sweepChart: null, data: null, idx: 0, pos: 0, playing: false, speed: 1, raf: 0, hover: null, zoom: null, dial: null};
+const R = 70;
+function resetView() {
+  stopPlay();
+  if (view.chart) view.chart.destroy(); if (view.sweepChart) view.sweepChart.destroy();
+  Object.assign(view, {id: null, sig: null, chart: null, sweepChart: null, data: null, idx: 0, pos: 0, hover: null, zoom: null, dial: null});
+}
+
+const dialSVG = () => `<svg viewBox="-90 -90 180 180" role="img" aria-label="Sublattice orientations in the x–z plane" id="dialsvg">
+  <circle r="${R}" fill="none" stroke="#CDD5DD"/><line x1="-${R}" y1="0" x2="${R}" y2="0" stroke="#E3E8ED"/><line x1="0" y1="-${R}" x2="0" y2="${R}" stroke="#E3E8ED"/>
+  <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" fill="#5A6875">+z</text><text x="${R + 6}" y="3" font-size="10" fill="#5A6875">+x</text>
+  <path id="trail1" d="" fill="none" stroke="#1F4FD1" stroke-opacity=".4" stroke-width="1"/>
+  <path id="trail2" d="" fill="none" stroke="#B0127F" stroke-opacity=".4" stroke-width="1"/>
+  <line id="nl" x1="0" y1="0" x2="0" y2="0" stroke="#17212B" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <line id="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><circle id="d1" r="4.7" fill="#1F4FD1"/>
+  <line id="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><circle id="d2" r="4.7" fill="#B0127F"/></svg>`;
+
+function bindDial() { view.dial = {l1: $("#l1"), d1: $("#d1"), l2: $("#l2"), d2: $("#d2"), nl: $("#nl"), t1: $("#trail1"), t2: $("#trail2")}; }
+function dialSet(m1, m2) {
+  const D = view.dial; if (!D) return;
+  const a = (el, x, y, p, q) => { el.setAttribute(p, x); el.setAttribute(q, y); };
+  a(D.l1, m1[0] * R, -m1[2] * R, "x2", "y2"); a(D.d1, m1[0] * R, -m1[2] * R, "cx", "cy");
+  a(D.l2, m2[0] * R, -m2[2] * R, "x2", "y2"); a(D.d2, m2[0] * R, -m2[2] * R, "cx", "cy");
+  a(D.nl, (m1[0] - m2[0]) / 2 * R, -(m1[2] - m2[2]) / 2 * R, "x2", "y2");
+}
+
+const sg = v => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(3);
+const vecs = (a, b, c) => `(${sg(a)}, ${sg(b)}, ${sg(c)})`;
+const fmt = (v, d = 4) => v === null || v === undefined ? "–" : (typeof v === "number" ? (Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(2) : +v.toFixed(d)) : v);
+const vec = v => v ? "(" + v.map(x => fmt(x, 3)).join(", ") + ")" : "–";
+const dur = s => s === undefined || s === null ? "" : s < 90 ? `${Math.round(s)} s` : `${(s / 60).toFixed(1)} min`;
+
+function statusText(r) {
+  const s = r.summary;
+  return r.status === "running" ? `running, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`
+    : r.status === "queued" ? `queued, estimated ${dur(r.estimated_runtime_s)}` : r.status + (s ? `, ${dur(s.runtime_s)}` : "");
+}
+
+function updateReadout(i, label) {
+  const d = view.data; if (!d || !$("#readout")) return;
+  const C = d.cols;
+  $("#readout").innerHTML = `<span><em>${label}</em> t = ${d.t[i].toFixed(4)} ns</span>` +
+    `<span><em>m₁</em> ${vecs(C.m1x[i], C.m1y[i], C.m1z[i])}</span><span><em>m₂</em> ${vecs(C.m2x[i], C.m2y[i], C.m2z[i])}</span><span><em>n</em> ${vecs(C.nx[i], C.ny[i], C.nz[i])}</span>`;
+}
+function setIdx(i) {
+  const d = view.data; if (!d) return;
+  i = Math.max(0, Math.min(d.t.length - 1, Math.round(i))); view.idx = i;
+  const C = d.cols;
+  dialSet([C.m1x[i], C.m1y[i], C.m1z[i]], [C.m2x[i], C.m2y[i], C.m2z[i]]);
+  view.chart.setPlayhead(d.t[i]); $("#scrub").value = i;
+  if (view.hover === null) updateReadout(i, "playhead");
+}
+function stopPlay() { view.playing = false; cancelAnimationFrame(view.raf); const b = $("#play"); if (b) b.textContent = "Play"; }
+function togglePlay() {
+  if (!view.data) return;
+  if (view.playing) return stopPlay();
+  const N = view.data.t.length; if (view.pos >= N - 1) view.pos = 0;
+  view.playing = true; view.last = performance.now(); $("#play").textContent = "Pause";
+  view.raf = requestAnimationFrame(tick);
+}
+function tick(now) {
+  if (!view.playing) return;
+  const N = view.data.t.length, dt = (now - view.last) / 1000; view.last = now;
+  view.pos += dt / (8 / view.speed) * (N - 1);
+  if (view.pos >= N - 1) { view.pos = N - 1; setIdx(view.pos); return stopPlay(); }
+  setIdx(view.pos); view.raf = requestAnimationFrame(tick);
+}
+
+function applyVisibility() {
+  CH.forEach((ch, j) => { if (view.chart && view.chart.series[j]) view.chart.series[j].visible = prefs[ch.k]; });
+  document.querySelectorAll("#legend button").forEach(b => b.setAttribute("aria-pressed", String(prefs[b.dataset.k])));
+  try { localStorage.setItem("sublattice.channels", JSON.stringify(prefs)); } catch {}
+  if (view.chart) view.chart.draw();
+}
+
+async function loadSeries(id, zoom) {
+  const note = $("#plotnote");
+  const q = new URLSearchParams({points: 2000}); if (zoom) { q.set("t0_ns", zoom[0]); q.set("t1_ns", zoom[1]); }
+  let d;
+  try { d = await api(`/api/runs/${id}/series?${q}`); } catch (e) { if (note) note.textContent = "Trajectory not available: " + e.message; return; }
+  if (view.id !== id || !view.chart) return;
+  const cols = {m1x: d.m1x, m1y: d.m1y, m1z: d.m1z, m2x: d.m2x, m2y: d.m2y, m2z: d.m2z};
+  for (const a of "xyz") cols["n" + a] = d["m1" + a].map((v, i) => (v - d["m2" + a][i]) / 2);
+  view.data = {t: d.t_ns, cols}; view.zoom = zoom;
+  view.chart.setData(d.t_ns, CH.map(ch => ({...ch, y: cols[ch.k], visible: prefs[ch.k]})));
+  // trail of the tips in the x-z projection; broken wherever neighbouring samples are too far apart
+  // to be connected honestly (the motion between them is faster than the sampling shown)
+  let gaps = 0;
+  const trail = k => {
+    let path = "", pen = false;
+    for (let i = 0; i < d.t_ns.length; i++) {
+      let ok = i > 0;
+      if (ok) { const dot = cols[k + "x"][i] * cols[k + "x"][i - 1] + cols[k + "y"][i] * cols[k + "y"][i - 1] + cols[k + "z"][i] * cols[k + "z"][i - 1]; ok = Math.acos(Math.max(-1, Math.min(1, dot))) < 0.35; }
+      if (!ok && i > 0) gaps++;
+      path += `${ok && pen ? "L" : "M"}${(cols[k + "x"][i] * R).toFixed(1)},${(-cols[k + "z"][i] * R).toFixed(1)}`;
+      pen = true;
+    }
+    return path;
+  };
+  view.dial.t1.setAttribute("d", trail("m1")); view.dial.t2.setAttribute("d", trail("m2"));
+  $("#scrub").max = d.t_ns.length - 1; view.hover = null; view.pos = d.t_ns.length - 1; stopPlay(); setIdx(view.pos);
+  $("#resetzoom").hidden = !zoom;
+  note.textContent = (zoom ? `Window ${zoom[0].toFixed(3)}–${zoom[1].toFixed(3)} ns. ` : "") +
+    (d.n_returned < d.n_window ? `Showing ${d.n_returned.toLocaleString()} of ${d.n_window.toLocaleString()} points; drag to zoom for detail. ` : "") +
+    (gaps ? "Parts of the dial trail are not drawn where the motion is faster than the sampling; zoom in to resolve them. " : "") +
+    "Click to move the playhead, drag to zoom, double-click to reset.";
+}
+
+function buildRunViewer(box, r) {
+  const s = r.summary;
+  box.querySelector("#viewer").innerHTML = `
+    <div class="top">
+      <div><div class="dial">${dialSVG()}</div>
+        <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:#17212B;border-top-style:dashed"></b>n</span></div></div>
+      <dl class="figures">
+        <dt>m₁ final</dt><dd>${vec(s.m1_final)}</dd>
+        <dt>m₂ final</dt><dd>${vec(s.m2_final)}</dd>
+        <dt>Néel vector final</dt><dd>${vec(s.neel_final)}</dd>
+        <dt>mean |n<sub>z</sub>|</dt><dd>${fmt(s.neel_z_abs_mean)}</dd>
+        <dt>n<sub>z</sub> sign changes</dt><dd>${s.neel_z_sign_changes}</dd>
+        <dt>dominant f(m<sub>1x</sub>)</dt><dd>${s.dominant_freq_m1x_GHz ? s.dominant_freq_m1x_GHz + " GHz" : "–"}</dd>
+        <dt>steps</dt><dd>${(r.steps || 0).toLocaleString()}</dd>
+      </dl>
+    </div>
+    <div class="plotbox">
+      <div class="plot-tools">
+        <div class="presets" role="group" aria-label="Quantities to show">
+          <button type="button" data-preset="m">m₁, m₂</button><button type="button" data-preset="z">z only</button><button type="button" data-preset="n">Néel n</button></div>
+        <div class="legend" id="legend">${CH.map(ch => `<button type="button" data-k="${ch.k}" aria-pressed="${prefs[ch.k]}">
+          <svg viewBox="0 0 20 8" aria-hidden="true"><line x1="0" y1="4" x2="20" y2="4" stroke="${ch.c}" stroke-width="2" stroke-dasharray="${ch.dash.length ? ch.dash.map(v => v * 1.2).join(" ") : "none"}"/></svg><span>${ch.name}</span></button>`).join("")}</div>
+      </div>
+      <div class="canvaswrap"><canvas id="chart" role="img" aria-label="Magnetization components of ${r.id} versus time"></canvas></div>
+      <div class="readout mono" id="readout"></div>
+      <div class="transport">
+        <button class="btn small" id="play" type="button">Play</button>
+        <select id="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+        <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Time">
+        <button class="btn small" id="resetzoom" type="button" hidden>Reset zoom</button>
+      </div>
+      <div class="note" id="plotnote">Loading trajectory…</div>
+    </div>`;
+  bindDial();
+  view.chart = new Chart($("#chart"), {
+    height: 250, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05,
+    onHover: i => { view.hover = i; if (i === null) updateReadout(view.idx, "playhead"); else updateReadout(i, "cursor"); },
+    onClick: i => { stopPlay(); view.pos = i; setIdx(i); },
+    onZoom: (a, b) => loadSeries(r.id, [Math.max(a, 0), b]),
+    onReset: () => { if (view.zoom) loadSeries(r.id, null); },
+  });
+  $("#play").onclick = togglePlay;
+  $("#speed").onchange = e => { view.speed = +e.target.value; };
+  $("#scrub").oninput = e => { stopPlay(); view.pos = +e.target.value; setIdx(view.pos); };
+  $("#resetzoom").onclick = () => loadSeries(r.id, null);
+  box.querySelectorAll("#legend button").forEach(b => b.onclick = () => { prefs[b.dataset.k] = !prefs[b.dataset.k]; applyVisibility(); });
+  box.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { for (const ch of CH) prefs[ch.k] = PRESETS[b.dataset.preset].includes(ch.k); applyVisibility(); });
+  loadSeries(r.id, null);
+}
+
+function updateProgress(r) {
+  const st = $("#st"), bar = $("#barfill");
+  if (st) { st.textContent = statusText(r); st.className = "status " + r.status; }
+  if (bar) bar.style.width = (r.progress * 100).toFixed(1) + "%";
+}
+
+function renderRun(box, r) {
+  const active = ["running", "queued"].includes(r.status);
+  box.innerHTML = `
+    <div class="sel-head"><strong class="mono">${r.id}</strong><span>${esc(r.label || "")}</span><span class="status ${r.status}" id="st">${statusText(r)}</span></div>
+    ${active ? `<div class="bar"><i id="barfill" style="width:${(r.progress * 100).toFixed(1)}%"></i></div><div class="note">The trajectory appears when the run finishes.</div>` : ""}
+    ${(r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("")}
+    ${r.error_tail ? `<pre class="mono" style="white-space:pre-wrap;color:var(--err)">${esc(r.error_tail)}</pre>` : ""}
+    <div id="viewer"></div>
+    <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}</div>
+    <div class="actions">
+      ${r.status === "done" ? `<button class="btn" id="analyse" type="button">Ask the assistant to analyse ${r.id}</button>` : ""}
+      ${active ? `<button class="btn" id="cancel" type="button">Cancel run</button>` : ""}
+      <button class="btn" id="loadparams" type="button">Load its parameters</button>
+    </div>`;
+  if (r.status === "done" && r.summary) buildRunViewer(box, r);
+  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse run ${r.id}.`; send(); };
+  const c = $("#cancel"); if (c) c.onclick = async () => { await postJson(`/api/runs/${r.id}/cancel`, {}); await refreshRuns(); renderSelected(true); };
+  $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; showTab("params"); $("#check").click(); };
+}
+
+function renderSweep(box, s) {
+  const c = s.status_counts || {}, done = c.done || 0, total = s.run_ids.length;
+  const isFreq = /Fr$/.test(s.parameter), scale = isFreq ? 1e9 : 1;
+  const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
+  box.innerHTML = `
+    <div class="sel-head"><strong class="mono">${s.id}</strong><span>Sweep of ${esc(s.parameter)}${s.label ? ", " + esc(s.label) : ""}</span>
+      <span class="status ${done === total ? "done" : "running"}">${done}/${total} done${c.failed ? `, ${c.failed} failed` : ""}</span></div>
+    <div class="bar"><i style="width:${(100 * done / total).toFixed(1)}%"></i></div>
+    ${rows.length ? `<div class="plotbox"><div class="canvaswrap"><canvas id="schart" role="img" aria-label="Mean |n_z| versus ${esc(s.parameter)}"></canvas></div>
+      <div class="readout mono" id="sreadout"><span><em>Hover a point; click it to open that run.</em></span></div></div>` : ""}
+    <label class="inline">Ignore the first <input id="discard" type="number" min="0" max="90" step="5" value="${Math.round(state.discard * 100)}"> % of each run (transient)</label>
+    <table class="sweep-table"><tr><th>${esc(s.parameter)}</th><th>run</th><th>status</th><th>mean |n_z|</th></tr>
+      ${s.rows.map(r => `<tr><td>${eng(r.value)}</td><td><a href="#" data-run="${r.run_id}">${r.run_id}</a></td><td>${r.status}</td><td>${fmt(r.neel_z_abs_mean)}</td></tr>`).join("")}</table>
+    <div class="actions">${done === total ? `<button class="btn" id="analyse" type="button">Ask the assistant to analyse ${s.id}</button>` : ""}</div>`;
+  if (rows.length) {
+    view.sweepChart = new Chart($("#schart"), {
+      height: 230, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|",
+      xFmt: isFreq ? null : eng,
+      onHover: i => { $("#sreadout").innerHTML = i === null ? `<span><em>Hover a point; click it to open that run.</em></span>`
+        : `<span>${esc(s.parameter)} = ${isFreq ? +(rows[i].value / 1e9).toPrecision(5) + " GHz" : eng(rows[i].value)}</span><span>mean |n<sub>z</sub>| = ${fmt(rows[i].neel_z_abs_mean)}</span><span><em>${rows[i].run_id}</em></span>`; },
+      onClick: i => select(rows[i].run_id),
+    });
+    view.sweepChart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
+  }
+  box.querySelectorAll("[data-run]").forEach(a => a.onclick = e => { e.preventDefault(); select(a.dataset.run); });
+  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse sweep ${s.id}.`; send(); };
+  $("#discard").onchange = e => { state.discard = Math.max(0, Math.min(0.9, (+e.target.value || 0) / 100)); renderSelected(true); };
+}
+
+async function renderSelected(force = false) {
+  const id = state.selected; if (!id) return;
+  const token = ++view.token, box = $("#selected");
+  try {
+    const isSweep = id.startsWith("s");
+    const data = await api(isSweep ? `/api/sweeps/${id}?discard_fraction=${state.discard}` : `/api/runs/${id}`);
+    if (token !== view.token || id !== state.selected) return;
+    const sig = isSweep ? `${id}:${state.discard}:${JSON.stringify(data.status_counts)}` : `${id}:${data.status}`;
+    if (!force && view.sig === sig) { if (!isSweep && ["running", "queued"].includes(data.status)) updateProgress(data); return; }
+    if (view.chart) { view.chart.destroy(); view.chart = null; } if (view.sweepChart) { view.sweepChart.destroy(); view.sweepChart = null; }
+    stopPlay(); view.data = null; view.dial = null; view.id = id; view.sig = sig;
+    isSweep ? renderSweep(box, data) : renderRun(box, data);
+  } catch (e) { box.innerHTML = `<div class="nothing">${esc(e.message)}</div>`; }
+}
+
+// ---------------------------------------------------------------- run list
 async function refreshRuns() {
   try {
     const out = await api("/api/runs");
@@ -395,8 +849,7 @@ async function refreshRuns() {
 }
 function renderRuns() {
   const ul = $("#runs"); ul.innerHTML = "";
-  const items = [...state.sweeps.map(s => ({kind: "sweep", ...s})),
-                 ...state.runs.filter(r => !r.sweep_id).map(r => ({kind: "run", ...r}))]
+  const items = [...state.sweeps.map(s => ({kind: "sweep", ...s})), ...state.runs.filter(r => !r.sweep_id).map(r => ({kind: "run", ...r}))]
     .sort((a, b) => (b.created || 0) - (a.created || 0));
   if (!items.length) { ul.innerHTML = `<li class="nothing">No runs yet.</li>`; return; }
   for (const it of items) {
@@ -413,84 +866,29 @@ function renderRuns() {
     ul.appendChild(li);
   }
 }
-async function select(id) { state.selected = id; renderRuns(); await renderSelected(); }
-
-function dial(summary) {
-  const R = 64;
-  const ang = v => v ? Math.atan2(v[0], v[2]) * 180 / Math.PI : 0;  // projection on the x-z plane
-  const len = v => v ? Math.min(1, Math.hypot(v[0], v[2])) : 0;
-  const m1 = summary && summary.m1_final, m2 = summary && summary.m2_final, n = summary && summary.neel_final;
-  const arrow = (v, color, w, dash) => !v ? "" :
-    `<g class="arrow" style="transform:rotate(${ang(v)}deg)"><line x1="0" y1="0" x2="0" y2="${-R * len(v)}" stroke="${color}" stroke-width="${w}" stroke-linecap="round" ${dash ? 'stroke-dasharray="4 4"' : ""}/>
-     <circle cx="0" cy="${-R * len(v)}" r="${w + 1.5}" fill="${color}"/></g>`;
-  return `<svg viewBox="-85 -85 170 170" role="img" aria-label="Final sublattice orientations in the x–z plane">
-    <circle r="${R}" fill="none" stroke="#CDD5DD"/><line x1="-${R}" y1="0" x2="${R}" y2="0" stroke="#E3E8ED"/><line x1="0" y1="-${R}" x2="0" y2="${R}" stroke="#E3E8ED"/>
-    <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" fill="#5A6875">+z</text><text x="${R + 10}" y="3" font-size="10" fill="#5A6875">+x</text>
-    ${arrow(m1, "#1F4FD1", 3.2)}${arrow(m2, "#B0127F", 3.2)}${arrow(n, "#17212B", 1.2, true)}</svg>`;
-}
-const fmt = (v, d = 4) => v === null || v === undefined ? "–" : (typeof v === "number" ? (Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(2) : +v.toFixed(d)) : v);
-const vec = v => v ? "(" + v.map(x => fmt(x, 3)).join(", ") + ")" : "–";
-const dur = s => s === undefined || s === null ? "" : s < 90 ? `${Math.round(s)} s` : `${(s / 60).toFixed(1)} min`;
-
-async function renderSelected() {
-  const box = $("#selected"); const id = state.selected;
-  if (!id) return;
-  try {
-    if (id.startsWith("s")) return renderSweep(box, await api(`/api/sweeps/${id}`));
-    const r = await api(`/api/runs/${id}`);
-    const s = r.summary;
-    const st = r.status === "running" ? `running, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`
-      : r.status === "queued" ? `queued, estimated ${dur(r.estimated_runtime_s)}` : r.status + (s ? `, ${dur(s.runtime_s)}` : "");
-    box.innerHTML = `
-      <div class="sel-head"><strong class="mono">${r.id}</strong><span>${esc(r.label || "")}</span><span class="status ${r.status}">${st}</span></div>
-      ${["running", "queued"].includes(r.status) ? `<div class="bar"><i style="width:${(r.progress * 100).toFixed(1)}%"></i></div>` : ""}
-      ${(r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("")}
-      <div class="state">
-        <div class="dial">${dial(s)}</div>
-        <dl class="figures">
-          <dt>m₁ final</dt><dd>${vec(s && s.m1_final)}</dd>
-          <dt>m₂ final</dt><dd>${vec(s && s.m2_final)}</dd>
-          <dt>Néel vector final</dt><dd>${vec(s && s.neel_final)}</dd>
-          <dt>mean |n<sub>z</sub>|</dt><dd>${fmt(s && s.neel_z_abs_mean)}</dd>
-          <dt>n<sub>z</sub> sign changes</dt><dd>${s ? s.neel_z_sign_changes : "–"}</dd>
-          <dt>dominant f(m<sub>1x</sub>)</dt><dd>${s && s.dominant_freq_m1x_GHz ? s.dominant_freq_m1x_GHz + " GHz" : "–"}</dd>
-          <dt>steps</dt><dd>${(r.steps || 0).toLocaleString()}</dd>
-        </dl>
-      </div>
-      <div class="legend"><span><b style="background:#1F4FD1"></b>m₁</span><span><b style="background:#B0127F"></b>m₂</span><span><b style="background:#17212B"></b>Néel n (dashed)</span><span>x–z projection</span></div>
-      ${r.files.includes("Two_Spin_Dynamics.png") ? `<img class="plot" alt="Magnetization dynamics of ${r.id}" src="/api/runs/${r.id}/files/Two_Spin_Dynamics.png?v=${r.finished || ""}">` : ""}
-      ${r.error_tail ? `<pre class="mono" style="white-space:pre-wrap;color:var(--err)">${esc(r.error_tail)}</pre>` : ""}
-      <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}</div>
-      <div class="actions">
-        ${r.status === "done" ? `<button class="btn" id="analyse">Ask the assistant to analyse ${r.id}</button>` : ""}
-        ${["running", "queued"].includes(r.status) ? `<button class="btn" id="cancel">Cancel run</button>` : ""}
-        <button class="btn" id="loadparams">Load its parameters</button>
-      </div>`;
-    const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse run ${r.id}.`; send(); };
-    const c = $("#cancel"); if (c) c.onclick = async () => { await postJson(`/api/runs/${r.id}/cancel`, {}); refreshRuns(); };
-    $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; };
-  } catch (e) { box.innerHTML = `<div class="nothing">${esc(e.message)}</div>`; }
+async function select(id) {
+  const changed = state.selected !== id;
+  if (changed) { resetView(); state.selected = id; }
+  showTab("result"); renderRuns(); await renderSelected(changed);
 }
 
-function renderSweep(box, s) {
-  const c = s.status_counts || {};
-  const done = c.done || 0, total = s.run_ids.length;
-  box.innerHTML = `
-    <div class="sel-head"><strong class="mono">${s.id}</strong><span>Sweep of ${esc(s.parameter)}${s.label ? ", " + esc(s.label) : ""}</span>
-      <span class="status ${done === total ? "done" : "running"}">${done}/${total} done${c.failed ? `, ${c.failed} failed` : ""}</span></div>
-    <div class="bar"><i style="width:${(100 * done / total).toFixed(1)}%"></i></div>
-    ${s.plot ? `<img class="plot" alt="Mean |n_z| versus ${esc(s.parameter)}" src="/api/sweeps/${s.id}/plot?v=${done}">` : ""}
-    <table class="sweep-table"><tr><td>${esc(s.parameter)}</td><td>run</td><td>status</td><td>mean |n_z|</td></tr>
-      ${s.rows.map(r => `<tr><td>${r.value.toExponential(3)}</td><td><a href="#" data-run="${r.run_id}">${r.run_id}</a></td><td>${r.status}</td><td>${fmt(r.neel_z_abs_mean)}</td></tr>`).join("")}</table>
-    <div class="actions">${s.plot ? `<button class="btn" id="analyse">Ask the assistant to analyse ${s.id}</button>` : ""}</div>`;
-  box.querySelectorAll("[data-run]").forEach(a => a.onclick = e => { e.preventDefault(); select(a.dataset.run); });
-  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse sweep ${s.id}.`; send(); };
+// ---------------------------------------------------------------- tabs, editor
+function showTab(name) {
+  for (const t of ["result", "params"]) {
+    $("#tab-" + t).setAttribute("aria-selected", String(t === name));
+    $("#panel-" + t).hidden = t !== name;
+  }
 }
+$("#tab-result").onclick = () => showTab("result");
+$("#tab-params").onclick = () => showTab("params");
+document.querySelector(".tabs").addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") { showTab("params"); $("#tab-params").focus(); }
+  if (e.key === "ArrowLeft") { showTab("result"); $("#tab-result").focus(); }
+});
 
-// ---------- parameter editor
 function showCheck(r) {
   const el = $("#checkout");
-  if (!r) { el.textContent = ""; return; }
+  if (!r) { el.className = "check"; el.textContent = ""; return; }
   if (!r.ok) { el.className = "check bad"; el.textContent = r.error; return; }
   el.className = "check ok";
   const changed = Object.entries(r.changed_from_defaults || {}).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join(",") : v}`).join("  ");
@@ -511,34 +909,47 @@ $("#save").onclick = async () => {
   const out = await postJson("/api/files/save", {name, parameters_text: $("#params").value});
   window.location = `/api/files/${encodeURIComponent(out.name)}`;
 };
-$("#examples").onchange = e => { const ex = state.examples.find(x => x.name === e.target.value); if (ex) { $("#params").value = ex.text; $("#label").value = ex.name.replace(".txt", "").replace(/_/g, " "); showCheck(null); } e.target.value = ""; };
+$("#examples").onchange = e => {
+  const ex = state.examples.find(x => x.name === e.target.value);
+  if (ex) { $("#params").value = ex.text; $("#label").value = ex.name.replace(".txt", "").replace(/_/g, " "); showCheck(null); }
+  e.target.value = "";
+};
 
-// ---------- key + model
+// ---------------------------------------------------------------- settings
 function keyState() {
-  const k = $("#apikey").value.trim(), el = $("#keystate");
-  if (k) { el.textContent = "key set for this tab"; el.className = "keystate good"; }
-  else if (state.config.has_server_key) { el.textContent = "using the server key"; el.className = "keystate good"; }
-  else { el.textContent = "no key yet"; el.className = "keystate"; }
+  const k = $("#apikey").value.trim(), pill = $("#keypill"), txt = $("#keytext");
+  if (k) { txt.textContent = "Key set for this tab"; pill.className = "pill good"; }
+  else if (state.config.has_server_key) { txt.textContent = "Using the server key"; pill.className = "pill good"; }
+  else { txt.textContent = "Add an API key"; pill.className = "pill need"; }
 }
-$("#apikey").addEventListener("input", () => { sessionStorage.setItem("macrospin.key", $("#apikey").value.trim()); keyState(); });
+function toggleSettings(open) {
+  const panel = $("#settingspanel"), want = open === undefined ? panel.hidden : open;
+  panel.hidden = !want; $("#settingsbtn").setAttribute("aria-expanded", String(want));
+  if (want) $("#apikey").focus();
+}
+$("#settingsbtn").onclick = () => toggleSettings();
+$("#keypill").onclick = () => toggleSettings(true);
+document.addEventListener("click", e => { if (!e.target.closest(".settings") && !e.target.closest("#keypill")) toggleSettings(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") toggleSettings(false); });
+$("#apikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.key", $("#apikey").value.trim()); keyState(); });
 
 async function init() {
   state.config = await api("/api/config");
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
-  sel.value = localStorage.getItem("macrospin.model") || state.config.model;
-  sel.onchange = () => localStorage.setItem("macrospin.model", sel.value);
-  $("#apikey").value = sessionStorage.getItem("macrospin.key") || ""; keyState();
+  sel.value = localStorage.getItem("sublattice.model") || state.config.model;
+  sel.onchange = () => localStorage.setItem("sublattice.model", sel.value);
+  $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState();
+  if ($("#keypill").classList.contains("need")) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
-  try { state.messages = JSON.parse(localStorage.getItem("macrospin.chat") || "[]"); } catch {}
+  try { state.messages = JSON.parse(localStorage.getItem("sublattice.chat") || "[]"); } catch {}
   render(); await refreshRuns();
-  const tick = async () => {
+  const loop = async () => {
     await refreshRuns();
-    const active = state.runs.some(r => ["running", "queued"].includes(r.status));
-    setTimeout(tick, active ? 2000 : 10000);
+    setTimeout(loop, state.runs.some(r => ["running", "queued"].includes(r.status)) ? 2000 : 10000);
   };
-  setTimeout(tick, 2000);
+  setTimeout(loop, 2000);
 }
 init();
 </script>

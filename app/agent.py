@@ -43,15 +43,19 @@ def _dump(block):
     return d
 
 
-def chat(messages, api_key=None, model=None):
-    """Run Claude until it answers without tool calls. Returns (messages, events)."""
+def chat_stream(messages, api_key=None, model=None):
+    """Run Claude until it answers without tool calls, yielding events as they happen.
+
+    Events: text, tool_start, tool_done, then done (full message list) or error.
+    """
     key = api_key or os.environ.get("ANTHROPIC_API_KEY")
     if not key:
-        raise AgentError("No API key. Paste a key from console.anthropic.com or set ANTHROPIC_API_KEY.", 401)
+        yield {"type": "error", "status": 401,
+               "error": "No API key. Paste a key from console.anthropic.com or set ANTHROPIC_API_KEY."}
+        return
     client = anthropic.Anthropic(api_key=key)
     model = model or DEFAULT_MODEL
     messages = list(messages)
-    events = []
     system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
 
     for _ in range(MAX_STEPS):
@@ -59,35 +63,57 @@ def chat(messages, api_key=None, model=None):
             resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
                                           tools=tools.TOOLS, messages=_prune_images(messages))
         except anthropic.AuthenticationError:
-            raise AgentError("The API key was rejected. Check it in console.anthropic.com.", 401)
+            yield {"type": "error", "status": 401, "error": "The API key was rejected. Check it in console.anthropic.com."}
+            return
         except anthropic.NotFoundError:
-            raise AgentError(f"Model '{model}' is not available for this key.", 400)
+            yield {"type": "error", "status": 400, "error": f"Model '{model}' is not available for this key."}
+            return
         except anthropic.RateLimitError:
-            raise AgentError("Rate limit reached. Wait a moment and send again.", 429)
+            yield {"type": "error", "status": 429, "error": "Rate limit reached. Wait a moment and send again."}
+            return
         except anthropic.APIStatusError as e:
-            raise AgentError(f"Claude API error {e.status_code}: {e.message}", 502)
+            yield {"type": "error", "status": 502, "error": f"Claude API error {e.status_code}: {e.message}"}
+            return
         except anthropic.APIConnectionError:
-            raise AgentError("Could not reach the Claude API. Check the network connection.", 502)
+            yield {"type": "error", "status": 502, "error": "Could not reach the Claude API. Check the network connection."}
+            return
 
-        content = [_dump(b) for b in resp.content]
-        messages.append({"role": "assistant", "content": content})
+        messages.append({"role": "assistant", "content": [_dump(b) for b in resp.content]})
+        for block in resp.content:
+            if block.type == "text" and block.text.strip():
+                yield {"type": "text", "text": block.text}
         if resp.stop_reason != "tool_use":
-            return messages, events
+            yield {"type": "done", "messages": messages}
+            return
 
         results = []
         for block in resp.content:
             if block.type != "tool_use":
                 continue
+            yield {"type": "tool_start", "id": block.id, "name": block.name, "input": block.input or {}}
             try:
                 out, event = tools.call(block.name, block.input or {})
                 is_error = '"ok": false' in out if isinstance(out, str) else False
             except Exception as e:  # tool failure goes back to Claude, not to the user
                 out, event, is_error = f"tool failed: {e}", {"tool": block.name, "error": str(e)}, True
-            events.append(event)
+            yield {"type": "tool_done", "id": block.id, "event": event, "is_error": is_error}
             results.append({"type": "tool_result", "tool_use_id": block.id,
                             "content": out, "is_error": is_error})
         messages.append({"role": "user", "content": results})
 
     messages.append({"role": "assistant", "content": [
         {"type": "text", "text": "I stopped after too many tool calls in one turn. Tell me how to continue."}]})
-    return messages, events
+    yield {"type": "done", "messages": messages}
+
+
+def chat(messages, api_key=None, model=None):
+    """Blocking version of chat_stream. Returns (messages, tool events)."""
+    events = []
+    for ev in chat_stream(messages, api_key, model):
+        if ev["type"] == "tool_done":
+            events.append(ev["event"])
+        elif ev["type"] == "error":
+            raise AgentError(ev["error"], ev["status"])
+        elif ev["type"] == "done":
+            return ev["messages"], events
+    raise AgentError("The conversation ended without an answer.", 500)
