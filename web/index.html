@@ -276,6 +276,11 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .rc-legend{display:flex;gap:14px;font-size:.82rem;margin-bottom:4px}
 .rc-meta{margin-top:6px;color:var(--muted);font-size:.78rem;white-space:pre-wrap}
 
+.composer .row .pick{max-width:200px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--panel);color:var(--ink);font-size:.82rem;text-overflow:ellipsis}
+.composer .modes.mini{margin:0;padding:2px}
+.composer .modes.mini button{padding:3px 12px;font-size:.82rem}
+.composer .row .hint{text-align:right}
+
 /* ---- workbench is toggled; default = chat only ---- */
 main{grid-template-columns:minmax(0,1fr)}
 .bench{display:none}
@@ -361,7 +366,12 @@ body.bench-open .bench{display:block}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
           </button>
           <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
-          <span class="hint">Enter to send · drop a .txt anywhere here</span>
+          <select id="model" class="pick" title="Model" aria-label="Model"></select>
+          <div class="modes mini" role="group" aria-label="Mode">
+            <button type="button" id="cmode-fast" aria-pressed="true" title="Fast: default parameters, short answers">Fast</button>
+            <button type="button" id="cmode-deep" aria-pressed="false" title="Deep: full parameters or txt, thorough analysis">Deep</button>
+          </div>
+          <span class="hint">Enter to send</span>
           <button class="send" id="send" type="button" title="Send" aria-label="Send">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
           </button>
@@ -387,7 +397,6 @@ body.bench-open .bench{display:block}
     </div>
 
     <div id="panel-params" role="tabpanel" aria-labelledby="tab-params" hidden>
-      <label class="modelrow">Assistant model <select id="model"></select></label>
       <div class="modes" role="group" aria-label="Setup mode">
         <button type="button" id="mode-fast" aria-pressed="true">Fast</button>
         <button type="button" id="mode-deep" aria-pressed="false">Deep (txt)</button>
@@ -674,7 +683,7 @@ async function send() {
   try {
     const headers = {"Content-Type": "application/json"};
     const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast"})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1248,11 +1257,13 @@ $("#frun").onclick = () => runText(fastText(), $("#f-label").value, r => showChe
 $("#fdeep").onclick = () => { $("#params").value = fastText(); $("#label").value = $("#f-label").value; setMode("deep"); showCheck(null); };
 function setMode(m) {
   $("#fast").hidden = m !== "fast"; $("#deep").hidden = m !== "deep";
-  $("#mode-fast").setAttribute("aria-pressed", String(m === "fast")); $("#mode-deep").setAttribute("aria-pressed", String(m === "deep"));
+  for (const p of ["", "c"]) { $(`#${p}mode-fast`).setAttribute("aria-pressed", String(m === "fast")); $(`#${p}mode-deep`).setAttribute("aria-pressed", String(m === "deep")); }
   try { localStorage.setItem("sublattice.mode", m); } catch {}
 }
 $("#mode-fast").onclick = () => setMode("fast");
 $("#mode-deep").onclick = () => setMode("deep");
+$("#cmode-fast").onclick = () => setMode("fast");
+$("#cmode-deep").onclick = () => setMode("deep");
 
 // ---------------------------------------------------------------- settings
 function keyState() {
