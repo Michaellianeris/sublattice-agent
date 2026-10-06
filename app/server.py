@@ -1,6 +1,7 @@
 """HTTP API and static UI."""
 import json
 import os
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
@@ -43,14 +44,20 @@ def index():
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
-            "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+            "defaults": P.defaults(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+
+
+@app.get("/api/models")
+def models(x_api_key: str | None = Header(default=None)):
+    found, source = agent.list_models(x_api_key)
+    return {"models": found, "source": source, "default": agent.DEFAULT_MODEL}
 
 
 @app.post("/api/chat")
 def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
     """Streams newline-delimited JSON events while Claude works."""
-    if body.model and body.model not in agent.MODELS:
-        raise HTTPException(400, f"unknown model {body.model}")
+    if body.model and not re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", body.model):
+        raise HTTPException(400, f"invalid model name {body.model}")
     if not (x_api_key or os.environ.get("ANTHROPIC_API_KEY")):
         return JSONResponse({"error": "No API key. Paste a key from console.anthropic.com "
                                       "or set ANTHROPIC_API_KEY."}, status_code=401)
