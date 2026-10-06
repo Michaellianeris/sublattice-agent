@@ -1,0 +1,4 @@
+# AFM start (m1 ~ -m2 along z), antiferromagnetic coupling (A0 < 0), no current, T = 0 K
+# The system starts AFM and stays AFM
+--t=2e-9
+--A0=-0.248e-12

@@ -40,7 +40,8 @@ exchange / anisotropy modulation
   flag1  A0(t) = A0 + A0_Amp sin(2 pi Fr t + phase)
   flag2  Ku(t) adds Ku_Amp sin(2 pi Ku_Fr t + Ku_phase) along u_ani_AC
 currents (A/cm^2)
-  flag5  spin-orbit torque, ON by default: SOT_DC_Amp (default 30e6), SOT_AC_Amp, SOT_AC_Fr [Hz],
+  flag5  spin-orbit torque (flag is always on, but this app sets SOT_DC_Amp=0 unless the user gives a
+         current; the original conf.py default would be 30e6): SOT_DC_Amp, SOT_AC_Amp, SOT_AC_Fr [Hz],
          SOT_AC_phase [deg], SOT_pol (1,0,0), SHE_angle 0.1, SOT_FL_q field-like ratio
   flag4  chirp current pulse: Chirp_Amp, Chirp_min_Fr -> Chirp_max_Fr over t_chirp [s], Chirp_phase [deg]
 FeRh temperature cycle
@@ -52,9 +53,19 @@ variability
   --gaussian PARAM REL_SIGMA   draws PARAM once from a normal distribution with sigma = REL_SIGMA x value
 unused by the physics: p, T, gamma
 
+Default scenario (when the user asks for the default run or default parameters without other details)
+  Run the AFM -> FM transition: t=2e-9 and A0=0.248e-12 (SOT_DC_Amp=0 and Temp=0 are applied automatically).
+  The initial state is antiferromagnetic (m1 ~ -m2); the positive A0 makes the coupling ferromagnetic, so
+  m1.m2 goes from -1 to +1 within about 50 ps. Report order_initial -> order_final and the m1.m2 values from
+  get_run, and say that this is a relaxation to the new ground state, not a thermal phase transition.
+  For a run that starts AFM and stays AFM use a negative A0 (-0.248e-12). For a temperature-driven
+  transition use flagTempVarying with a positive A0.
+
 Known behaviour of the original code (mention it when relevant, do not hide it)
-- flag5 has default True and is a store_true flag, so SOT cannot be switched off from a file;
-  use SOT_DC_Amp=0 and SOT_AC_Amp=0 instead.
+- flag5 has default True and is a store_true flag, so SOT cannot be switched off from a file; the app
+  therefore defaults to SOT_DC_Amp=0 (no current) and Temp=0 (deterministic). Defaults: Neel vector along
+  -z, A0 < 0 (antiferromagnetic coupling), so a default run starts AFM and stays AFM. A positive A0 makes
+  the coupling ferromagnetic and the AFM start relaxes to a parallel state.
 - With flagTempVarying, a negative A0 becomes positive (ferromagnetic) below 370 K, which is inverted
   with respect to FeRh; use a positive A0 if you want AFM below the transition.
 - Temp is shared: flag0 uses it as the noise temperature, flagTempVarying as the cycle amplitude.

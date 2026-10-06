@@ -26,14 +26,21 @@ FLAG_PARAMS = {"flagShape", "flag0", "flag1", "flag2", "flag3", "flag4", "flag5"
 DEFAULT_SEC_PER_STEP = 0.8e-3
 
 
+# SpinMate default behaviour: deterministic (Temp = 0, no noise) and no current. The original conf.py
+# applies a 30e6 A/cm^2 SOT current by default; it is switched off here unless the file sets it.
+APP_DEFAULTS = {"SOT_DC_Amp": 0.0}
+
+
 def clean_text(text):
-    """Drop '#' comments and blank lines so files can be annotated."""
+    """Drop '#' comments and blank lines so files can be annotated, and apply the app defaults."""
     lines = []
     for line in text.replace("\r", "").split("\n"):
         line = re.sub(r"(^|\s)#.*$", "", line).strip()
         if line:
             lines.append(line)
-    return "\n".join(lines) + "\n"
+    body = "\n".join(lines) + "\n"
+    pre = "".join(f"--{k}={v:g}\n" for k, v in APP_DEFAULTS.items() if not re.search(rf"--{k}\b", body))
+    return pre + body
 
 
 def defaults():
@@ -42,6 +49,10 @@ def defaults():
     for k, v in vars(c).items():
         out[k] = v.tolist() if isinstance(v, np.ndarray) else v
     return out
+
+
+def app_defaults():
+    return {**defaults(), **APP_DEFAULTS}
 
 
 def _parse(text):
@@ -75,7 +86,7 @@ def validate(text, sec_per_step=DEFAULT_SEC_PER_STEP):
     if error:
         return {"ok": False, "error": error}
 
-    base = defaults()
+    base = app_defaults()
     resolved = {k: (list(v) if isinstance(v, (list, tuple)) else v) for k, v in vars(args).items()
                 if k not in ("input_file",)}
     changed = {}
@@ -104,9 +115,6 @@ def validate(text, sec_per_step=DEFAULT_SEC_PER_STEP):
     if args.flagTempVarying and args.A0 < 0:
         warnings.append("flagTempVarying multiplies A0 by -1 below the transition; with a negative A0 "
                         "the coupling becomes ferromagnetic below 370 K (inverted with respect to FeRh)")
-    if args.flag5 and args.SOT_DC_Amp and "--SOT_DC_Amp" not in clean_text(text):
-        warnings.append(f"a default SOT current of {args.SOT_DC_Amp:g} A/cm^2 is applied (flag5 is on by "
-                        "default and cannot be switched off from a file); set SOT_DC_Amp=0 to disable it")
     if steps > 5_000_000:
         warnings.append(f"{steps:,} steps is very long")
 

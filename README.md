@@ -96,7 +96,7 @@ estimate is recalibrated from finished runs.
 
 The assistant is told about these and mentions them when relevant.
 
-- `flag5` (SOT) is on by default and cannot be switched off from a file; use `--SOT_DC_Amp=0`.
+- `flag5` (SOT) is always on in the original code; this app sets `--SOT_DC_Amp=0` unless the file gives a current, so default runs are deterministic with no current.
 - With `flagTempVarying`, A0 is multiplied by −1 below 370 K, so a negative A0 becomes
   ferromagnetic below the transition (inverted with respect to FeRh). Use a positive A0.
 - `Temp` is used both as the noise temperature (`flag0`) and as the temperature-cycle amplitude

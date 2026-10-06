@@ -45,7 +45,7 @@ def index():
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
-            "defaults": P.defaults(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+            "defaults": P.app_defaults(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
 
 
 @app.get("/api/models")
