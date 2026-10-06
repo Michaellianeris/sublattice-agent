@@ -1,3 +1,4 @@
+<img width="1905" height="1004" alt="Screenshot 2026-10-06 181632" src="https://github.com/user-attachments/assets/1092531f-fe42-4ee6-b375-dd780bb8866d" />
 # Sublattice Agent
 
 An AI agent, powered by Claude, that runs the two-sublattice macrospin simulator.
