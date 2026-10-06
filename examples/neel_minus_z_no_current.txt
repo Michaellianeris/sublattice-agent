@@ -1,0 +1,3 @@
+# Néel vector starts along -z (the default initial state), no current, nothing else
+--t=2e-9
+--SOT_DC_Amp=0

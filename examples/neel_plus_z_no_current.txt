@@ -1,0 +1,5 @@
+# Néel vector starts along +z (sublattices swapped), no current, nothing else
+--t=2e-9
+--SOT_DC_Amp=0
+--m1=0.25,0.0,0.968
+--m2=-0.256,0.0,-0.965
