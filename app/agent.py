@@ -1,6 +1,7 @@
 """Claude tool-use loop. The conversation lives in the browser and is sent on every turn."""
 import copy
 import os
+import re
 
 import anthropic
 
@@ -106,6 +107,14 @@ def chat_stream(messages, api_key=None, model=None, mode=None):
         except anthropic.APIConnectionError as e:
             cause = e.__cause__ or e
             yield {"type": "error", "status": 502, "error": f"Could not reach the Claude API ({type(cause).__name__}: {cause}). Check the network, proxy and certificates of the container."}
+            return
+
+        if isinstance(resp, str):
+            title = re.search(r"<title>(.*?)</title>", resp, re.I | re.S)
+            yield {"type": "error", "status": 502,
+                   "error": "The network returned a web page instead of the Claude API"
+                            + (f" (\"{title.group(1).strip()}\")" if title else "")
+                            + ". A proxy or firewall is intercepting api.anthropic.com; open that page in a browser or ask IT to allow the API."}
             return
 
         messages.append({"role": "assistant", "content": [_dump(b) for b in resp.content]})
