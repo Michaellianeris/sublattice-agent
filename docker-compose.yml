@@ -3,7 +3,7 @@ services:
     build: .
     image: sublattice-agent
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8421}:8000"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-5}

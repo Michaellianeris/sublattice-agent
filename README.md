@@ -16,7 +16,7 @@ The physics code in `macrospin/` is the original code, unchanged.
    docker compose up --build
    ```
 
-3. Open http://localhost:8000
+3. Open http://localhost:8421 (set `HOST_PORT` in `.env` to use another port)
 
 If you leave `ANTHROPIC_API_KEY` empty, paste the key into the field at the top of the page instead.
 It is kept only in that browser tab (sessionStorage) and sent to your local server with each message.
@@ -121,7 +121,7 @@ The assistant is told about these and mentions them when relevant.
 
 ## Security
 
-Built for local use: there is no login. Do not expose port 8000 to the internet, since anyone
+Built for local use: there is no login. Do not expose the port (8421 by default) to the internet, since anyone
 reaching it could start simulations and use the server-side API key.
 
 ## Layout
