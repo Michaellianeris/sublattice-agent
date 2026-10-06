@@ -8,8 +8,10 @@ from . import tools
 from .prompts import SYSTEM_PROMPT
 
 DEFAULT_MODEL = os.environ.get("CLAUDE_MODEL") or "claude-sonnet-5"
-MODELS = [m.strip() for m in (os.environ.get("CLAUDE_MODELS")
-          or "claude-sonnet-5,claude-opus-5-5,claude-haiku-4-5-20251001").split(",") if m.strip()]
+KNOWN_MODELS = ("claude-sonnet-5,claude-opus-5-5,claude-opus-4-5-20251101,claude-opus-4-1-20250805,"
+                "claude-opus-4-20250514,claude-sonnet-4-5-20250929,claude-sonnet-4-20250514,"
+                "claude-3-7-sonnet-20250219,claude-haiku-4-5-20251001,claude-3-5-haiku-20241022")
+MODELS = [m.strip() for m in (os.environ.get("CLAUDE_MODELS") or KNOWN_MODELS).split(",") if m.strip()]
 if DEFAULT_MODEL not in MODELS:
     MODELS.insert(0, DEFAULT_MODEL)
 
@@ -17,15 +19,16 @@ if DEFAULT_MODEL not in MODELS:
 def list_models(api_key=None):
     """Every model the key can use (Sonnet, Opus, Haiku and any other), falling back to the configured list."""
     key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    err = None if key else "no API key"
     if key:
         try:
             found = [{"id": m.id, "name": getattr(m, "display_name", None) or m.id}
                      for m in anthropic.Anthropic(api_key=key).models.list(limit=1000)]
             if found:
-                return found, "api"
-        except Exception:
-            pass
-    return [{"id": m, "name": m} for m in MODELS], "configured"
+                return found, "api", None
+        except Exception as e:
+            err = f"{type(e.__cause__ or e).__name__}: {e.__cause__ or e}"
+    return [{"id": m, "name": m} for m in MODELS], "configured", err
 
 
 MODE_NOTES = {
@@ -87,7 +90,7 @@ def chat_stream(messages, api_key=None, model=None, mode=None):
     for _ in range(MAX_STEPS):
         try:
             resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
-                                          tools=tools.TOOLS, messages=_prune_images(messages))
+                                          tools=tools.TOOLS, messages=_prune_images(messages), timeout=90)
         except anthropic.AuthenticationError:
             yield {"type": "error", "status": 401, "error": "The API key was rejected. Check it in console.anthropic.com."}
             return
@@ -100,8 +103,9 @@ def chat_stream(messages, api_key=None, model=None, mode=None):
         except anthropic.APIStatusError as e:
             yield {"type": "error", "status": 502, "error": f"Claude API error {e.status_code}: {e.message}"}
             return
-        except anthropic.APIConnectionError:
-            yield {"type": "error", "status": 502, "error": "Could not reach the Claude API. Check the network connection."}
+        except anthropic.APIConnectionError as e:
+            cause = e.__cause__ or e
+            yield {"type": "error", "status": 502, "error": f"Could not reach the Claude API ({type(cause).__name__}: {cause}). Check the network, proxy and certificates of the container."}
             return
 
         messages.append({"role": "assistant", "content": [_dump(b) for b in resp.content]})

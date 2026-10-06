@@ -1302,6 +1302,8 @@ async function loadModels() {
     const sel = $("#model"), keep = localStorage.getItem("sublattice.model") || sel.value || out.default;
     sel.innerHTML = "";
     for (const m of out.models) { const o = document.createElement("option"); o.value = m.id; o.textContent = m.name && m.name !== m.id ? `${m.name} (${m.id})` : m.id; sel.appendChild(o); }
+    const other = document.createElement("option"); other.value = "__custom__"; other.textContent = "Other model id…"; sel.appendChild(other);
+    sel.title = out.source === "api" ? `${out.models.length} models from your API key` : `Built-in list (could not read your key's models${out.error ? ": " + out.error : ""})`;
     sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
   } catch {}
 }
@@ -1315,7 +1317,14 @@ async function init() {
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
   sel.value = localStorage.getItem("sublattice.model") || state.config.model;
-  sel.onchange = () => localStorage.setItem("sublattice.model", sel.value);
+  sel.onchange = () => {
+    if (sel.value === "__custom__") {
+      const id = (prompt("Model id, e.g. claude-opus-4-1-20250805") || "").trim();
+      if (!id) { sel.value = localStorage.getItem("sublattice.model") || sel.options[0].value; return; }
+      const o = document.createElement("option"); o.value = o.textContent = id; sel.insertBefore(o, sel.lastElementChild); sel.value = id;
+    }
+    localStorage.setItem("sublattice.model", sel.value);
+  };
   $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState(); loadModels();
   if ($("#keypill").classList.contains("need")) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;

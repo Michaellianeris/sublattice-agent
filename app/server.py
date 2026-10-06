@@ -50,8 +50,8 @@ def config():
 
 @app.get("/api/models")
 def models(x_api_key: str | None = Header(default=None)):
-    found, source = agent.list_models(x_api_key)
-    return {"models": found, "source": source, "default": agent.DEFAULT_MODEL}
+    found, source, error = agent.list_models(x_api_key)
+    return {"models": found, "source": source, "error": error, "default": agent.DEFAULT_MODEL}
 
 
 @app.post("/api/chat")
