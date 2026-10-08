@@ -272,6 +272,12 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .guide-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .guide-form input{flex:1;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--panel);color:var(--ink)}
 .guide-form .send{width:34px;height:34px;border-radius:50%;border:none;background:var(--m1);color:#fff;cursor:pointer;font-size:1rem}
+.guide-back{position:fixed;inset:0;z-index:20;background:rgba(15,20,30,.5);backdrop-filter:blur(2px)}
+.guide.centered{right:auto;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 32px));height:auto;max-height:min(600px,calc(100vh - 40px));z-index:22;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.guide:not(.centered) .guide-desc{display:none}
+.guide.centered .guide-log{flex:none;min-height:110px}
+.guide.centered #guideclose{display:none}
+.guide.centered .guide-head img{width:48px;height:48px}
 @media (max-width:900px){.guide{right:8px;bottom:8px}}
 .chat.is-empty{justify-content:center;align-items:center;overflow-y:auto}
 .chat.is-empty .log,.chat.is-empty .empty{display:contents}
@@ -475,6 +481,7 @@ body.bench-open .bench{display:block}
 <button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
   <img src="/athena.png" alt="" width="40" height="40">
 </button>
+<div class="guide-back" id="guideback" hidden></div>
 <section class="guide" id="guide" hidden role="dialog" aria-label="Athena, the SpinMate guide">
   <div class="guide-head">
     <img src="/athena.png" alt="" width="40" height="40">
@@ -1333,6 +1340,7 @@ $("#cmode-deep").onclick = () => setMode("deep");
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
+  [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena. In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. Here I am the guide of SpinMate, an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh. Ask me how to use it."],
   [/fast|deep|mode/i, "Fast (default) uses the default parameters and gives short answers. Deep works from the full parameter set or a txt file and gives a thorough analysis. Switch it under the message box or in Workbench > Setup."],
   [/workbench|panel|result|αποτελ|δεξ/i, "The Workbench button (top right) opens the right panel with your runs, the Result tab and the Setup tab. It opens by itself when a run starts. Use the X in the panel to close it."],
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, use Workbench > Setup > Deep (txt editor with an examples dropdown)."],
@@ -1349,7 +1357,7 @@ const GUIDE_FAQ = [
   [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or open Workbench > Setup, pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
 const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
-const GUIDE_CHIPS = ["How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
+const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
 function guideAdd(role, text) {
   const d = document.createElement("div"); d.className = "gmsg " + role;
@@ -1361,12 +1369,17 @@ function guideChips() {
   for (const c of GUIDE_CHIPS) { const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.onclick = () => { box.remove(); guideAsk(c); }; box.appendChild(b); }
   $("#guidelog").appendChild(box);
 }
+function setCentered(on) {
+  $("#guide").classList.toggle("centered", on); $("#guideback").hidden = !on;
+  $("#guideinput").placeholder = on ? "Type your name…" : "Type here…";
+}
 function openGuide(open) {
   guide.open = open; $("#guide").hidden = !open; $("#guidefab").hidden = open;
+  setCentered(open && !getName());
   if (open && !guide.started) {
     guide.started = true; const n = getName();
     guideAdd("bot", n ? `Hi ${n}! I'm Athena, SpinMate's guide. I can show you around the app: where things are and what the buttons do.` :
-      "Hi! I'm Athena, SpinMate's guide. I can show you around the app. What's your name?");
+      "Hi! I'm Athena, SpinMate's guide. I can show you around the app. Before we start, what's your name?");
     if (n) guideChips(); else guide.awaitName = true;
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
@@ -1378,7 +1391,7 @@ async function guideAsk(q) {
   if (guide.awaitName) {
     const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
     try { localStorage.setItem("sublattice.name", v); } catch {}
-    $("#username").value = v; guide.awaitName = false; render();
+    $("#username").value = v; guide.awaitName = false; setCentered(false); render();
     guideAdd("bot", `Nice to meet you, ${v}! Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
   }
   guide.msgs.push({role: "user", content: q}); guide.busy = true;
@@ -1460,7 +1473,7 @@ async function init() {
     localStorage.setItem("sublattice.model", sel.value);
   };
   $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState(); loadModels();
-  if ($("#keypill").classList.contains("need")) toggleSettings(true);
+  if ($("#keypill").classList.contains("need") && getName()) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
   try { state.messages = JSON.parse(localStorage.getItem("sublattice.chat") || "[]"); } catch {}
