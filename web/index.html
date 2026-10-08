@@ -250,6 +250,27 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .themes button[aria-pressed=true]{border-color:var(--m1);box-shadow:0 0 0 2px color-mix(in srgb,var(--m1) 25%,transparent)}
 
 /* ---- empty state: composer under the greeting, like Researcher ---- */
+.namebox{display:flex;gap:8px;max-width:420px;margin:14px auto 0}
+.namebox input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--panel);color:var(--ink)}
+.guide-fab{position:fixed;right:20px;bottom:20px;z-index:20;width:56px;height:56px;border-radius:50%;border:none;background:var(--panel);color:var(--m1);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow),0 0 0 1px var(--line)}
+.guide-fab:hover{transform:translateY(-2px);box-shadow:var(--shadow),0 0 0 2px var(--m1)}
+.guide{position:fixed;right:20px;bottom:20px;z-index:21;width:min(340px,calc(100vw - 32px));height:min(480px,calc(100vh - 40px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(16,24,40,.22);overflow:hidden}
+.guide-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--m1)}
+.guide-head div{flex:1;color:var(--ink);line-height:1.2}
+.guide-head small{display:block;color:var(--muted);font-size:.78rem}
+.guide-desc{padding:8px 14px;font-size:.8rem;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
+.guide-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.gmsg{max-width:88%;padding:7px 11px;border-radius:12px;font-size:.88rem;line-height:1.45}
+.gmsg p{margin:.2em 0}
+.gmsg.bot{align-self:flex-start;background:var(--soft);border-bottom-left-radius:4px}
+.gmsg.user{align-self:flex-end;background:var(--m1);color:#fff;border-bottom-right-radius:4px}
+.gchips{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.gchips button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px;font-size:.82rem;cursor:pointer;color:var(--ink);text-align:left}
+.gchips button:hover{border-color:var(--m1);color:var(--m1)}
+.guide-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.guide-form input{flex:1;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--panel);color:var(--ink)}
+.guide-form .send{width:34px;height:34px;border-radius:50%;border:none;background:var(--m1);color:#fff;cursor:pointer;font-size:1rem}
+@media (max-width:900px){.guide{right:8px;bottom:8px}}
 .chat.is-empty{justify-content:center;align-items:center;overflow-y:auto}
 .chat.is-empty .log,.chat.is-empty .empty{display:contents}
 .chat.is-empty .empty>*{order:1;width:min(720px,calc(100% - 48px))}
@@ -351,6 +372,7 @@ body.bench-open .bench{display:block}
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
         <button type="button" data-theme="spin" aria-pressed="false"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
+      <label>Your name <input id="username" maxlength="40" placeholder="So SpinMate can greet you" autocomplete="off"></label>
       <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
       <p>The key stays in this browser tab and is sent only to your own server.</p>
     </div>
@@ -412,16 +434,15 @@ body.bench-open .bench{display:block}
 
       <div id="fast">
         <div class="chips" id="fpresets" aria-label="Presets">
-          <button type="button" data-p="default">Default: AFM &rarr; FM</button>
-          <button type="button" data-p="afm">AFM stays AFM</button>
-          <button type="button" data-p="minus">Néel &minus;z, no current</button>
-          <button type="button" data-p="plus">Néel +z, no current</button>
-          <button type="button" data-p="sotp">SOT +</button>
-          <button type="button" data-p="sotn">SOT &minus;</button>
+          <button type="button" data-p="default">AFM &rarr; FM</button>
+          <button type="button" data-p="afm2afm">AFM &rarr; AFM</button>
+          <button type="button" data-p="fm2afm">FM &rarr; AFM</button>
+          <button type="button" data-p="fm2fm">FM &rarr; FM</button>
+          <button type="button" data-p="ferh">FeRh heating</button>
         </div>
         <div id="fform"></div>
-        <div class="frow"><label for="f-neel">Initial Néel vector</label>
-          <select id="f-neel"><option value="minus">&minus;z (default)</option><option value="plus">+z</option></select><span></span></div>
+        <div class="frow"><label for="f-neel">Initial state</label>
+          <select id="f-neel"><option value="minus">AFM, Néel &minus;z (default)</option><option value="plus">AFM, Néel +z</option><option value="fm">FM, m₁ ∥ m₂</option></select><span></span></div>
         <div class="frow"><label for="f-extra">Quick extra txt</label>
           <input id="f-extra" placeholder="e.g. --H=0.1 --SOT_pol=0,1,0" spellcheck="false"><span></span></div>
         <pre class="ftext" id="ftext"></pre>
@@ -448,6 +469,20 @@ body.bench-open .bench{display:block}
     </div>
   </section>
 </main>
+
+<button class="guide-fab" id="guidefab" type="button" title="Need help? Ask the SpinMate Guide" aria-label="Open the SpinMate Guide">
+  <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="4.5" r="2.6" fill="#E5341B"/><rect x="8" y="12" width="32" height="26" rx="9" fill="currentColor"/><circle cx="18" cy="25" r="4" fill="#fff"/><circle cx="30" cy="25" r="4" fill="#fff"/><circle cx="18.8" cy="25.4" r="1.7" fill="#E5341B"/><circle cx="30.8" cy="25.4" r="1.7" fill="#1D1DD8"/><rect x="17" y="32" width="14" height="2.6" rx="1.3" fill="#fff" fill-opacity=".8"/><rect x="3" y="21" width="4" height="9" rx="2" fill="currentColor"/><rect x="41" y="21" width="4" height="9" rx="2" fill="currentColor"/></svg>
+</button>
+<section class="guide" id="guide" hidden role="dialog" aria-label="SpinMate Guide">
+  <div class="guide-head">
+    <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="4.5" r="2.6" fill="#E5341B"/><rect x="8" y="12" width="32" height="26" rx="9" fill="currentColor"/><circle cx="18" cy="25" r="4" fill="#fff"/><circle cx="30" cy="25" r="4" fill="#fff"/><circle cx="18.8" cy="25.4" r="1.7" fill="#E5341B"/><circle cx="30.8" cy="25.4" r="1.7" fill="#1D1DD8"/><rect x="17" y="32" width="14" height="2.6" rx="1.3" fill="#fff" fill-opacity=".8"/></svg>
+    <div><b>SpinMate Guide</b><small>Your how-to assistant</small></div>
+    <button class="rail-btn" id="guideclose" type="button" aria-label="Close the guide" title="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="guide-desc">I explain how to use the app: where things are and what the buttons and modes do. For simulations, ask in the main chat.</div>
+  <div class="guide-log" id="guidelog" aria-live="polite"></div>
+  <form class="guide-form" id="guideform"><input id="guideinput" placeholder="Type here…" autocomplete="off" aria-label="Ask the guide"><button class="send" type="submit" aria-label="Send">&rarr;</button></form>
+</section>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -596,8 +631,21 @@ function addUser(text) {
   $("#log").appendChild(d);
 }
 
+const cleanName = v => v.replace(/[^\p{L}\p{N} .'-]/gu, "").trim().slice(0, 40);
+const getName = () => { try { return localStorage.getItem("sublattice.name") || ""; } catch { return ""; } };
+function wireName(d) {
+  const f = d.querySelector(".namebox"), inp = f.querySelector("input");
+  f.onsubmit = e => {
+    e.preventDefault(); const v = cleanName(inp.value); if (!v) return;
+    try { localStorage.setItem("sublattice.name", v); } catch {}
+    $("#username").value = v; render(); $("#input").focus();
+  };
+  setTimeout(() => inp.focus(), 0);
+}
+
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
+  const name = getName();
   d.innerHTML = `<div class="brand">SpinMate</div><svg class="hero" viewBox="0 0 340 200" aria-hidden="true">
       <defs>
         <radialGradient id="gr" cx="35%" cy="30%"><stop offset="0" stop-color="#FF7A5C"/><stop offset="1" stop-color="#C21B00"/></radialGradient>
@@ -612,21 +660,24 @@ function emptyState() {
       <g class="s1"><line x1="102" y1="120" x2="116" y2="68" stroke="#E5341B" stroke-width="7" stroke-linecap="round"/><path d="M122 52 L103 70 L128 74Z" fill="#E5341B"/><circle cx="100" cy="112" r="14" fill="url(#gr)"/></g>
       <g class="s2"><line x1="240" y1="120" x2="226" y2="68" stroke="#1D1DD8" stroke-width="7" stroke-linecap="round"/><path d="M220 52 L212 74 L238 70Z" fill="#1D1DD8"/><circle cx="242" cy="112" r="14" fill="url(#gb)"/></g>
     </svg>
-    <h2>Hi, what shall we simulate?</h2>
+    <h2>Hi${name ? " " + esc(name) : ""}, what shall we simulate?</h2>
     <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model, and explains the result from the real dynamics.</p>
     <div class="skills-title"><span>Find a skill</span></div>
     <div class="starters"></div>`;
   const starters = [
+    ["AFM → FM", "Start antiferromagnetic with a positive exchange A0 = 0.248e-12, no current, 2 ns. Does it end ferromagnetic?"],
+    ["AFM → AFM", "Start antiferromagnetic with the negative default exchange, no current, 2 ns. Does it stay antiferromagnetic?"],
+    ["FM → AFM", "Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and a negative exchange A0 = -0.248e-12, no current, 2 ns. Does it become antiferromagnetic?"],
+    ["FM → FM", "Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and a positive exchange A0 = 0.248e-12, no current, 2 ns. Does it stay ferromagnetic?"],
+    ["FeRh heating", "Heat a FeRh layer through its transition: positive A0 = 0.248e-12, temperature 370 K ± 60 K at 0.25 GHz, 2 ns. When does it go from AFM to FM?"],
     ["Parameters", "Explain which parameters I can set and their units."],
-    ["SOT switching", "Run 5 ns of SOT-driven dynamics with a DC current of 20e6 A/cm² and tell me if the Néel vector switches."],
-    ["FeRh transition", "Cycle a FeRh layer through its transition (±40 K around 370 K at 1 GHz) for 2 ns."],
-    ["Frequency sweep", "Sweep the AC drive frequency from 10 to 40 GHz in 5 GHz steps and show where the response peaks."],
   ];
+  const box = d.querySelector(".starters");
   for (const [title, s] of starters) {
     const b = document.createElement("button"); b.type = "button";
     b.innerHTML = `<b>${esc(title)}</b><span>${esc(s)}</span>`;
     b.onclick = () => { $("#input").value = s; send(); };
-    d.querySelector(".starters").appendChild(b);
+    box.appendChild(b);
   }
   return d;
 }
@@ -692,7 +743,7 @@ async function send() {
   try {
     const headers = {"Content-Type": "application/json"};
     const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast"})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName()})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1247,6 +1298,7 @@ function fastText() {
   }
   if (parseFloat($("#f-Temp").value) > 0) lines.push("--flag0");
   if ($("#f-neel").value === "plus") lines.push("--m1=0.25,0.0,0.968", "--m2=-0.256,0.0,-0.965");
+  if ($("#f-neel").value === "fm") lines.push("--m1=0.25,0.0,0.968", "--m2=0.35,0.0,0.937");
   const extra = $("#f-extra").value.trim(); if (extra) lines.push(...extra.split(/\s+(?=--)/));
   return lines.join("\n") + "\n";
 }
@@ -1254,11 +1306,10 @@ function fastUpdate() { $("#ftext").textContent = fastText(); $("#fcheckout").te
 const baseFast = () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; };
 const PRESETS_FAST = {
   default: () => { baseFast(); fastSet("A0", 0.248); fastSet("t", 2); },
-  afm: () => { baseFast(); fastSet("t", 2); },
-  minus: () => { baseFast(); fastSet("SOT_DC_Amp", 0); },
-  plus: () => { baseFast(); fastSet("SOT_DC_Amp", 0); $("#f-neel").value = "plus"; },
-  sotp: () => { baseFast(); fastSet("SOT_DC_Amp", 30); },
-  sotn: () => { baseFast(); fastSet("SOT_DC_Amp", -30); },
+  afm2afm: () => { baseFast(); fastSet("t", 2); },
+  fm2afm: () => { baseFast(); fastSet("t", 2); $("#f-neel").value = "fm"; },
+  fm2fm: () => { baseFast(); fastSet("A0", 0.248); fastSet("t", 2); $("#f-neel").value = "fm"; },
+  ferh: () => { baseFast(); fastSet("A0", 0.248); fastSet("t", 2); $("#f-extra").value = "--flagTempVarying --Temp=60 --Fr=0.25e9"; },
 };
 document.querySelectorAll("#fpresets button").forEach(b => b.onclick = () => {
   PRESETS_FAST[b.dataset.p](); fastUpdate();
@@ -1276,6 +1327,72 @@ $("#mode-fast").onclick = () => setMode("fast");
 $("#mode-deep").onclick = () => setMode("deep");
 $("#cmode-fast").onclick = () => setMode("fast");
 $("#cmode-deep").onclick = () => setMode("deep");
+
+
+// ---------------------------------------------------------------- Guide robot (bottom right)
+const GUIDE_FAQ = [
+  [/fast|deep|mode/i, "Fast (default) uses the default parameters and gives short answers. Deep works from the full parameter set or a txt file and gives a thorough analysis. Switch it under the message box or in Workbench > Setup."],
+  [/workbench|panel|result|αποτελ|δεξ/i, "The Workbench button (top right) opens the right panel with your runs, the Result tab and the Setup tab. It opens by itself when a run starts. Use the X in the panel to close it."],
+  [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, use Workbench > Setup > Deep (txt editor with an examples dropdown)."],
+  [/param|slider|exchange|A0|Ku|Ms|damping/i, "Workbench > Setup > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
+  [/preset|afm|fm\b|ferh/i, "In Workbench > Setup > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
+  [/model|claude|opus|sonnet|haiku/i, "The model dropdown is under the message box. It lists all models available to your API key; choose \"Other model id…\" to type one yourself."],
+  [/key|api|κλειδ/i, "Paste your API key in Settings (gear, bottom of the left bar) or set ANTHROPIC_API_KEY in the .env file used by Docker, then restart the container."],
+  [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
+  [/name|όνομα/i, "You can change your name in Settings (gear, left bar) > Your name."],
+  [/graph|plot|zoom|play|viewer|γράφημα/i, "In the Result tab: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
+  [/cancel|stop|ακύρ/i, "Open the running run in the Result tab and press Cancel run."],
+  [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the Result tab."],
+  [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
+  [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or open Workbench > Setup, pick a preset and press Run. A card with the steps and the graph appears in the chat."],
+];
+const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
+const GUIDE_CHIPS = ["How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
+
+function guideAdd(role, text) {
+  const d = document.createElement("div"); d.className = "gmsg " + role;
+  if (role === "bot") d.innerHTML = md(text); else d.textContent = text;
+  const log = $("#guidelog"); log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+function guideChips() {
+  const box = document.createElement("div"); box.className = "gchips";
+  for (const c of GUIDE_CHIPS) { const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.onclick = () => { box.remove(); guideAsk(c); }; box.appendChild(b); }
+  $("#guidelog").appendChild(box);
+}
+function openGuide(open) {
+  guide.open = open; $("#guide").hidden = !open; $("#guidefab").hidden = open;
+  if (open && !guide.started) {
+    guide.started = true; const n = getName();
+    guideAdd("bot", n ? `Hi ${n}! I'm the SpinMate Guide. I can show you around the app: where things are and what the buttons do.` :
+      "Hi! I'm the SpinMate Guide robot. I can show you around the app. What's your name?");
+    if (n) guideChips(); else guide.awaitName = true;
+  }
+  if (open) setTimeout(() => $("#guideinput").focus(), 0);
+}
+function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1] : "I can only help with using SpinMate: the chat, Fast and Deep modes, the Workbench, runs and results, settings and the API key. Ask me about any of those."; }
+async function guideAsk(q) {
+  q = q.trim(); if (!q || guide.busy) return;
+  guideAdd("user", q);
+  if (guide.awaitName) {
+    const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
+    try { localStorage.setItem("sublattice.name", v); } catch {}
+    $("#username").value = v; guide.awaitName = false; render();
+    guideAdd("bot", `Nice to meet you, ${v}! Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
+  }
+  guide.msgs.push({role: "user", content: q}); guide.busy = true;
+  const wait = guideAdd("bot", "…");
+  try {
+    const headers = {"Content-Type": "application/json"}, k = $("#apikey").value.trim(); if (k) headers["X-Api-Key"] = k;
+    const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: $("#model").value, name: getName()})});
+    wait.innerHTML = md(out.text); guide.msgs.push({role: "assistant", content: out.text});
+  } catch (e) {
+    const t = guideFaq(q); wait.innerHTML = md(t); guide.msgs.push({role: "assistant", content: t});
+  }
+  guide.busy = false; $("#guidelog").scrollTop = $("#guidelog").scrollHeight;
+}
+$("#guidefab").onclick = () => openGuide(true);
+$("#guideclose").onclick = () => openGuide(false);
+$("#guideform").onsubmit = e => { e.preventDefault(); const i = $("#guideinput"); const q = i.value; i.value = ""; guideAsk(q); };
 
 // ---------------------------------------------------------------- settings
 function keyState() {
@@ -1317,12 +1434,17 @@ async function loadModels() {
     sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
   } catch {}
 }
+$("#username").addEventListener("input", e => {
+  try { localStorage.setItem("sublattice.name", cleanName(e.target.value)); } catch {}
+  render();
+});
 let modelTimer;
 $("#apikey").addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
 
 async function init() {
   setTheme(document.documentElement.dataset.theme);
   state.config = await api("/api/config");
+  $("#username").value = getName();
   PRESETS_FAST.default(); fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
