@@ -78,8 +78,8 @@ run starts and is hidden otherwise.
 
 The app works without the assistant: Setup runs a simulation directly and only the chat needs the API.
 
-**Iris.** The robot in the bottom right corner (named after the Greek goddess of the rainbow and
-messenger of the gods) is a small assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
+**Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) is a small
+assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
 Fast and Deep do. If the Claude API cannot be reached it falls back to a built-in list of answers.
 
 **Settings** (gear in the left bar): colour theme (Light, Dark, Spin), your name and the API key.
@@ -206,7 +206,7 @@ run queue (app/simulations.py) --> python -m app.runner   (one process per run)
 
 `app/runner.py` wraps the original code without changing its equations. It counts Heun steps for the
 progress bar, silences the per-step print of the temperature branch, adds a font fallback and writes the
-summary. Parameter files are parsed with the original `importdata.py`. `app/guide.py` backs Iris, the helper robot.
+summary. Parameter files are parsed with the original `importdata.py`. `app/guide.py` backs Athena, the guide.
 
 ## Development
 
