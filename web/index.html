@@ -42,7 +42,6 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:12px
 /* layout */
 main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:calc(100vh - 57px)}
 .chat{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
-.bench{overflow-y:auto;padding:20px 24px 40px}
 
 /* conversation */
 .log{flex:1;overflow-y:auto;padding:24px 28px}
@@ -94,7 +93,6 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:ca
 .hint{font-size:.8rem;color:var(--muted);margin-top:6px}
 
 /* bench */
-.bench h2{font-size:1.1rem;font-weight:600;margin:0 0 10px}
 .runs{list-style:none;margin:0 0 22px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:190px;overflow-y:auto}
 .runs li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--soft);cursor:pointer}
 .runs li:last-child{border-bottom:none}
@@ -227,8 +225,6 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .composer .send:hover{background:#173FAA}
 .composer .send:disabled{opacity:.4;cursor:not-allowed}
 
-.bench{background:var(--panel);border-left:1px solid var(--line);padding:24px 28px 40px}
-.bench h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .runs{border-radius:12px;box-shadow:none}
 .tabs{gap:6px;border-bottom:none;background:var(--soft);padding:4px;border-radius:10px;width:fit-content}
 .tabs button{border-radius:7px;padding:5px 16px;border-bottom:none;margin:0}
@@ -272,8 +268,16 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .guide-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .guide-form input{flex:1;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--panel);color:var(--ink)}
 .guide-form .send{width:34px;height:34px;border-radius:50%;border:none;background:var(--m1);color:#fff;cursor:pointer;font-size:1rem}
+.chat .runcard{max-width:min(780px,100%)}
+.runcard.flash{box-shadow:0 0 0 3px var(--m1)}
+.rc-view{margin-top:8px;border-top:1px solid var(--grid);padding-top:10px}
+.rc-err{white-space:pre-wrap;color:var(--err);font-size:.78rem}
+.setupdlg{width:min(680px,calc(100vw - 32px))}
+.dlg-head{display:flex;align-items:center;justify-content:space-between}
+.setupdlg .modes{margin-top:4px}
 .tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
 .composer .row .hint{display:none}
+.composer .row .send{margin-left:auto}
 .usage{font-size:.74rem;color:var(--muted);margin:-8px 0 16px;max-width:68ch}
 a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .history{position:fixed;left:64px;top:0;bottom:0;width:280px;z-index:15;background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -332,20 +336,12 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .composer .modes.mini button{padding:3px 12px;font-size:.82rem}
 .composer .row .hint{text-align:right}
 
-.bench-toggle{position:fixed;top:14px;right:18px;z-index:6;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer;box-shadow:var(--shadow);font-size:.88rem}
-.bench-toggle:hover{border-color:var(--m1);color:var(--m1)}
-body.bench-open .bench-toggle{display:none}
 
 /* ---- workbench is toggled; default = chat only ---- */
 main{grid-template-columns:minmax(0,1fr)}
-.bench{display:none}
-body.bench-open main{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}
-body.bench-open .bench{display:block}
 .rail-btn[aria-pressed=true]{background:var(--soft);color:var(--m1)}
 .chat:not(.is-empty) .log{padding-left:max(24px,calc((100% - 780px)/2));padding-right:max(24px,calc((100% - 780px)/2))}
 .chat:not(.is-empty) .composer{width:min(830px,100%);align-self:center}
-.bench-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.bench-head h2{margin:0}
 .modelrow{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted);margin-bottom:12px}
 .modelrow select{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);color:var(--ink)}
 .modes{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:10px;width:fit-content;margin-bottom:14px}
@@ -389,6 +385,7 @@ body.bench-open .bench{display:block}
   </button>
   <button class="rail-btn" id="historybtn" type="button" title="Conversation history" aria-label="Conversation history" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button class="rail-btn" id="defaultsbtn" type="button" title="Default parameters" aria-label="Default parameters"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>
+  <button class="rail-btn" id="setupbtn" type="button" title="Run setup (no assistant)" aria-label="Run setup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></button>
   <div class="rail-sp"></div>
   <button class="pill" id="keypill" type="button" title="API key status"><i></i><span id="keytext"></span></button>
   <div class="settings">
@@ -408,11 +405,6 @@ body.bench-open .bench{display:block}
     </div>
   </div>
 </header>
-
-<button class="bench-toggle" id="benchbtn" type="button" title="Show the workbench (runs, results, setup)" aria-label="Show the workbench" aria-pressed="false">
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14 4v16"/></svg>
-  <span>Workbench</span>
-</button>
 
 <main>
   <section class="chat" aria-label="Conversation">
@@ -441,23 +433,16 @@ body.bench-open .bench{display:block}
     </div>
   </section>
 
-  <section class="bench" id="bench" aria-label="Workbench">
-    <div class="bench-head"><h2>Workbench</h2>
-      <button class="rail-btn" id="closebench" type="button" title="Hide the workbench" aria-label="Hide the workbench">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button></div>
-    <ul class="runs" id="runs"><li class="nothing">No runs yet.</li></ul>
+</main>
 
-    <div class="tabs" role="tablist" aria-label="Workbench">
-      <button role="tab" id="tab-result" aria-selected="true" aria-controls="panel-result" type="button">Result</button>
-      <button role="tab" id="tab-params" aria-selected="false" aria-controls="panel-params" type="button">Setup</button>
-    </div>
-
-    <div id="panel-result" role="tabpanel" aria-labelledby="tab-result">
-      <div class="selected" id="selected"><div class="nothing">Run something from the chat or from Setup and the result appears here.</div></div>
-    </div>
-
-    <div id="panel-params" role="tabpanel" aria-labelledby="tab-params" hidden>
+<button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
+  <img src="/athena.png" alt="" width="40" height="40">
+</button>
+<div class="modal-back" id="setupback" hidden></div>
+<section class="defdlg setupdlg" id="setupdlg" hidden role="dialog" aria-label="Run setup">
+  <div class="dlg-head"><h3>Run setup</h3>
+    <button class="rail-btn" id="setupclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>Start a run yourself, without the assistant (no tokens). The result appears in the chat.</p>
       <div class="modes" role="group" aria-label="Setup mode">
         <button type="button" id="mode-fast" aria-pressed="true">Fast</button>
         <button type="button" id="mode-deep" aria-pressed="false">Deep (txt)</button>
@@ -497,13 +482,7 @@ body.bench-open .bench{display:block}
         </div>
         <div class="check" id="checkout"></div>
       </div>
-    </div>
-  </section>
-</main>
-
-<button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
-  <img src="/athena.png" alt="" width="40" height="40">
-</button>
+</section>
 <aside class="history" id="history" hidden aria-label="Conversations">
   <div class="history-head"><b>Conversations</b><button class="btn small" id="histnew" type="button">New chat</button></div>
   <ul id="historylist"></ul>
@@ -626,7 +605,7 @@ function chipFor(name, input, result, running) {
   const target = result.run_id || result.sweep_id || input.run_id || input.sweep_id;
   if (result.ok === false || result.error) { c.classList.add("bad"); label += ": " + (result.error || "failed"); }
   c.textContent = label;
-  if (target && !result.error && result.ok !== false) { c.classList.add("link"); c.tabIndex = 0; c.onclick = () => select(target); c.onkeydown = e => { if (e.key === "Enter") select(target); }; }
+  if (target && !result.error && result.ok !== false) { c.classList.add("link"); c.tabIndex = 0; c.onclick = () => openRunCard(target); c.onkeydown = e => { if (e.key === "Enter") openRunCard(target); }; }
   return c;
 }
 
@@ -755,7 +734,7 @@ $("#log").addEventListener("click", async e => {
     catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch {} t.remove(); }
     const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = old, 1200);
   } else {
-    $("#params").value = text; showTab("params"); setBench(true); setMode("deep"); $("#check").click(); $("#params").focus();
+    openSetup("deep"); $("#params").value = text; $("#check").click(); $("#params").focus();
   }
 });
 
@@ -954,7 +933,7 @@ class Chart {
   }
 }
 
-// ---------------------------------------------------------------- run viewer
+// ---------------------------------------------------------------- run viewer (one instance per run card)
 const CH = [
   {k: "m1x", name: "m<sub>1x</sub>", c: "#1F4FD1", dash: [5, 3]}, {k: "m1y", name: "m<sub>1y</sub>", c: "#1F4FD1", dash: [1.5, 3]}, {k: "m1z", name: "m<sub>1z</sub>", c: "#1F4FD1", dash: []},
   {k: "m2x", name: "m<sub>2x</sub>", c: "#B0127F", dash: [5, 3]}, {k: "m2y", name: "m<sub>2y</sub>", c: "#B0127F", dash: [1.5, 3]}, {k: "m2z", name: "m<sub>2z</sub>", c: "#B0127F", dash: []},
@@ -963,32 +942,16 @@ const CH = [
 const PRESETS = {m: ["m1x", "m1y", "m1z", "m2x", "m2y", "m2z"], z: ["m1z", "m2z", "nz"], n: ["nx", "ny", "nz"]};
 let prefs; try { prefs = JSON.parse(localStorage.getItem("sublattice.channels")); } catch {}
 if (!prefs) prefs = Object.fromEntries(CH.map(c => [c.k, PRESETS.m.includes(c.k)]));
-
-const view = {id: null, sig: null, token: 0, chart: null, sweepChart: null, data: null, idx: 0, pos: 0, playing: false, speed: 1, raf: 0, hover: null, zoom: null, dial: null};
 const R = 70;
-function resetView() {
-  stopPlay();
-  if (view.chart) view.chart.destroy(); if (view.sweepChart) view.sweepChart.destroy();
-  Object.assign(view, {id: null, sig: null, chart: null, sweepChart: null, data: null, idx: 0, pos: 0, hover: null, zoom: null, dial: null});
-}
 
-const dialSVG = () => `<svg viewBox="-90 -90 180 180" role="img" aria-label="Sublattice orientations in the x–z plane" id="dialsvg">
+const dialSVG = () => `<svg viewBox="-90 -90 180 180" role="img" aria-label="Sublattice orientations in the x–z plane">
   <circle r="${R}" fill="none" style="stroke:var(--line)"/><line x1="-${R}" y1="0" x2="${R}" y2="0" style="stroke:var(--grid)"/><line x1="0" y1="-${R}" x2="0" y2="${R}" style="stroke:var(--grid)"/>
   <text x="0" y="-${R + 8}" text-anchor="middle" font-size="10" style="fill:var(--muted)">+z</text><text x="${R + 6}" y="3" font-size="10" style="fill:var(--muted)">+x</text>
-  <path id="trail1" d="" fill="none" stroke="#1F4FD1" stroke-opacity=".4" stroke-width="1"/>
-  <path id="trail2" d="" fill="none" stroke="#B0127F" stroke-opacity=".4" stroke-width="1"/>
-  <line id="nl" x1="0" y1="0" x2="0" y2="0" style="stroke:var(--ink)" stroke-width="1.2" stroke-dasharray="4 4"/>
-  <line id="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><circle id="d1" r="4.7" fill="#1F4FD1"/>
-  <line id="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><circle id="d2" r="4.7" fill="#B0127F"/></svg>`;
-
-function bindDial() { view.dial = {l1: $("#l1"), d1: $("#d1"), l2: $("#l2"), d2: $("#d2"), nl: $("#nl"), t1: $("#trail1"), t2: $("#trail2")}; }
-function dialSet(m1, m2) {
-  const D = view.dial; if (!D) return;
-  const a = (el, x, y, p, q) => { el.setAttribute(p, x); el.setAttribute(q, y); };
-  a(D.l1, m1[0] * R, -m1[2] * R, "x2", "y2"); a(D.d1, m1[0] * R, -m1[2] * R, "cx", "cy");
-  a(D.l2, m2[0] * R, -m2[2] * R, "x2", "y2"); a(D.d2, m2[0] * R, -m2[2] * R, "cx", "cy");
-  a(D.nl, (m1[0] - m2[0]) / 2 * R, -(m1[2] - m2[2]) / 2 * R, "x2", "y2");
-}
+  <path data-v="trail1" d="" fill="none" stroke="#1F4FD1" stroke-opacity=".4" stroke-width="1"/>
+  <path data-v="trail2" d="" fill="none" stroke="#B0127F" stroke-opacity=".4" stroke-width="1"/>
+  <line data-v="nl" x1="0" y1="0" x2="0" y2="0" style="stroke:var(--ink)" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <line data-v="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><circle data-v="d1" r="4.7" fill="#1F4FD1"/>
+  <line data-v="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><circle data-v="d2" r="4.7" fill="#B0127F"/></svg>`;
 
 const sg = v => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(3);
 const vecs = (a, b, c) => `(${sg(a)}, ${sg(b)}, ${sg(c)})`;
@@ -1002,79 +965,12 @@ function statusText(r) {
     : r.status === "queued" ? `queued, estimated ${dur(r.estimated_runtime_s)}` : r.status + (s ? `, ${dur(s.runtime_s)}` : "");
 }
 
-function updateReadout(i, label) {
-  const d = view.data; if (!d || !$("#readout")) return;
-  const C = d.cols;
-  $("#readout").innerHTML = `<span><em>${label}</em> t = ${d.t[i].toFixed(4)} ns</span>` +
-    `<span><em>m₁</em> ${vecs(C.m1x[i], C.m1y[i], C.m1z[i])}</span><span><em>m₂</em> ${vecs(C.m2x[i], C.m2y[i], C.m2z[i])}</span><span><em>n</em> ${vecs(C.nx[i], C.ny[i], C.nz[i])}</span>`;
-}
-function setIdx(i) {
-  const d = view.data; if (!d) return;
-  i = Math.max(0, Math.min(d.t.length - 1, Math.round(i))); view.idx = i;
-  const C = d.cols;
-  dialSet([C.m1x[i], C.m1y[i], C.m1z[i]], [C.m2x[i], C.m2y[i], C.m2z[i]]);
-  view.chart.setPlayhead(d.t[i]); $("#scrub").value = i;
-  if (view.hover === null) updateReadout(i, "playhead");
-}
-function stopPlay() { view.playing = false; cancelAnimationFrame(view.raf); const b = $("#play"); if (b) b.textContent = "Play"; }
-function togglePlay() {
-  if (!view.data) return;
-  if (view.playing) return stopPlay();
-  const N = view.data.t.length; if (view.pos >= N - 1) view.pos = 0;
-  view.playing = true; view.last = performance.now(); $("#play").textContent = "Pause";
-  view.raf = requestAnimationFrame(tick);
-}
-function tick(now) {
-  if (!view.playing) return;
-  const N = view.data.t.length, dt = (now - view.last) / 1000; view.last = now;
-  view.pos += dt / (8 / view.speed) * (N - 1);
-  if (view.pos >= N - 1) { view.pos = N - 1; setIdx(view.pos); return stopPlay(); }
-  setIdx(view.pos); view.raf = requestAnimationFrame(tick);
-}
-
-function applyVisibility() {
-  CH.forEach((ch, j) => { if (view.chart && view.chart.series[j]) view.chart.series[j].visible = prefs[ch.k]; });
-  document.querySelectorAll("#legend button").forEach(b => b.setAttribute("aria-pressed", String(prefs[b.dataset.k])));
-  try { localStorage.setItem("sublattice.channels", JSON.stringify(prefs)); } catch {}
-  if (view.chart) view.chart.draw();
-}
-
-async function loadSeries(id, zoom) {
-  const note = $("#plotnote");
-  const q = new URLSearchParams({points: 2000}); if (zoom) { q.set("t0_ns", zoom[0]); q.set("t1_ns", zoom[1]); }
-  let d;
-  try { d = await api(`/api/runs/${id}/series?${q}`); } catch (e) { if (note) note.textContent = "Trajectory not available: " + e.message; return; }
-  if (view.id !== id || !view.chart) return;
-  const cols = {m1x: d.m1x, m1y: d.m1y, m1z: d.m1z, m2x: d.m2x, m2y: d.m2y, m2z: d.m2z};
-  for (const a of "xyz") cols["n" + a] = d["m1" + a].map((v, i) => (v - d["m2" + a][i]) / 2);
-  view.data = {t: d.t_ns, cols}; view.zoom = zoom;
-  view.chart.setData(d.t_ns, CH.map(ch => ({...ch, y: cols[ch.k], visible: prefs[ch.k]})));
-  // trail of the tips in the x-z projection; broken wherever neighbouring samples are too far apart
-  // to be connected honestly (the motion between them is faster than the sampling shown)
-  let gaps = 0;
-  const trail = k => {
-    let path = "", pen = false;
-    for (let i = 0; i < d.t_ns.length; i++) {
-      let ok = i > 0;
-      if (ok) { const dot = cols[k + "x"][i] * cols[k + "x"][i - 1] + cols[k + "y"][i] * cols[k + "y"][i - 1] + cols[k + "z"][i] * cols[k + "z"][i - 1]; ok = Math.acos(Math.max(-1, Math.min(1, dot))) < 0.35; }
-      if (!ok && i > 0) gaps++;
-      path += `${ok && pen ? "L" : "M"}${(cols[k + "x"][i] * R).toFixed(1)},${(-cols[k + "z"][i] * R).toFixed(1)}`;
-      pen = true;
-    }
-    return path;
-  };
-  view.dial.t1.setAttribute("d", trail("m1")); view.dial.t2.setAttribute("d", trail("m2"));
-  $("#scrub").max = d.t_ns.length - 1; view.hover = null; view.pos = d.t_ns.length - 1; stopPlay(); setIdx(view.pos);
-  $("#resetzoom").hidden = !zoom;
-  note.textContent = (zoom ? `Window ${zoom[0].toFixed(3)}–${zoom[1].toFixed(3)} ns. ` : "") +
-    (d.n_returned < d.n_window ? `Showing ${d.n_returned.toLocaleString()} of ${d.n_window.toLocaleString()} points; drag to zoom for detail. ` : "") +
-    (gaps ? "Parts of the dial trail are not drawn where the motion is faster than the sampling; zoom in to resolve them. " : "") +
-    "Click to move the playhead, drag to zoom, double-click to reset.";
-}
-
-function buildRunViewer(box, r) {
-  const s = r.summary;
-  box.querySelector("#viewer").innerHTML = `
+class RunView {
+  constructor(box, r) {
+    this.id = r.id; this.box = box; this.data = null; this.idx = 0; this.pos = 0; this.playing = false;
+    this.speed = 1; this.raf = 0; this.hover = null; this.zoom = null;
+    const s = r.summary, q = this.q = sel => box.querySelector(sel), D = k => q(`[data-v=${k}]`);
+    box.innerHTML = `
     <div class="top">
       <div><div class="dial">${dialSVG()}</div>
         <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:currentColor;border-top-style:dashed"></b>n</span></div></div>
@@ -1093,154 +989,117 @@ function buildRunViewer(box, r) {
       <div class="plot-tools">
         <div class="presets" role="group" aria-label="Quantities to show">
           <button type="button" data-preset="m">m₁, m₂</button><button type="button" data-preset="z">z only</button><button type="button" data-preset="n">Néel n</button></div>
-        <div class="legend" id="legend">${CH.map(ch => `<button type="button" data-k="${ch.k}" aria-pressed="${prefs[ch.k]}">
+        <div class="legend" data-v="legend">${CH.map(ch => `<button type="button" data-k="${ch.k}" aria-pressed="${prefs[ch.k]}">
           <svg viewBox="0 0 20 8" aria-hidden="true"><line x1="0" y1="4" x2="20" y2="4" stroke="${ch.c === "#17212B" ? "currentColor" : ch.c}" stroke-width="2" stroke-dasharray="${ch.dash.length ? ch.dash.map(v => v * 1.2).join(" ") : "none"}"/></svg><span>${ch.name}</span></button>`).join("")}</div>
       </div>
-      <div class="canvaswrap"><canvas id="chart" role="img" aria-label="Magnetization components of ${r.id} versus time"></canvas></div>
-      <div class="readout mono" id="readout"></div>
+      <div class="canvaswrap"><canvas role="img" aria-label="Magnetization components of ${r.id} versus time"></canvas></div>
+      <div class="readout mono" data-v="readout"></div>
       <div class="transport">
-        <button class="btn small" id="play" type="button">Play</button>
-        <select id="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
-        <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Time">
-        <button class="btn small" id="resetzoom" type="button" hidden>Reset zoom</button>
+        <button class="btn small" data-v="play" type="button">Play</button>
+        <select data-v="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+        <input data-v="scrub" type="range" min="0" max="0" value="0" aria-label="Time">
+        <button class="btn small" data-v="resetzoom" type="button" hidden>Reset zoom</button>
       </div>
-      <div class="note" id="plotnote">Loading trajectory…</div>
+      <div class="note" data-v="note">Loading trajectory…</div>
     </div>`;
-  bindDial();
-  view.chart = new Chart($("#chart"), {
-    height: 250, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05,
-    onHover: i => { view.hover = i; if (i === null) updateReadout(view.idx, "playhead"); else updateReadout(i, "cursor"); },
-    onClick: i => { stopPlay(); view.pos = i; setIdx(i); },
-    onZoom: (a, b) => loadSeries(r.id, [Math.max(a, 0), b]),
-    onReset: () => { if (view.zoom) loadSeries(r.id, null); },
-  });
-  $("#play").onclick = togglePlay;
-  $("#speed").onchange = e => { view.speed = +e.target.value; };
-  $("#scrub").oninput = e => { stopPlay(); view.pos = +e.target.value; setIdx(view.pos); };
-  $("#resetzoom").onclick = () => loadSeries(r.id, null);
-  box.querySelectorAll("#legend button").forEach(b => b.onclick = () => { prefs[b.dataset.k] = !prefs[b.dataset.k]; applyVisibility(); });
-  box.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { for (const ch of CH) prefs[ch.k] = PRESETS[b.dataset.preset].includes(ch.k); applyVisibility(); });
-  loadSeries(r.id, null);
-}
-
-function updateProgress(r) {
-  const st = $("#st"), bar = $("#barfill");
-  if (st) { st.textContent = statusText(r); st.className = "status " + r.status; }
-  if (bar) bar.style.width = (r.progress * 100).toFixed(1) + "%";
-}
-
-function renderRun(box, r) {
-  const active = ["running", "queued"].includes(r.status);
-  box.innerHTML = `
-    <div class="sel-head"><strong class="mono">${r.id}</strong><span>${esc(r.label || "")}</span><span class="status ${r.status}" id="st">${statusText(r)}</span></div>
-    ${active ? `<div class="bar"><i id="barfill" style="width:${(r.progress * 100).toFixed(1)}%"></i></div><div class="note">The trajectory appears when the run finishes.</div>` : ""}
-    ${(r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("")}
-    ${r.error_tail ? `<pre class="mono" style="white-space:pre-wrap;color:var(--err)">${esc(r.error_tail)}</pre>` : ""}
-    <div id="viewer"></div>
-    <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}${r.status === "done" ? ` <a href="/api/runs/${r.id}/export.csv" download>trajectory.csv</a> <a href="/api/runs/${r.id}/export.zip" download>all data (.zip)</a>` : ""}</div>
-    <div class="actions">
-      ${r.status === "done" ? `<button class="btn" id="analyse" type="button">Ask the assistant to analyse ${r.id}</button>` : ""}
-      ${active ? `<button class="btn" id="cancel" type="button">Cancel run</button>` : ""}
-      <button class="btn" id="loadparams" type="button">Load its parameters</button>
-    </div>`;
-  if (r.status === "done" && r.summary) buildRunViewer(box, r);
-  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse run ${r.id}.`; send(); };
-  const c = $("#cancel"); if (c) c.onclick = async () => { await postJson(`/api/runs/${r.id}/cancel`, {}); await refreshRuns(); renderSelected(true); };
-  $("#loadparams").onclick = () => { $("#params").value = r.parameters_text; $("#label").value = r.label || ""; showTab("params"); setMode("deep"); $("#check").click(); };
-}
-
-function renderSweep(box, s) {
-  const c = s.status_counts || {}, done = c.done || 0, total = s.run_ids.length;
-  const isFreq = /Fr$/.test(s.parameter), scale = isFreq ? 1e9 : 1;
-  const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
-  box.innerHTML = `
-    <div class="sel-head"><strong class="mono">${s.id}</strong><span>Sweep of ${esc(s.parameter)}${s.label ? ", " + esc(s.label) : ""}</span>
-      <span class="status ${done === total ? "done" : "running"}">${done}/${total} done${c.failed ? `, ${c.failed} failed` : ""}</span></div>
-    <div class="bar"><i style="width:${(100 * done / total).toFixed(1)}%"></i></div>
-    ${rows.length ? `<div class="plotbox"><div class="canvaswrap"><canvas id="schart" role="img" aria-label="Mean |n_z| versus ${esc(s.parameter)}"></canvas></div>
-      <div class="readout mono" id="sreadout"><span><em>Hover a point; click it to open that run.</em></span></div></div>` : ""}
-    <label class="inline">Ignore the first <input id="discard" type="number" min="0" max="90" step="5" value="${Math.round(state.discard * 100)}"> % of each run (transient)</label>
-    <table class="sweep-table"><tr><th>${esc(s.parameter)}</th><th>run</th><th>status</th><th>mean |n_z|</th></tr>
-      ${s.rows.map(r => `<tr><td>${eng(r.value)}</td><td><a href="#" data-run="${r.run_id}">${r.run_id}</a></td><td>${r.status}</td><td>${fmt(r.neel_z_abs_mean)}</td></tr>`).join("")}</table>
-    <div class="actions">${done === total ? `<button class="btn" id="analyse" type="button">Ask the assistant to analyse ${s.id}</button>` : ""}</div>`;
-  if (rows.length) {
-    view.sweepChart = new Chart($("#schart"), {
-      height: 230, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|",
-      xFmt: isFreq ? null : eng,
-      onHover: i => { $("#sreadout").innerHTML = i === null ? `<span><em>Hover a point; click it to open that run.</em></span>`
-        : `<span>${esc(s.parameter)} = ${isFreq ? +(rows[i].value / 1e9).toPrecision(5) + " GHz" : eng(rows[i].value)}</span><span>mean |n<sub>z</sub>| = ${fmt(rows[i].neel_z_abs_mean)}</span><span><em>${rows[i].run_id}</em></span>`; },
-      onClick: i => select(rows[i].run_id),
+    this.dial = {l1: D("l1"), d1: D("d1"), l2: D("l2"), d2: D("d2"), nl: D("nl"), t1: D("trail1"), t2: D("trail2")};
+    this.chart = new Chart(q("canvas"), {
+      height: 250, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05,
+      onHover: i => { this.hover = i; if (i === null) this.readout(this.idx, "playhead"); else this.readout(i, "cursor"); },
+      onClick: i => { this.stopPlay(); this.pos = i; this.setIdx(i); },
+      onZoom: (a, b) => this.load([Math.max(a, 0), b]),
+      onReset: () => { if (this.zoom) this.load(null); },
     });
-    view.sweepChart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
+    D("play").onclick = () => this.togglePlay();
+    D("speed").onchange = e => { this.speed = +e.target.value; };
+    D("scrub").oninput = e => { this.stopPlay(); this.pos = +e.target.value; this.setIdx(this.pos); };
+    D("resetzoom").onclick = () => this.load(null);
+    box.querySelectorAll("[data-v=legend] button").forEach(b => b.onclick = () => { prefs[b.dataset.k] = !prefs[b.dataset.k]; this.applyVisibility(); });
+    box.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { for (const ch of CH) prefs[ch.k] = PRESETS[b.dataset.preset].includes(ch.k); this.applyVisibility(); });
+    this.load(null);
   }
-  box.querySelectorAll("[data-run]").forEach(a => a.onclick = e => { e.preventDefault(); select(a.dataset.run); });
-  const a = $("#analyse"); if (a) a.onclick = () => { $("#input").value = `Analyse sweep ${s.id}.`; send(); };
-  $("#discard").onchange = e => { state.discard = Math.max(0, Math.min(0.9, (+e.target.value || 0) / 100)); renderSelected(true); };
+  dialSet(m1, m2) {
+    const D = this.dial, a = (el, x, y, p, q) => { el.setAttribute(p, x); el.setAttribute(q, y); };
+    a(D.l1, m1[0] * R, -m1[2] * R, "x2", "y2"); a(D.d1, m1[0] * R, -m1[2] * R, "cx", "cy");
+    a(D.l2, m2[0] * R, -m2[2] * R, "x2", "y2"); a(D.d2, m2[0] * R, -m2[2] * R, "cx", "cy");
+    a(D.nl, (m1[0] - m2[0]) / 2 * R, -(m1[2] - m2[2]) / 2 * R, "x2", "y2");
+  }
+  readout(i, label) {
+    const d = this.data; if (!d) return; const C = d.cols;
+    this.q("[data-v=readout]").innerHTML = `<span><em>${label}</em> t = ${d.t[i].toFixed(4)} ns</span>` +
+      `<span><em>m₁</em> ${vecs(C.m1x[i], C.m1y[i], C.m1z[i])}</span><span><em>m₂</em> ${vecs(C.m2x[i], C.m2y[i], C.m2z[i])}</span><span><em>n</em> ${vecs(C.nx[i], C.ny[i], C.nz[i])}</span>`;
+  }
+  setIdx(i) {
+    const d = this.data; if (!d) return;
+    i = Math.max(0, Math.min(d.t.length - 1, Math.round(i))); this.idx = i;
+    const C = d.cols;
+    this.dialSet([C.m1x[i], C.m1y[i], C.m1z[i]], [C.m2x[i], C.m2y[i], C.m2z[i]]);
+    this.chart.setPlayhead(d.t[i]); this.q("[data-v=scrub]").value = i;
+    if (this.hover === null) this.readout(i, "playhead");
+  }
+  stopPlay() { this.playing = false; cancelAnimationFrame(this.raf); const b = this.q("[data-v=play]"); if (b) b.textContent = "Play"; }
+  togglePlay() {
+    if (!this.data) return;
+    if (this.playing) return this.stopPlay();
+    const N = this.data.t.length; if (this.pos >= N - 1) this.pos = 0;
+    this.playing = true; this.last = performance.now(); this.q("[data-v=play]").textContent = "Pause";
+    this.raf = requestAnimationFrame(t => this.tick(t));
+  }
+  tick(now) {
+    if (!this.playing) return;
+    const N = this.data.t.length, dt = (now - this.last) / 1000; this.last = now;
+    this.pos += dt / (8 / this.speed) * (N - 1);
+    if (this.pos >= N - 1) { this.pos = N - 1; this.setIdx(this.pos); return this.stopPlay(); }
+    this.setIdx(this.pos); this.raf = requestAnimationFrame(t => this.tick(t));
+  }
+  applyVisibility() {
+    CH.forEach((ch, j) => { if (this.chart.series[j]) this.chart.series[j].visible = prefs[ch.k]; });
+    this.box.querySelectorAll("[data-v=legend] button").forEach(b => b.setAttribute("aria-pressed", String(prefs[b.dataset.k])));
+    try { localStorage.setItem("sublattice.channels", JSON.stringify(prefs)); } catch {}
+    this.chart.draw();
+  }
+  async load(zoom) {
+    const note = this.q("[data-v=note]"), q = new URLSearchParams({points: 2000});
+    if (zoom) { q.set("t0_ns", zoom[0]); q.set("t1_ns", zoom[1]); }
+    let d;
+    try { d = await api(`/api/runs/${this.id}/series?${q}`); } catch (e) { note.textContent = "Trajectory not available: " + e.message; return; }
+    if (!this.chart) return;
+    const cols = {m1x: d.m1x, m1y: d.m1y, m1z: d.m1z, m2x: d.m2x, m2y: d.m2y, m2z: d.m2z};
+    for (const a of "xyz") cols["n" + a] = d["m1" + a].map((v, i) => (v - d["m2" + a][i]) / 2);
+    this.data = {t: d.t_ns, cols}; this.zoom = zoom;
+    this.chart.setData(d.t_ns, CH.map(ch => ({...ch, y: cols[ch.k], visible: prefs[ch.k]})));
+    // the trail is broken wherever neighbouring samples are too far apart to be connected honestly
+    let gaps = 0;
+    const trail = k => {
+      let path = "", pen = false;
+      for (let i = 0; i < d.t_ns.length; i++) {
+        let ok = i > 0;
+        if (ok) { const dot = cols[k + "x"][i] * cols[k + "x"][i - 1] + cols[k + "y"][i] * cols[k + "y"][i - 1] + cols[k + "z"][i] * cols[k + "z"][i - 1]; ok = Math.acos(Math.max(-1, Math.min(1, dot))) < 0.35; }
+        if (!ok && i > 0) gaps++;
+        path += `${ok && pen ? "L" : "M"}${(cols[k + "x"][i] * R).toFixed(1)},${(-cols[k + "z"][i] * R).toFixed(1)}`;
+        pen = true;
+      }
+      return path;
+    };
+    this.dial.t1.setAttribute("d", trail("m1")); this.dial.t2.setAttribute("d", trail("m2"));
+    this.q("[data-v=scrub]").max = d.t_ns.length - 1; this.hover = null; this.pos = d.t_ns.length - 1; this.stopPlay(); this.setIdx(this.pos);
+    this.q("[data-v=resetzoom]").hidden = !zoom;
+    note.textContent = (zoom ? `Window ${zoom[0].toFixed(3)}–${zoom[1].toFixed(3)} ns. ` : "") +
+      (d.n_returned < d.n_window ? `Showing ${d.n_returned.toLocaleString()} of ${d.n_window.toLocaleString()} points; drag to zoom for detail. ` : "") +
+      (gaps ? "Parts of the dial trail are not drawn where the motion is faster than the sampling; zoom in to resolve them. " : "") +
+      "Click to move the playhead, drag to zoom, double-click to reset.";
+  }
+  destroy() { this.stopPlay(); if (this.chart) { this.chart.destroy(); this.chart = null; } }
 }
 
-async function renderSelected(force = false) {
-  const id = state.selected; if (!id) return;
-  const token = ++view.token, box = $("#selected");
-  try {
-    const isSweep = id.startsWith("s");
-    const data = await api(isSweep ? `/api/sweeps/${id}?discard_fraction=${state.discard}` : `/api/runs/${id}`);
-    if (token !== view.token || id !== state.selected) return;
-    const sig = isSweep ? `${id}:${state.discard}:${JSON.stringify(data.status_counts)}` : `${id}:${data.status}`;
-    if (!force && view.sig === sig) { if (!isSweep && ["running", "queued"].includes(data.status)) updateProgress(data); return; }
-    if (view.chart) { view.chart.destroy(); view.chart = null; } if (view.sweepChart) { view.sweepChart.destroy(); view.sweepChart = null; }
-    stopPlay(); view.data = null; view.dial = null; view.id = id; view.sig = sig;
-    isSweep ? renderSweep(box, data) : renderRun(box, data);
-  } catch (e) { box.innerHTML = `<div class="nothing">${esc(e.message)}</div>`; }
-}
-
-// ---------------------------------------------------------------- run list
 async function refreshRuns() {
   try {
     const out = await api("/api/runs");
-    state.runs = out.runs; state.sweeps = out.sweeps; renderRuns(); updateCards();
-    if (state.selected) await renderSelected();
+    state.runs = out.runs; state.sweeps = out.sweeps; updateCards();
   } catch {}
 }
-function renderRuns() {
-  const ul = $("#runs"); ul.innerHTML = "";
-  const items = [...state.sweeps.map(s => ({kind: "sweep", ...s})), ...state.runs.filter(r => !r.sweep_id).map(r => ({kind: "run", ...r}))]
-    .sort((a, b) => (b.created || 0) - (a.created || 0));
-  if (!items.length) { ul.innerHTML = `<li class="nothing">No runs yet.</li>`; return; }
-  for (const it of items) {
-    const li = document.createElement("li"); li.tabIndex = 0;
-    if (it.id === state.selected) li.classList.add("active");
-    let right;
-    if (it.kind === "sweep") right = `<span class="status">${it.done}/${it.runs} done</span>`;
-    else if (it.status === "running") right = `<span class="mini"><i style="width:${(it.progress * 100).toFixed(0)}%"></i></span><span class="status running">${(it.progress * 100).toFixed(0)}%</span>`;
-    else right = `<span class="status ${it.status}">${it.status}</span>`;
-    const label = it.kind === "sweep" ? `Sweep of ${it.parameter}${it.label ? ", " + it.label : ""}` : (it.label || "untitled");
-    li.innerHTML = `<span class="id">${it.id}</span><span class="lbl">${esc(label)}</span><span>${right}</span>`;
-    li.onclick = () => select(it.id);
-    li.onkeydown = e => { if (e.key === "Enter") select(it.id); };
-    ul.appendChild(li);
-  }
-}
-async function select(id) {
-  const changed = state.selected !== id;
-  setBench(true);
-  if (changed) { resetView(); state.selected = id; }
-  showTab("result"); renderRuns(); await renderSelected(changed);
-}
 
-// ---------------------------------------------------------------- tabs, editor
-function showTab(name) {
-  for (const t of ["result", "params"]) {
-    $("#tab-" + t).setAttribute("aria-selected", String(t === name));
-    $("#panel-" + t).hidden = t !== name;
-  }
-}
-$("#tab-result").onclick = () => showTab("result");
-$("#tab-params").onclick = () => showTab("params");
-document.querySelector(".tabs").addEventListener("keydown", e => {
-  if (e.key === "ArrowRight") { showTab("params"); $("#tab-params").focus(); }
-  if (e.key === "ArrowLeft") { showTab("result"); $("#tab-result").focus(); }
-});
-
+// ---------------------------------------------------------------- manual run (setup dialog)
 function showCheck(r, el = $("#checkout")) {
   if (!r) { el.className = "check"; el.textContent = ""; return; }
   if (!r.ok) { el.className = "check bad"; el.textContent = r.error; return; }
@@ -1256,7 +1115,7 @@ async function runText(text, label, show) {
     const chk = await postJson("/api/validate", {parameters_text: text}); show(chk);
     if (!chk.ok) return;
     const out = await postJson("/api/runs", {parameters_text: text, label});
-    trackRun(out.run_id, label); await refreshRuns();
+    trackRun(out.run_id, label); closeSetup(); await refreshRuns();
   } catch (e) { show({ok: false, error: e.message}); }
 }
 $("#run").onclick = () => runText($("#params").value, $("#label").value, r => showCheck(r));
@@ -1276,24 +1135,36 @@ $("#examples").onchange = e => {
 // ---------------------------------------------------------------- run cards in the chat (process, then graph)
 const cardEls = new Map();
 const CARD_SERIES = [{k: "m1z", c: "#1F4FD1"}, {k: "m2z", c: "#B0127F"}, {k: "nz", c: "#17212B"}];
+function openRunCard(id) {
+  if (!cardEls.has(id)) { if (id.startsWith("s")) trackSweep(id); else trackRun(id); }
+  setTimeout(() => {
+    const c = cardEls.get(id); if (!c) return;
+    c.el.scrollIntoView({behavior: "smooth", block: "center"});
+    c.el.classList.add("flash"); setTimeout(() => c.el.classList.remove("flash"), 1500);
+  }, 60);
+}
 function trackRun(id, label) {
   if (cardEls.has(id)) return;
   const el = document.createElement("div"); el.className = "runcard";
   el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label">${esc(label || "")}</span><span class="status" data-r="st"></span></div>
     <ul class="steps"><li data-s="check"></li><li data-s="start"></li><li data-s="sim"></li><li data-s="plot"></li></ul>
     <div class="bar"><i data-r="bar" style="width:0"></i></div>
-    <div class="rc-plot" hidden><div class="rc-legend"><span style="color:#1F4FD1">m<sub>1z</sub></span><span style="color:#B0127F">m<sub>2z</sub></span><span>n<sub>z</sub></span></div>
-      <div class="canvaswrap"><canvas role="img" aria-label="Trajectory of ${id}"></canvas></div><div class="rc-meta mono"></div></div>
-    <div class="actions"><button class="btn small" type="button" data-r="open">Open full viewer</button>
-      <a class="btn small" data-r="csv" hidden download>Export CSV</a><a class="btn small" data-r="zip" hidden download>Export all data (.zip)</a></div>`;
-  el.querySelector("[data-r=open]").onclick = () => select(id);
-  cardEls.set(id, {el, chart: null, final: false}); state.cards.push(id);
+    <pre class="mono rc-err" hidden></pre>
+    <div class="rc-view" hidden></div>
+    <div class="files" data-r="files" hidden></div>
+    <div class="actions">
+      <button class="btn small" type="button" data-r="cancel">Cancel run</button>
+      <button class="btn small" type="button" data-r="analyse" hidden>Ask the assistant to analyse</button>
+      <button class="btn small" type="button" data-r="edit" hidden>Edit parameters</button>
+      <a class="btn small" data-r="csv" download hidden>Export CSV</a><a class="btn small" data-r="zip" download hidden>Export all data (.zip)</a>
+    </div>`;
+  cardEls.set(id, {el, chart: null, view: null, final: false}); state.cards.push(id);
   setStep(el, "check", "done", "Parameters checked"); setStep(el, "start", "done", `Run ${id} started`);
-  setStep(el, "sim", "active", "Waiting for the solver"); setStep(el, "plot", "wait", "Plot the trajectory");
+  setStep(el, "sim", "active", "Waiting for the solver"); setStep(el, "plot", "wait", "Show the results");
   render(); updateCards();
 }
 function setStep(el, k, st, text) { const li = el.querySelector(`[data-s=${k}]`); li.className = st; li.innerHTML = `<span class="dot"></span>${text}`; }
-function clearCards() { for (const c of cardEls.values()) c.chart && c.chart.destroy(); cardEls.clear(); state.cards = []; }
+function clearCards() { for (const c of cardEls.values()) { c.chart && c.chart.destroy(); c.view && c.view.destroy(); } cardEls.clear(); state.cards = []; }
 async function updateCards() {
   for (const id of state.cards) {
     const c = cardEls.get(id); if (!c || c.final || c.busy) continue;
@@ -1305,7 +1176,7 @@ async function updateCards() {
     } catch (e) {
       if (/not found/i.test(e.message)) {
         c.final = true; c.el.querySelector("[data-r=st]").textContent = "no longer available";
-        if (!sweep) setStep(c.el, "sim", "bad", "This run is no longer on the server");
+        if (!sweep) { setStep(c.el, "sim", "bad", "This run is no longer on the server"); c.el.querySelector("[data-r=cancel]").hidden = true; }
       }
     }
     c.busy = false;
@@ -1317,9 +1188,8 @@ function trackSweep(id) {
   el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label"></span><span class="status" data-r="st"></span></div>
     <div class="bar"><i data-r="bar" style="width:0"></i></div>
     <div class="rc-plot" hidden><div class="canvaswrap"><canvas role="img" aria-label="Sweep ${id}"></canvas></div><div class="rc-meta mono"></div></div>
-    <div class="actions"><button class="btn small" type="button" data-r="open">Open in workbench</button></div>`;
-  el.querySelector("[data-r=open]").onclick = () => select(id);
-  cardEls.set(id, {el, chart: null, final: false}); state.cards.push(id);
+    <div class="actions"><button class="btn small" type="button" data-r="analyse" hidden>Ask the assistant to analyse</button></div>`;
+  cardEls.set(id, {el, chart: null, view: null, final: false}); state.cards.push(id);
   render(); updateCards();
 }
 async function paintSweepCard(id, c, s) {
@@ -1331,46 +1201,53 @@ async function paintSweepCard(id, c, s) {
   el.querySelector(".rc-label").textContent = `sweep of ${s.parameter}`;
   if (done + failed < total) return;
   c.final = true;
+  const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = `Analyse sweep ${id}.`; send(); };
   const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
   if (!rows.length) return;
   const isFreq = /Fr$/.test(s.parameter), scale = isFreq ? 1e9 : 1, plot = el.querySelector(".rc-plot"); plot.hidden = false;
-  c.chart = new Chart(plot.querySelector("canvas"), {height: 200, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|", xFmt: isFreq ? null : eng});
+  c.chart = new Chart(plot.querySelector("canvas"), {height: 200, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|", xFmt: isFreq ? null : eng,
+    onClick: i => openRunCard(rows[i].run_id)});
   c.chart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
-  plot.querySelector(".rc-meta").textContent = rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${r.neel_z_sign_changes ? ", " + r.neel_z_sign_changes + " flips" : ""}`).join("\n");
+  plot.querySelector(".rc-meta").textContent = "Click a point to open that run.\n" +
+    rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${r.neel_z_sign_changes ? ", " + r.neel_z_sign_changes + " flips" : ""}`).join("\n");
 }
 async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
+  const show = (k, on) => { el.querySelector(`[data-r=${k}]`).hidden = !on; };
   st.textContent = statusText(r); st.className = "status " + r.status;
   bar.style.width = (r.status === "done" ? 100 : r.progress * 100).toFixed(1) + "%";
   if (r.status === "queued") setStep(el, "sim", "active", `Queued, estimated ${dur(r.estimated_runtime_s)}`);
   else if (r.status === "running") setStep(el, "sim", "active", `Simulating, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`);
   else if (r.status === "done") setStep(el, "sim", "done", `Simulated${r.summary ? " in " + dur(r.summary.runtime_s) : ""}`);
-  else { setStep(el, "sim", "bad", "Run " + r.status); setStep(el, "plot", "bad", "No trajectory"); c.final = true; return; }
+  else {
+    setStep(el, "sim", "bad", "Run " + r.status); setStep(el, "plot", "bad", "No trajectory"); c.final = true; show("cancel", false);
+    if (r.error_tail) { const pre = el.querySelector(".rc-err"); pre.hidden = false; pre.textContent = r.error_tail; }
+    return;
+  }
+  const active = r.status === "queued" || r.status === "running";
+  show("cancel", active);
+  el.querySelector("[data-r=cancel]").onclick = async () => { await postJson(`/api/runs/${id}/cancel`, {}); refreshRuns(); };
   if (r.status !== "done" || !r.summary) return;
-  c.final = true;
+  c.final = true; show("cancel", false);
   const csv = el.querySelector("[data-r=csv]"), zip = el.querySelector("[data-r=zip]");
-  csv.href = `/api/runs/${id}/export.csv`; zip.href = `/api/runs/${id}/export.zip`; csv.hidden = zip.hidden = false;
-  setStep(el, "plot", "active", "Plotting the trajectory");
-  const plot = el.querySelector(".rc-plot"); plot.hidden = false;
-  try {
-    const d = await api(`/api/runs/${id}/series?points=1200`);
-    const cols = {m1z: d.m1z, m2z: d.m2z, nz: d.m1z.map((v, i) => (v - d.m2z[i]) / 2)};
-    c.chart = new Chart(plot.querySelector("canvas"), {height: 210, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05});
-    c.chart.setData(d.t_ns, CARD_SERIES.map(s => ({...s, y: cols[s.k]})));
-    setStep(el, "plot", "done", "Trajectory ready");
-    const s = r.summary;
-    plot.querySelector(".rc-meta").textContent = `${s.order_final ? s.order_initial + " → " + s.order_final + "   " : ""}mean |nz| = ${fmt(s.neel_z_abs_mean)}   nz sign changes = ${s.neel_z_sign_changes}   n final = ${vec(s.neel_final)}`;
-  } catch (e) { setStep(el, "plot", "bad", "Trajectory not available: " + esc(e.message)); }
+  csv.href = `/api/runs/${id}/export.csv`; zip.href = `/api/runs/${id}/export.zip`;
+  for (const k of ["csv", "zip", "analyse", "edit"]) show(k, true);
+  el.querySelector("[data-r=analyse]").onclick = () => { $("#input").value = `Analyse run ${id}.`; send(); };
+  el.querySelector("[data-r=edit]").onclick = () => { openSetup("deep"); $("#params").value = r.parameters_text; $("#label").value = r.label || ""; $("#check").click(); };
+  const files = el.querySelector("[data-r=files]");
+  files.innerHTML = r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${id}/files/${f}" download>${f}</a>`).join("");
+  files.hidden = false;
+  setStep(el, "plot", "done", "Results below");
+  const box = el.querySelector(".rc-view"); box.hidden = false;
+  c.view = new RunView(box, r);
 }
 
-
-// ---------------------------------------------------------------- workbench toggle, fast / deep setup
-function setBench(open) {
-  document.body.classList.toggle("bench-open", open);
-  $("#benchbtn").setAttribute("aria-pressed", String(open));
-}
-$("#benchbtn").onclick = () => setBench(!document.body.classList.contains("bench-open"));
-$("#closebench").onclick = () => setBench(false);
+// ---------------------------------------------------------------- setup dialog, fast / deep
+function openSetup(mode) { $("#setupdlg").hidden = false; $("#setupback").hidden = false; if (mode) setMode(mode); }
+function closeSetup() { $("#setupdlg").hidden = true; $("#setupback").hidden = true; }
+$("#setupbtn").onclick = () => openSetup();
+$("#setupclose").onclick = closeSetup;
+$("#setupback").onclick = closeSetup;
 
 const FAST = [
   {k: "t", label: "Duration (ns)", scale: 1e-9, min: 0.5, max: 30, step: 0.5},
@@ -1546,7 +1423,7 @@ $("#defsave").onclick = () => {
   baseFast(); fastUpdate(); closeDefaults();
 };
 $("#defreset").onclick = () => { try { localStorage.removeItem(UD_KEY); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
-document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); toggleHistory(false); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); toggleHistory(false); } });
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
@@ -1554,21 +1431,21 @@ const GUIDE_FAQ = [
   [/histor|previous|παλι|ιστορικ/i, "The clock icon in the left bar opens your past conversations. Click one to reopen it with its runs and graphs, or the cross to delete it. The pencil icon starts a new chat."],
   [/default|προεπιλογ/i, "The sliders icon in the left bar (Default parameters) lets you edit the values Fast mode starts from. They are saved in this browser and also sent to the assistant as the base of every run."],
   [/token|cost|κόστος|usage/i, "The small counter next to Fast and Deep shows the tokens used in this chat. Under each answer you see the input and output tokens of that answer. Runs started from Setup use no tokens."],
-  [/export|download|csv|data|εξαγωγ|κατεβ/i, "Every run card in the chat has Export CSV (the whole trajectory) and Export all data (.zip) with every output file. The same links are in the Result tab."],
-  [/fast|deep|mode/i, "Fast (default) uses the default parameters and gives short answers. Deep works from the full parameter set or a txt file and gives a thorough analysis. Switch it under the message box or in Workbench > Setup."],
-  [/workbench|panel|result|αποτελ|δεξ/i, "The Workbench button (top right) opens the right panel with your runs, the Result tab and the Setup tab. It opens by itself when a run starts. Use the X in the panel to close it."],
-  [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, use Workbench > Setup > Deep (txt editor with an examples dropdown)."],
-  [/param|slider|exchange|A0|Ku|Ms|damping/i, "Workbench > Setup > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
-  [/preset|afm|fm\b|ferh/i, "In Workbench > Setup > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
+  [/export|download|csv|data|εξαγωγ|κατεβ/i, "Every run card in the chat has Export CSV (the whole trajectory) and Export all data (.zip) with every output file."],
+  [/fast|deep|mode/i, "Fast (default) uses the default parameters and gives short answers. Deep works from the full parameter set or a txt file and gives a thorough analysis. Switch it under the message box."],
+  [/workbench|panel|result|αποτελ|δεξ|dial|vector/i, "There is no side panel. Results appear in the chat right under your message: the steps, the dial with the +x and +z axes, the m1, m2 and Néel curves with toggles, and a Play button that animates the run."],
+  [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, press the play icon in the left bar (Run setup) and choose Deep: a txt editor with an examples dropdown."],
+  [/param|slider|exchange|A0|Ku|Ms|damping/i, "Run setup (play icon in the left bar) > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
+  [/preset|afm|fm\b|ferh/i, "In Run setup (play icon in the left bar) > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
   [/model|claude|opus|sonnet|haiku/i, "The model dropdown is under the message box. It lists all models available to your API key; choose \"Other model id…\" to type one yourself."],
   [/key|api|κλειδ/i, "Paste your API key in Settings (gear, bottom of the left bar) or set ANTHROPIC_API_KEY in the .env file used by Docker, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
   [/name|όνομα/i, "You can change your name in Settings (gear, left bar) > Your name."],
-  [/graph|plot|zoom|play|viewer|γράφημα/i, "In the Result tab: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
-  [/cancel|stop|ακύρ/i, "Open the running run in the Result tab and press Cancel run."],
-  [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the Result tab."],
+  [/graph|plot|zoom|play|viewer|γράφημα/i, "In the run card: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
+  [/cancel|stop|ακύρ/i, "Press Cancel run on the run card."],
+  [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the chat."],
   [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
-  [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or open Workbench > Setup, pick a preset and press Run. A card with the steps and the graph appears in the chat."],
+  [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or press the play icon in the left bar (Run setup), pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
 const ATHENA_INTRO = "In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. SpinMate is an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh: describe a run in words or attach a parameter file, and it checks the input, runs the simulation and explains the result from the real magnetization curves.";
 const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
@@ -1599,7 +1476,7 @@ function openGuide(open) {
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
 }
-function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1] : "I can only help with using SpinMate: the chat, Fast and Deep modes, the Workbench, runs and results, settings and the API key. Ask me about any of those."; }
+function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1] : "I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."; }
 async function guideAsk(q) {
   q = q.trim(); if (!q || guide.busy) return;
   guideAdd("user", q);
@@ -1646,9 +1523,7 @@ function setTheme(t) {
   if (!["light", "dark", "spin"].includes(t)) t = "light";
   document.documentElement.dataset.theme = t; try { localStorage.setItem("sublattice.theme", t); } catch {}
   document.querySelectorAll("#themes button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
-  if (view.chart) view.chart.draw();
-  if (view.sweepChart) view.sweepChart.draw();
-  for (const c of cardEls.values()) c.chart && c.chart.draw();
+  for (const c of cardEls.values()) { c.chart && c.chart.draw(); c.view && c.view.chart && c.view.chart.draw(); }
 }
 document.querySelectorAll("#themes button").forEach(b => b.onclick = () => setTheme(b.dataset.theme));
 

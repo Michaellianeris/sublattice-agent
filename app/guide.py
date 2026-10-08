@@ -22,18 +22,18 @@ How the app works
 - Centre: the chat. Type a request in words or attach a parameter .txt (paperclip, or drag and drop).
   Under the message box: model dropdown (all models of the API key), Fast / Deep switch, send arrow.
   Fast = default parameters and short answers. Deep = full parameters or a txt file and a thorough analysis.
-- Top right button "Workbench" opens the right panel; the X in that panel closes it. It opens by itself
-  when a run starts. It has a run list and two tabs: Result and Setup.
-- Setup tab, Fast: presets (AFM->FM, AFM->AFM, FM->AFM, FM->FM, FeRh heating), sliders and number fields
+- There is no side panel. Results appear in the chat under your message. The play icon in the left bar
+  opens "Run setup", a dialog for starting a run yourself, without the assistant (no tokens).
+- Run setup, Fast: presets (AFM->FM, AFM->AFM, FM->AFM, FM->FM, FeRh heating), sliders and number fields
   for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current, an initial-state
   selector, "Quick extra txt" for one or two extra flags such as --H=0.1, then Check / Run / Edit as txt.
-  Setup tab, Deep: a txt editor with an examples dropdown, label, Check, Run and Save as file.
+  Run setup, Deep: a txt editor with an examples dropdown, label, Check, Run and Save as file.
 - Default scenario: starts antiferromagnetic (AFM) with positive exchange, no current, T=0, and ends
   ferromagnetic (FM). A negative A0 keeps it AFM.
 - Every run shows a card in the chat with its steps (checked, started, simulating with progress, plot) and
-  then a graph. "Open full viewer" opens the Result tab: dial of the sublattices, figures (order AFM -> FM),
-  plot with toggles for m1, m2 and the Neel vector; click moves the playhead, drag zooms, double-click
-  resets, Play animates. Result files can be downloaded. A running run can be cancelled in the Result tab.
+  then the full viewer: dial of the sublattices (+x and +z axes), figures (order AFM -> FM), plot with
+  toggles for m1, m2 and the Neel vector; click moves the playhead, drag zooms, double-click resets, Play
+  animates. Result files can be downloaded. A running run can be cancelled on its card.
 - Left bar also has: clock = conversation history (reopen or delete past chats with their runs), sliders =
   Default parameters (the values Fast mode starts from; also sent to the assistant). The counter next to
   Fast / Deep shows the tokens used in this chat, and each answer shows its own tokens. Runs started from
