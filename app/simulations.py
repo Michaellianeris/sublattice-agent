@@ -278,6 +278,9 @@ def sweep_info(sweep_id, discard_fraction=0.0):
             row["neel_z_abs_mean"] = _neel_mean(rid, discard_fraction)
             s = r.get("summary") or {}
             row["dominant_freq_neel_z_GHz"] = s.get("dominant_freq_neel_z_GHz")
+            row["neel_z_sign_changes"] = s.get("neel_z_sign_changes")
+            row["order_final"] = s.get("order_final")
+            row["neel_z_final"] = (s.get("neel_final") or [None, None, None])[2]
         rows.append(row)
     info = dict(m, status_counts=counts, rows=rows, discard_fraction=discard_fraction)
     if counts.get("done") and not counts.get("running") and not counts.get("queued"):
@@ -317,6 +320,62 @@ def _sweep_plot(sweep_id, parameter, rows):
     fig.savefig(SWEEPS / sweep_id / name)
     plt.close(fig)
     return name
+
+
+def wait_for_run(run_id, timeout_s=60.0):
+    """Block until the run leaves queued/running, or the timeout (max 120 s) passes."""
+    end = time.time() + max(1.0, min(float(timeout_s), 120.0))
+    while True:
+        info = run_info(run_id, full=True)
+        if not info or info["status"] not in ("queued", "running") or time.time() >= end:
+            return info
+        time.sleep(1.0)
+
+
+def wait_for_sweep(sweep_id, timeout_s=60.0, discard_fraction=0.0):
+    end = time.time() + max(1.0, min(float(timeout_s), 120.0))
+    while True:
+        info = sweep_info(sweep_id, discard_fraction)
+        if not info:
+            return None
+        counts = info.get("status_counts", {})
+        if not (counts.get("queued") or counts.get("running")) or time.time() >= end:
+            return info
+        time.sleep(1.0)
+
+
+# ---------- export
+def export_csv(run_id):
+    """Whole trajectory as CSV: time, m1, m2 and the Neel vector."""
+    import io
+    import numpy as np
+    if not _valid(run_id, "r"):
+        return None
+    data = _load_series(run_id)
+    if data is None:
+        return None
+    neel = (data[:, 1:4] - data[:, 4:7]) / 2.0
+    buf = io.StringIO()
+    np.savetxt(buf, np.column_stack((data[:, 0], data[:, 1:7], neel)), delimiter=",", fmt="%.8e",
+               header="t_s,m1x,m1y,m1z,m2x,m2y,m2z,nx,ny,nz", comments="")
+    return buf.getvalue()
+
+
+def export_zip(run_id):
+    """All result files of a run plus the trajectory CSV."""
+    import io
+    import zipfile
+    csv = export_csv(run_id)
+    if csv is None:
+        return None
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in RESULT_FILES:
+            p = RUNS / run_id / f
+            if p.exists():
+                z.write(p, f)
+        z.writestr(f"{run_id}_trajectory.csv", csv)
+    return buf.getvalue()
 
 
 def sweep_file(sweep_id, name):

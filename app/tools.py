@@ -51,6 +51,23 @@ TOOLS = [
                          "required": ["parameters_text", "parameter", "values"]},
     },
     {
+        "name": "wait_for_run",
+        "description": "Wait until a run has finished (up to timeout_s, at most 120). Call it right after "
+                       "start_simulation, then get_run with include_plot=true to report the result.",
+        "input_schema": {"type": "object",
+                         "properties": {"run_id": TEXT, "timeout_s": {"type": "number"}},
+                         "required": ["run_id"]},
+    },
+    {
+        "name": "wait_for_sweep",
+        "description": "Wait until every run of a sweep has finished (up to timeout_s, at most 120). "
+                       "Then call get_sweep. Rows carry mean |n_z|, neel_z_sign_changes, order_final and "
+                       "neel_z_final, which are what a threshold search needs.",
+        "input_schema": {"type": "object",
+                         "properties": {"sweep_id": TEXT, "timeout_s": {"type": "number"}},
+                         "required": ["sweep_id"]},
+    },
+    {
         "name": "get_run",
         "description": "Status, progress, parameters and result summary of a run. Set include_plot=true "
                        "to also receive the magnetization dynamics plot of a finished run.",
@@ -108,6 +125,12 @@ def call(name, args):
         out = S.start_run(args["parameters_text"], args.get("label", ""))
     elif name == "start_sweep":
         out = S.start_sweep(args["parameters_text"], args["parameter"], args["values"], args.get("label", ""))
+    elif name == "wait_for_run":
+        run = S.wait_for_run(args["run_id"], float(args.get("timeout_s") or 60))
+        out = _brief(run) if run else {"error": f"no run {args['run_id']}"}
+    elif name == "wait_for_sweep":
+        out = S.wait_for_sweep(args["sweep_id"], float(args.get("timeout_s") or 60)) \
+            or {"error": f"no sweep {args['sweep_id']}"}
     elif name == "get_run":
         run = S.run_info(args["run_id"], full=True)
         if not run:
@@ -140,6 +163,6 @@ def call(name, args):
     for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error"):
         if isinstance(out, dict) and key in out:
             event[key] = out[key]
-    if name == "get_run" and isinstance(out, dict) and "id" in out:
+    if name in ("get_run", "wait_for_run") and isinstance(out, dict) and "id" in out:
         event["run_id"] = out["id"]
     return json.dumps(out, default=str), event
