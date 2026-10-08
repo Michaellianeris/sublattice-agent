@@ -253,6 +253,8 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .namebox{display:flex;gap:8px;max-width:420px;margin:14px auto 0}
 .namebox input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--panel);color:var(--ink)}
 .guide-fab{position:fixed;right:20px;bottom:20px;z-index:20;width:56px;height:56px;border-radius:50%;border:none;background:var(--panel);color:var(--m1);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow),0 0 0 1px var(--line)}
+.guide-fab img,.guide-head img{border-radius:50%;object-fit:cover;display:block}
+.guide-fab img{width:100%;height:100%}
 .guide-fab:hover{transform:translateY(-2px);box-shadow:var(--shadow),0 0 0 2px var(--m1)}
 .guide{position:fixed;right:20px;bottom:20px;z-index:21;width:min(340px,calc(100vw - 32px));height:min(480px,calc(100vh - 40px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(16,24,40,.22);overflow:hidden}
 .guide-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--m1)}
@@ -470,17 +472,16 @@ body.bench-open .bench{display:block}
   </section>
 </main>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="iris-logo" viewBox="0 0 48 48"><path d="M4.0 25 A20 20 0 0 1 44.0 25" fill="none" stroke="#E5341B" stroke-width="2.5" stroke-linecap="round"/><path d="M6.600000000000001 25 A17.4 17.4 0 0 1 41.4 25" fill="none" stroke="#F28C1B" stroke-width="2.5" stroke-linecap="round"/><path d="M9.2 25 A14.8 14.8 0 0 1 38.8 25" fill="none" stroke="#F2C81B" stroke-width="2.5" stroke-linecap="round"/><path d="M11.8 25 A12.2 12.2 0 0 1 36.2 25" fill="none" stroke="#2BA86B" stroke-width="2.5" stroke-linecap="round"/><path d="M14.4 25 A9.6 9.6 0 0 1 33.6 25" fill="none" stroke="#1D6FE0" stroke-width="2.5" stroke-linecap="round"/><path d="M17.0 25 A7 7 0 0 1 31.0 25" fill="none" stroke="#8A3FB5" stroke-width="2.5" stroke-linecap="round"/><rect x="12" y="26" width="24" height="17" rx="8.5" fill="currentColor"/><circle cx="19" cy="33.5" r="3" fill="#fff"/><circle cx="29" cy="33.5" r="3" fill="#fff"/><circle cx="19.6" cy="33.9" r="1.3" fill="#1A2230"/><circle cx="29.6" cy="33.9" r="1.3" fill="#1A2230"/><path d="M20 38.6 Q24 41.2 28 38.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></symbol></svg>
-<button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Iris" aria-label="Ask Iris, the SpinMate helper">
-  <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><use href="#iris-logo"/></svg>
+<button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
+  <img src="/athena.png" alt="" width="40" height="40">
 </button>
-<section class="guide" id="guide" hidden role="dialog" aria-label="Iris, the SpinMate helper">
+<section class="guide" id="guide" hidden role="dialog" aria-label="Athena, the SpinMate guide">
   <div class="guide-head">
-    <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><use href="#iris-logo"/></svg>
-    <div><b>Iris</b><small>SpinMate's how-to assistant</small></div>
+    <img src="/athena.png" alt="" width="40" height="40">
+    <div><b>Athena</b><small>SpinMate's how-to guide</small></div>
     <button class="rail-btn" id="guideclose" type="button" aria-label="Close the guide" title="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="guide-desc">Hi, my name is Iris. In Greek mythology I was the goddess of the rainbow and the messenger of the gods. Now I am also the guide of this tool: ask me how to use it. For simulations, use the main chat.</div>
+  <div class="guide-desc">Hi, my name is Athena. In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of the city of Athens. The owl, who sees clearly in the dark, was my symbol. Now I am also the guide of this tool: ask me how to use it. For simulations, use the main chat.</div>
   <div class="guide-log" id="guidelog" aria-live="polite"></div>
   <form class="guide-form" id="guideform"><input id="guideinput" placeholder="Type here…" autocomplete="off" aria-label="Ask the guide"><button class="send" type="submit" aria-label="Send">&rarr;</button></form>
 </section>
@@ -1364,8 +1365,8 @@ function openGuide(open) {
   guide.open = open; $("#guide").hidden = !open; $("#guidefab").hidden = open;
   if (open && !guide.started) {
     guide.started = true; const n = getName();
-    guideAdd("bot", n ? `Hi ${n}! I'm Iris, SpinMate's helper. I can show you around the app: where things are and what the buttons do.` :
-      "Hi! I'm Iris, SpinMate's helper robot. I can show you around the app. What's your name?");
+    guideAdd("bot", n ? `Hi ${n}! I'm Athena, SpinMate's guide. I can show you around the app: where things are and what the buttons do.` :
+      "Hi! I'm Athena, SpinMate's guide. I can show you around the app. What's your name?");
     if (n) guideChips(); else guide.awaitName = true;
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
@@ -1464,6 +1465,7 @@ async function init() {
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
   try { state.messages = JSON.parse(localStorage.getItem("sublattice.chat") || "[]"); } catch {}
   render(); await refreshRuns();
+  if (!getName()) openGuide(true);
   const loop = async () => {
     await refreshRuns();
     setTimeout(loop, state.runs.some(r => ["running", "queued"].includes(r.status)) ? 2000 : 10000);
