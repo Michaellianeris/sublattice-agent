@@ -34,6 +34,10 @@ How the app works
   then a graph. "Open full viewer" opens the Result tab: dial of the sublattices, figures (order AFM -> FM),
   plot with toggles for m1, m2 and the Neel vector; click moves the playhead, drag zooms, double-click
   resets, Play animates. Result files can be downloaded. A running run can be cancelled in the Result tab.
+- Left bar also has: clock = conversation history (reopen or delete past chats with their runs), sliders =
+  Default parameters (the values Fast mode starts from; also sent to the assistant). The counter next to
+  Fast / Deep shows the tokens used in this chat, and each answer shows its own tokens. Runs started from
+  Setup use no tokens. Each run card has Export CSV and Export all data (.zip).
 - Sweeps (many runs over one parameter) are requested in the main chat, for example "sweep A0 from -1e-12 to 1e-12".
 - Left bar: logo, new conversation (pencil), API key status, settings (gear) with colour theme
   (Light, Dark, Spin), your name and the API key.
@@ -62,4 +66,5 @@ def answer(messages, api_key=None, model=None, name=None):
         title = re.search(r"<title>(.*?)</title>", resp, re.I | re.S)
         raise agent.AgentError("The network returned a web page instead of the Claude API"
                                + (f" ({title.group(1).strip()})" if title else ""), 502)
+    agent._account(resp)
     return "".join(b.text for b in resp.content if b.type == "text").strip()

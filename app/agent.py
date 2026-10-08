@@ -41,7 +41,24 @@ MODE_NOTES = {
              "thorough, quantitative explanation of the dynamics."),
 }
 MAX_TOKENS = int(os.environ.get("CLAUDE_MAX_TOKENS", "4096"))
-MAX_STEPS = 12
+MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "24"))
+TOKEN_BUDGET = int(os.environ.get("TOKEN_BUDGET") or 0)
+USED = {"input": 0, "output": 0}
+
+
+def tokens_used():
+    return USED["input"] + USED["output"]
+
+
+def _account(resp):
+    """Add the usage of one API response to the session counters; returns (input, output)."""
+    u = getattr(resp, "usage", None)
+    inp = sum(int(getattr(u, k, 0) or 0) for k in
+              ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
+    out = int(getattr(u, "output_tokens", 0) or 0)
+    USED["input"] += inp
+    USED["output"] += out
+    return inp, out
 
 
 class AgentError(Exception):
@@ -71,7 +88,7 @@ def _dump(block):
     return d
 
 
-def chat_stream(messages, api_key=None, model=None, mode=None, name=None):
+def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -91,7 +108,19 @@ def chat_stream(messages, api_key=None, model=None, mode=None, name=None):
         system.append({"type": "text", "text": f"The user's name is {name}. Greet them by name in your first reply "
                                                "and use their name only occasionally after that."})
 
+    if defaults_text and defaults_text.strip():
+        system.append({"type": "text", "text": "The user's saved default parameters. Use them as the base of every "
+                                               "run unless the user asks for something else:\n" + defaults_text.strip()})
+    turn_in = turn_out = 0
+
+    def usage():
+        return {"type": "usage", "input": turn_in, "output": turn_out, "session": tokens_used(), "budget": TOKEN_BUDGET}
+
     for _ in range(MAX_STEPS):
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
+            yield usage()
+            yield {"type": "error", "status": 429, "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
         try:
             resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
                                           tools=tools.TOOLS, messages=_prune_images(messages), timeout=90)
@@ -120,11 +149,19 @@ def chat_stream(messages, api_key=None, model=None, mode=None, name=None):
                             + ". A proxy or firewall is intercepting api.anthropic.com; open that page in a browser or ask IT to allow the API."}
             return
 
+        i, o = _account(resp)
+        turn_in += i
+        turn_out += o
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET and resp.stop_reason == "tool_use":
+            yield usage()
+            yield {"type": "error", "status": 429, "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
         messages.append({"role": "assistant", "content": [_dump(b) for b in resp.content]})
         for block in resp.content:
             if block.type == "text" and block.text.strip():
                 yield {"type": "text", "text": block.text}
         if resp.stop_reason != "tool_use":
+            yield usage()
             yield {"type": "done", "messages": messages}
             return
 
@@ -145,6 +182,7 @@ def chat_stream(messages, api_key=None, model=None, mode=None, name=None):
 
     messages.append({"role": "assistant", "content": [
         {"type": "text", "text": "I stopped after too many tool calls in one turn. Tell me how to continue."}]})
+    yield usage()
     yield {"type": "done", "messages": messages}
 
 

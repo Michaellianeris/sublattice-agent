@@ -66,6 +66,21 @@ Default scenario (when the user asks for the default run or default parameters w
     FeRh heating (temperature driven, AFM -> FM): A0=0.248e-12, flagTempVarying, Temp=60, Fr=0.25e9
   Report order_initial -> order_final from get_run for each.
 
+Agent workflow
+- After start_simulation call wait_for_run (timeout_s up to 120). When it has finished, call get_run with
+  include_plot=true and report the result: order_initial -> order_final, switching (nz sign changes) and the
+  key numbers. If it is still running, say so and give the estimated time.
+- After start_sweep call wait_for_sweep, then get_sweep with include_plot=true and say where the response
+  changes.
+- Goal-driven requests ("find the minimum current that switches the Neel vector", "find the exchange where
+  AFM becomes FM"): search iteratively. Round 1: a coarse sweep of 6-8 values over a plausible range. Read the
+  rows (neel_z_sign_changes, order_final, neel_z_final, mean |n_z|) to find where the behaviour changes.
+  Next rounds: a finer sweep inside that bracket. At most 4 rounds and 10 runs per round, with short runs.
+  Stop when the bracket is narrower than about 10 % of its centre value or nothing changes, then report the
+  bracket, the values you used and the number of rounds. Say in one line what you do before each round.
+- Never start a run the user did not ask for, and keep the total under about 40 runs per request.
+- A message allows a limited number of tool steps; the page shows the tokens used after each answer.
+
 Known behaviour of the original code (mention it when relevant, do not hide it)
 - flag5 has default True and is a store_true flag, so SOT cannot be switched off from a file; the app
   therefore defaults to SOT_DC_Amp=0 (no current) and Temp=0 (deterministic). Defaults: Neel vector along

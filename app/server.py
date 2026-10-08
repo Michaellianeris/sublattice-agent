@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
 from . import agent
@@ -26,6 +26,7 @@ class ChatIn(BaseModel):
     model: str | None = None
     mode: str | None = None
     name: str | None = None
+    defaults: str | None = None
 
 
 class GuideIn(BaseModel):
@@ -58,7 +59,8 @@ def athena():
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
-            "defaults": P.app_defaults(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+            "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
+            "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
 
 
 @app.post("/api/guide")
@@ -88,7 +90,8 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
     def stream():
         try:
             for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model, mode=body.mode,
-                                    name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()):
+                                    name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
+                                    defaults_text=(body.defaults or "")[:2000]):
                 yield json.dumps(ev, default=str) + "\n"
         except Exception as e:  # keep the stream well-formed for the page
             yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"
@@ -176,6 +179,24 @@ def run_series(run_id: str, points: int = 1200, t0_ns: float | None = None, t1_n
     if out is None:
         raise HTTPException(404, "no trajectory for this run")
     return out
+
+
+@app.get("/api/runs/{run_id}/export.csv")
+def run_export_csv(run_id: str):
+    text = S.export_csv(run_id)
+    if text is None:
+        raise HTTPException(404, "no trajectory for this run")
+    return Response(text, media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{run_id}_trajectory.csv"'})
+
+
+@app.get("/api/runs/{run_id}/export.zip")
+def run_export_zip(run_id: str):
+    data = S.export_zip(run_id)
+    if data is None:
+        raise HTTPException(404, "no trajectory for this run")
+    return Response(data, media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{run_id}_data.zip"'})
 
 
 @app.get("/api/runs/{run_id}/files/{name}")
