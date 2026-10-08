@@ -71,7 +71,7 @@ def _dump(block):
     return d
 
 
-def chat_stream(messages, api_key=None, model=None, mode=None):
+def chat_stream(messages, api_key=None, model=None, mode=None, name=None):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -87,6 +87,9 @@ def chat_stream(messages, api_key=None, model=None, mode=None):
     system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
     if mode in MODE_NOTES:
         system.append({"type": "text", "text": MODE_NOTES[mode]})
+    if name:
+        system.append({"type": "text", "text": f"The user's name is {name}. Greet them by name in your first reply "
+                                               "and use their name only occasionally after that."})
 
     for _ in range(MAX_STEPS):
         try:

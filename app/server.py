@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Str
 from pydantic import BaseModel
 
 from . import agent
+from . import guide
 from . import params as P
 from . import simulations as S
 
@@ -24,6 +25,13 @@ class ChatIn(BaseModel):
     messages: list
     model: str | None = None
     mode: str | None = None
+    name: str | None = None
+
+
+class GuideIn(BaseModel):
+    messages: list
+    model: str | None = None
+    name: str | None = None
 
 
 class ParamsIn(BaseModel):
@@ -48,6 +56,15 @@ def config():
             "defaults": P.app_defaults(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
 
 
+@app.post("/api/guide")
+def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None)):
+    try:
+        name = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()
+        return {"text": guide.answer(body.messages, x_api_key, body.model, name)}
+    except agent.AgentError as e:
+        return JSONResponse({"error": str(e)}, status_code=e.status)
+
+
 @app.get("/api/models")
 def models(x_api_key: str | None = Header(default=None)):
     found, source, error = agent.list_models(x_api_key)
@@ -65,7 +82,8 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
 
     def stream():
         try:
-            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model, mode=body.mode):
+            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model, mode=body.mode,
+                                    name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()):
                 yield json.dumps(ev, default=str) + "\n"
         except Exception as e:  # keep the stream well-formed for the page
             yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"

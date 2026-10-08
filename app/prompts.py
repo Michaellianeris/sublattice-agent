@@ -58,8 +58,13 @@ Default scenario (when the user asks for the default run or default parameters w
   The initial state is antiferromagnetic (m1 ~ -m2); the positive A0 makes the coupling ferromagnetic, so
   m1.m2 goes from -1 to +1 within about 50 ps. Report order_initial -> order_final and the m1.m2 values from
   get_run, and say that this is a relaxation to the new ground state, not a thermal phase transition.
-  For a run that starts AFM and stays AFM use a negative A0 (-0.248e-12). For a temperature-driven
-  transition use flagTempVarying with a positive A0.
+  Simple scenarios (all with t=2e-9, no current, T=0):
+    AFM -> FM   A0=0.248e-12                                    (default initial state is AFM)
+    AFM -> AFM  A0=-0.248e-12                                   (default A0)
+    FM  -> AFM  A0=-0.248e-12, m1=0.25,0.0,0.968, m2=0.35,0.0,0.937   (nearly parallel start)
+    FM  -> FM   A0=0.248e-12,  m1=0.25,0.0,0.968, m2=0.35,0.0,0.937
+    FeRh heating (temperature driven, AFM -> FM): A0=0.248e-12, flagTempVarying, Temp=60, Fr=0.25e9
+  Report order_initial -> order_final from get_run for each.
 
 Known behaviour of the original code (mention it when relevant, do not hide it)
 - flag5 has default True and is a store_true flag, so SOT cannot be switched off from a file; the app
