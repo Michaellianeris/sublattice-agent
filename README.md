@@ -104,7 +104,11 @@ The app works without the assistant: Run setup runs a simulation directly and on
 assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
 Fast and Deep do. If the Claude API cannot be reached it falls back to a built-in list of answers.
 
-**Settings** (gear in the left bar): colour theme (Light, Dark, Spin), your name and the API key.
+**Account.** There is no password: you log in by typing your name when Athena asks for it. The round button
+with your initial in the left bar shows who is signed in and lets you log out. Every name keeps its own
+chat history and default parameters in the browser.
+
+**Settings** (gear in the left bar): colour theme (Light, Dark, Spin) and the API key.
 
 By default a run is deterministic: temperature 0 and no current. See the note on `SOT_DC_Amp` below.
 
