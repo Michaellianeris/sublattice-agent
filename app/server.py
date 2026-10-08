@@ -49,6 +49,11 @@ def index():
     return FileResponse(WEB / "index.html")
 
 
+@app.get("/athena.png")
+def athena():
+    return FileResponse(WEB / "athena.png")
+
+
 @app.get("/api/config")
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
