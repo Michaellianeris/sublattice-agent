@@ -62,6 +62,27 @@ with the paperclip (drag and drop also works). Under the message box you choose 
 The model list is read from your API key, so it contains whatever Anthropic models the key can use. "Other
 model id" lets you type one by hand.
 
+**Agent behaviour.** After it starts a run the assistant waits for it, reads the result (including the
+plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
+requests ("find the smallest current that switches the Néel vector") it searches on its own: a coarse
+sweep, then finer sweeps inside the interval where the behaviour changes, for at most four rounds, and it
+reports the interval it found. The assistant is the only part that uses tokens; runs started from Setup
+never do.
+
+**Tokens.** A counter next to the Fast and Deep switch shows the tokens used in the current chat, and each
+answer ends with its own input and output tokens. Set `TOKEN_BUDGET` to stop the assistant, and with it any
+run it would start, once the server has used that many tokens since it started.
+
+**Conversations.** The clock icon in the left bar lists earlier chats with their runs and graphs; the
+pencil starts a new one. Results appear in the chat under the prompt that asked for them. The Workbench
+only opens when you ask for it.
+
+**Default parameters.** The sliders icon in the left bar edits the values Fast mode starts from. They are
+stored in the browser and also sent to the assistant as the base of its runs.
+
+**Export.** Each run card has *Export CSV* (time, m1, m2 and the Néel vector) and *Export all data*
+(a zip with every output file and the CSV).
+
 **Runs in the chat.** Every run adds a card that shows its steps (parameters checked, run started,
 simulating with progress and time left, plot) and then the m1z, m2z and nz curves, together with the
 order of the sublattices before and after (for example AFM to FM).
@@ -167,6 +188,8 @@ Set these in `.env`.
 | `HOST_PORT` | `8421` | port on your machine |
 | `MAX_PARALLEL` | CPU cores - 1 | simultaneous runs |
 | `MAX_SWEEP_RUNS` | `400` | largest sweep |
+| `TOKEN_BUDGET` | `0` (off) | token limit for the assistant per server session |
+| `AGENT_MAX_STEPS` | `24` | tool steps the assistant may take for one message |
 | `WORKSPACE` | `/data` in Docker | where runs, sweeps and files are stored |
 | `SSL_CERT_FILE` | system bundle | CA bundle used for HTTPS, see below |
 
