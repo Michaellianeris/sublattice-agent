@@ -1570,6 +1570,7 @@ const GUIDE_FAQ = [
   [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
   [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or open Workbench > Setup, pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
+const ATHENA_INTRO = "In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. SpinMate is an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh: describe a run in words or attach a parameter file, and it checks the input, runs the simulation and explains the result from the real magnetization curves.";
 const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
 const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
@@ -1592,7 +1593,7 @@ function openGuide(open) {
   setCentered(open && !getName());
   if (open && !guide.started) {
     guide.started = true; const n = getName();
-    guideAdd("bot", n ? `Hi ${n}! I'm Athena, SpinMate's guide. I can show you around the app: where things are and what the buttons do.` :
+    guideAdd("bot", n ? `Hi ${n}! I'm Athena, SpinMate's guide. ${ATHENA_INTRO} I can show you around the app: where things are and what the buttons do.` :
       "Hi! I'm Athena, SpinMate's guide. I can show you around the app. Before we start, what's your name?");
     if (n) guideChips(); else guide.awaitName = true;
   }
@@ -1606,7 +1607,7 @@ async function guideAsk(q) {
     const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
     try { localStorage.setItem("sublattice.name", v); } catch {}
     $("#username").value = v; guide.awaitName = false; setCentered(false); render();
-    guideAdd("bot", `Nice to meet you, ${v}! Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
+    guideAdd("bot", `Nice to meet you, ${v}! ${ATHENA_INTRO} Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
   }
   guide.msgs.push({role: "user", content: q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
