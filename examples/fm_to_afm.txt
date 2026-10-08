@@ -1,0 +1,5 @@
+# Starts ferromagnetic (m1 and m2 nearly parallel), negative exchange A0: relaxes to AFM within ~20 ps
+--t=2e-9
+--A0=-0.248e-12
+--m1=0.25,0.0,0.968
+--m2=0.35,0.0,0.937

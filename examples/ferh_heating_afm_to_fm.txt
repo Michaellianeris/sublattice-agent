@@ -1,0 +1,6 @@
+# FeRh heating through the 370 K transition: AFM below, FM above (positive A0 with flagTempVarying)
+--t=2e-9
+--A0=0.248e-12
+--flagTempVarying
+--Temp=60
+--Fr=0.25e9
