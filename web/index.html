@@ -272,6 +272,26 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .guide-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .guide-form input{flex:1;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--panel);color:var(--ink)}
 .guide-form .send{width:34px;height:34px;border-radius:50%;border:none;background:var(--m1);color:#fff;cursor:pointer;font-size:1rem}
+.tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
+.composer .row .hint{display:none}
+.usage{font-size:.74rem;color:var(--muted);margin:-8px 0 16px;max-width:68ch}
+a.btn{text-decoration:none;color:var(--ink);display:inline-block}
+.history{position:fixed;left:64px;top:0;bottom:0;width:280px;z-index:15;background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.history-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px}
+#historylist{list-style:none;margin:0;padding:0 8px 12px;overflow-y:auto;flex:1}
+#historylist li{display:grid;grid-template-columns:1fr auto;gap:0 6px;padding:8px 10px;border-radius:10px;cursor:pointer}
+#historylist li:hover,#historylist li.active{background:var(--soft)}
+#historylist .ht{font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#historylist .hd{grid-column:1;font-size:.72rem;color:var(--muted)}
+#historylist .hx{grid-row:1 / span 2;grid-column:2;border:none;background:none;color:var(--muted);cursor:pointer;opacity:0}
+#historylist li:hover .hx{opacity:1}
+.modal-back{position:fixed;inset:0;z-index:24;background:rgba(15,20,30,.5)}
+.defdlg{position:fixed;z-index:25;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 20px}
+.defdlg h3{margin:0 0 4px}
+.defdlg p{margin:0 0 10px;color:var(--muted);font-size:.85rem}
+.defdlg .frow{grid-template-columns:1fr 200px}
+.defdlg .frow select,.defdlg .frow input:not([type]){grid-column:2}
+.defdlg .row{margin-top:14px;flex-wrap:wrap}
 .guide-back{position:fixed;inset:0;z-index:20;background:rgba(15,20,30,.5);backdrop-filter:blur(2px)}
 .guide.centered{right:auto;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 32px));height:auto;max-height:min(600px,calc(100vh - 40px));z-index:22;box-shadow:0 24px 70px rgba(0,0,0,.4)}
 .guide:not(.centered) .guide-desc{display:none}
@@ -367,6 +387,8 @@ body.bench-open .bench{display:block}
   <button class="rail-btn" id="newchat" type="button" title="New conversation" aria-label="New conversation">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
   </button>
+  <button class="rail-btn" id="historybtn" type="button" title="Conversation history" aria-label="Conversation history" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+  <button class="rail-btn" id="defaultsbtn" type="button" title="Default parameters" aria-label="Default parameters"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>
   <div class="rail-sp"></div>
   <button class="pill" id="keypill" type="button" title="API key status"><i></i><span id="keytext"></span></button>
   <div class="settings">
@@ -409,6 +431,7 @@ body.bench-open .bench{display:block}
             <button type="button" id="cmode-fast" aria-pressed="true" title="Fast: default parameters, short answers">Fast</button>
             <button type="button" id="cmode-deep" aria-pressed="false" title="Deep: full parameters or txt, thorough analysis">Deep</button>
           </div>
+          <span class="tokpill" id="tokpill" title="Tokens used in this chat">0 tokens</span>
           <span class="hint">Enter to send</span>
           <button class="send" id="send" type="button" title="Send" aria-label="Send">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
@@ -481,6 +504,19 @@ body.bench-open .bench{display:block}
 <button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
   <img src="/athena.png" alt="" width="40" height="40">
 </button>
+<aside class="history" id="history" hidden aria-label="Conversations">
+  <div class="history-head"><b>Conversations</b><button class="btn small" id="histnew" type="button">New chat</button></div>
+  <ul id="historylist"></ul>
+</aside>
+<div class="modal-back" id="defback" hidden></div>
+<section class="defdlg" id="defdlg" hidden role="dialog" aria-label="Default parameters">
+  <h3>Default parameters</h3>
+  <p>Saved in this browser. They are the starting point of Fast mode and are sent to the assistant as the base of every run.</p>
+  <div id="deffields"></div>
+  <div class="frow"><label for="d-neel">Initial state</label><select id="d-neel"><option value="minus">AFM, Néel &minus;z (default)</option><option value="plus">AFM, Néel +z</option><option value="fm">FM, m₁ ∥ m₂</option></select></div>
+  <div class="frow"><label for="d-extra">Extra txt</label><input id="d-extra" placeholder="e.g. --H=0.1" spellcheck="false"></div>
+  <div class="row"><button class="btn primary" id="defsave" type="button">Save</button><button class="btn" id="defreset" type="button">Reset to built-in</button><button class="btn" id="defcancel" type="button">Cancel</button></div>
+</section>
 <div class="guide-back" id="guideback" hidden></div>
 <section class="guide" id="guide" hidden role="dialog" aria-label="Athena, the SpinMate guide">
   <div class="guide-head">
@@ -496,7 +532,8 @@ body.bench-open .bench{display:block}
 <script>
 const $ = s => document.querySelector(s);
 const state = {messages: [], live: [], busy: false, pending: null, selected: null, runs: [], sweeps: [],
-               config: {}, examples: [], error: null, discard: 0, cards: []};
+               config: {}, examples: [], error: null, discard: 0, cards: [],
+               chatId: null, usage: {input: 0, output: 0}, usages: {}, turnUsage: null};
 
 // ---------------------------------------------------------------- api
 async function api(path, opts = {}) {
@@ -563,6 +600,8 @@ const TOOL_UI = {
   get_sweep: {run: a => `Looking at ${a.sweep_id}`, done: a => `Looked at ${a.sweep_id}`},
   list_runs: {run: () => "Listing runs", done: () => "Listed runs"},
   cancel_run: {run: a => `Cancelling ${a.run_id}`, done: a => `Cancelled ${a.run_id}`},
+  wait_for_run: {run: a => `Waiting for ${a.run_id}`, done: a => `Finished waiting for ${a.run_id}`},
+  wait_for_sweep: {run: a => `Waiting for ${a.sweep_id}`, done: a => `Finished waiting for ${a.sweep_id}`},
 };
 
 function toolResults(messages) {
@@ -591,14 +630,26 @@ function chipFor(name, input, result, running) {
   return c;
 }
 
+function fmtUsage(u) {
+  return `tokens: ${fmtN(u.input)} in · ${fmtN(u.output)} out · ${fmtN(u.input + u.output)} total` +
+    (u.session ? ` (server session ${fmtN(u.session)}${u.budget ? " of " + fmtN(u.budget) : ""})` : "");
+}
+
 function render() {
   const log = $("#log"); log.innerHTML = "";
   const isEmpty = !state.messages.length && !state.live.length && !state.busy && !state.cards.length;
   $(".chat").classList.toggle("is-empty", isEmpty);
   if (isEmpty) { log.appendChild(emptyState()); return; }
-  const results = toolResults(state.messages);
+  const results = toolResults(state.messages), placed = new Set();
   const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
+  const place = (name, res) => {
+    const id = name === "start_simulation" ? res.run_id : name === "start_sweep" ? res.sweep_id : null;
+    if (id && cardEls.has(id)) { log.appendChild(cardEls.get(id).el); placed.add(id); return true; }
+    return false;
+  };
+  let mi = -1;
   for (const m of state.messages) {
+    mi++;
     if (m.role === "user") {
       if (typeof m.content === "string") { addUser(m.content); continue; }
       const texts = m.content.filter(b => b.type === "text").map(b => b.text);
@@ -611,9 +662,12 @@ function render() {
       if (b.type === "text" && b.text.trim()) { chips = null; add("msg assistant", md(b.text)); }
       else if (b.type === "tool_use") {
         if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
-        chips.appendChild(chipFor(b.name, b.input || {}, results[b.id] || {}, false));
+        const res = results[b.id] || {};
+        chips.appendChild(chipFor(b.name, b.input || {}, res, false));
+        if (place(b.name, res)) chips = null;
       }
     }
+    if (state.usages[mi]) add("usage mono", fmtUsage(state.usages[mi]));
   }
   let chips = null;
   for (const it of state.live) {
@@ -621,9 +675,10 @@ function render() {
     else {
       if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
       chips.appendChild(chipFor(it.name, it.input, it.event || {}, it.status === "running"));
+      if (it.status === "done" && place(it.name, it.event || {})) chips = null;
     }
   }
-  for (const id of state.cards) log.appendChild(cardEls.get(id).el);
+  for (const id of state.cards) if (!placed.has(id)) log.appendChild(cardEls.get(id).el);
   if (state.busy && !state.live.some(x => x.status === "running"))
     add("thinking", `<span class="spin"></span>Working…`);
   if (state.error) add("error", esc(state.error));
@@ -710,7 +765,6 @@ function stripImages(messages) {
     b.type === "tool_result" && Array.isArray(b.content)
       ? {...b, content: b.content.map(x => x.type === "image" ? {type: "text", text: "[plot shown earlier]"} : x)} : b)});
 }
-function persist() { try { localStorage.setItem("sublattice.chat", JSON.stringify(stripImages(state.messages))); } catch {} }
 
 function onEvent(ev) {
   if (ev.type === "text") { state.live.push({kind: "text", text: ev.text}); }
@@ -719,9 +773,17 @@ function onEvent(ev) {
     const it = state.live.find(x => x.id === ev.id);
     if (it) { it.status = "done"; it.event = ev.event; }
     const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
-    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) { select(target); refreshRuns(); if (ev.event.run_id) trackRun(ev.event.run_id); }
+    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) {
+      refreshRuns();
+      if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
+    }
   }
-  else if (ev.type === "done") { state.messages = ev.messages; state.live = []; state.finished = true; }
+  else if (ev.type === "usage") { state.turnUsage = ev; state.usage.input += ev.input; state.usage.output += ev.output; updateTok(); }
+  else if (ev.type === "done") {
+    state.messages = ev.messages; state.live = []; state.finished = true;
+    if (state.turnUsage) state.usages[ev.messages.length - 1] = state.turnUsage;
+    state.turnUsage = null;
+  }
   else if (ev.type === "error") { throw new Error(ev.error); }
   render();
 }
@@ -748,11 +810,11 @@ async function send() {
   if (state.pending) content = "Attached parameter file `" + state.pending.name + "`:\n```\n" + state.pending.text.trim() + "\n```\n" + text;
   state.messages.push({role: "user", content});
   $("#input").value = ""; autosize(); setPending(null);
-  state.busy = true; state.error = null; state.live = []; state.finished = false; render(); toggle();
+  state.busy = true; state.error = null; state.live = []; state.finished = false; state.turnUsage = null; render(); toggle();
   try {
     const headers = {"Content-Type": "application/json"};
     const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName()})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -790,7 +852,6 @@ function autosize() { const t = $("#input"); t.style.height = "auto"; t.style.he
 $("#input").addEventListener("input", autosize);
 $("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
 $("#send").onclick = send;
-$("#newchat").onclick = () => { clearCards(); state.messages = []; state.live = []; state.error = null; persist(); render(); };
 
 // ---------------------------------------------------------------- chart (canvas)
 function niceTicks(lo, hi, n = 6) {
@@ -1076,7 +1137,7 @@ function renderRun(box, r) {
     ${(r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("")}
     ${r.error_tail ? `<pre class="mono" style="white-space:pre-wrap;color:var(--err)">${esc(r.error_tail)}</pre>` : ""}
     <div id="viewer"></div>
-    <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}</div>
+    <div class="files">${r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${r.id}/files/${f}" download>${f}</a>`).join("")}${r.status === "done" ? ` <a href="/api/runs/${r.id}/export.csv" download>trajectory.csv</a> <a href="/api/runs/${r.id}/export.zip" download>all data (.zip)</a>` : ""}</div>
     <div class="actions">
       ${r.status === "done" ? `<button class="btn" id="analyse" type="button">Ask the assistant to analyse ${r.id}</button>` : ""}
       ${active ? `<button class="btn" id="cancel" type="button">Cancel run</button>` : ""}
@@ -1195,7 +1256,7 @@ async function runText(text, label, show) {
     const chk = await postJson("/api/validate", {parameters_text: text}); show(chk);
     if (!chk.ok) return;
     const out = await postJson("/api/runs", {parameters_text: text, label});
-    trackRun(out.run_id, label); await refreshRuns(); select(out.run_id);
+    trackRun(out.run_id, label); await refreshRuns();
   } catch (e) { show({ok: false, error: e.message}); }
 }
 $("#run").onclick = () => runText($("#params").value, $("#label").value, r => showCheck(r));
@@ -1217,14 +1278,14 @@ const cardEls = new Map();
 const CARD_SERIES = [{k: "m1z", c: "#1F4FD1"}, {k: "m2z", c: "#B0127F"}, {k: "nz", c: "#17212B"}];
 function trackRun(id, label) {
   if (cardEls.has(id)) return;
-  setBench(true);
   const el = document.createElement("div"); el.className = "runcard";
   el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label">${esc(label || "")}</span><span class="status" data-r="st"></span></div>
     <ul class="steps"><li data-s="check"></li><li data-s="start"></li><li data-s="sim"></li><li data-s="plot"></li></ul>
     <div class="bar"><i data-r="bar" style="width:0"></i></div>
     <div class="rc-plot" hidden><div class="rc-legend"><span style="color:#1F4FD1">m<sub>1z</sub></span><span style="color:#B0127F">m<sub>2z</sub></span><span>n<sub>z</sub></span></div>
       <div class="canvaswrap"><canvas role="img" aria-label="Trajectory of ${id}"></canvas></div><div class="rc-meta mono"></div></div>
-    <div class="actions"><button class="btn small" type="button" data-r="open">Open full viewer</button></div>`;
+    <div class="actions"><button class="btn small" type="button" data-r="open">Open full viewer</button>
+      <a class="btn small" data-r="csv" hidden download>Export CSV</a><a class="btn small" data-r="zip" hidden download>Export all data (.zip)</a></div>`;
   el.querySelector("[data-r=open]").onclick = () => select(id);
   cardEls.set(id, {el, chart: null, final: false}); state.cards.push(id);
   setStep(el, "check", "done", "Parameters checked"); setStep(el, "start", "done", `Run ${id} started`);
@@ -1237,9 +1298,45 @@ async function updateCards() {
   for (const id of state.cards) {
     const c = cardEls.get(id); if (!c || c.final || c.busy) continue;
     c.busy = true;
-    try { await paintCard(id, c, await api(`/api/runs/${id}`)); } catch {}
+    const sweep = id.startsWith("s");
+    try {
+      const d = await api(sweep ? `/api/sweeps/${id}` : `/api/runs/${id}`);
+      await (sweep ? paintSweepCard(id, c, d) : paintCard(id, c, d));
+    } catch (e) {
+      if (/not found/i.test(e.message)) {
+        c.final = true; c.el.querySelector("[data-r=st]").textContent = "no longer available";
+        if (!sweep) setStep(c.el, "sim", "bad", "This run is no longer on the server");
+      }
+    }
     c.busy = false;
   }
+}
+function trackSweep(id) {
+  if (!id || cardEls.has(id)) return;
+  const el = document.createElement("div"); el.className = "runcard";
+  el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label"></span><span class="status" data-r="st"></span></div>
+    <div class="bar"><i data-r="bar" style="width:0"></i></div>
+    <div class="rc-plot" hidden><div class="canvaswrap"><canvas role="img" aria-label="Sweep ${id}"></canvas></div><div class="rc-meta mono"></div></div>
+    <div class="actions"><button class="btn small" type="button" data-r="open">Open in workbench</button></div>`;
+  el.querySelector("[data-r=open]").onclick = () => select(id);
+  cardEls.set(id, {el, chart: null, final: false}); state.cards.push(id);
+  render(); updateCards();
+}
+async function paintSweepCard(id, c, s) {
+  const el = c.el, cnt = s.status_counts || {}, total = s.run_ids.length, done = cnt.done || 0, failed = cnt.failed || 0;
+  const st = el.querySelector("[data-r=st]");
+  st.textContent = `${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
+  st.className = "status " + (done + failed === total ? (failed ? "failed" : "done") : "running");
+  el.querySelector("[data-r=bar]").style.width = (100 * (done + failed) / total).toFixed(1) + "%";
+  el.querySelector(".rc-label").textContent = `sweep of ${s.parameter}`;
+  if (done + failed < total) return;
+  c.final = true;
+  const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
+  if (!rows.length) return;
+  const isFreq = /Fr$/.test(s.parameter), scale = isFreq ? 1e9 : 1, plot = el.querySelector(".rc-plot"); plot.hidden = false;
+  c.chart = new Chart(plot.querySelector("canvas"), {height: 200, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|", xFmt: isFreq ? null : eng});
+  c.chart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
+  plot.querySelector(".rc-meta").textContent = rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${r.neel_z_sign_changes ? ", " + r.neel_z_sign_changes + " flips" : ""}`).join("\n");
 }
 async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
@@ -1251,6 +1348,8 @@ async function paintCard(id, c, r) {
   else { setStep(el, "sim", "bad", "Run " + r.status); setStep(el, "plot", "bad", "No trajectory"); c.final = true; return; }
   if (r.status !== "done" || !r.summary) return;
   c.final = true;
+  const csv = el.querySelector("[data-r=csv]"), zip = el.querySelector("[data-r=zip]");
+  csv.href = `/api/runs/${id}/export.csv`; zip.href = `/api/runs/${id}/export.zip`; csv.hidden = zip.hidden = false;
   setStep(el, "plot", "active", "Plotting the trajectory");
   const plot = el.querySelector(".rc-plot"); plot.hidden = false;
   try {
@@ -1299,20 +1398,11 @@ function buildFast() {
 }
 function fastSet(k, v) { const n = $("#f-" + k), r = $("#r-" + k); n.value = fnum(v); r.value = n.value; }
 function fastText() {
-  const D = state.config.defaults || {}, lines = ["# fast mode: only values that differ from the defaults"];
-  for (const f of FAST) {
-    const v = parseFloat($("#f-" + f.k).value); if (!isFinite(v)) continue;
-    const def = (D[f.k] ?? 0) / f.scale;
-    if (Math.abs(v - def) > 1e-9 * Math.max(1, Math.abs(def))) lines.push(`--${f.k}=${+(v * f.scale).toPrecision(8)}`);
-  }
-  if (parseFloat($("#f-Temp").value) > 0) lines.push("--flag0");
-  if ($("#f-neel").value === "plus") lines.push("--m1=0.25,0.0,0.968", "--m2=-0.256,0.0,-0.965");
-  if ($("#f-neel").value === "fm") lines.push("--m1=0.25,0.0,0.968", "--m2=0.35,0.0,0.937");
-  const extra = $("#f-extra").value.trim(); if (extra) lines.push(...extra.split(/\s+(?=--)/));
-  return lines.join("\n") + "\n";
+  const vals = Object.fromEntries(FAST.map(f => [f.k, $("#f-" + f.k).value]));
+  return ["# fast mode: only values that differ from the defaults", ...paramsLines(vals, $("#f-neel").value, $("#f-extra").value)].join("\n") + "\n";
 }
 function fastUpdate() { $("#ftext").textContent = fastText(); $("#fcheckout").textContent = ""; $("#fcheckout").className = "check"; }
-const baseFast = () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; };
+const baseFast = () => { buildFast(); $("#f-neel").value = "minus"; $("#f-extra").value = ""; applyUD(); };
 const PRESETS_FAST = {
   default: () => { baseFast(); fastSet("A0", 0.248); fastSet("t", 2); },
   afm2afm: () => { baseFast(); fastSet("t", 2); },
@@ -1338,9 +1428,133 @@ $("#cmode-fast").onclick = () => setMode("fast");
 $("#cmode-deep").onclick = () => setMode("deep");
 
 
+// ---------------------------------------------------------------- conversations, tokens, default parameters
+const CH_KEY = "sublattice.chats", CUR_KEY = "sublattice.current", UD_KEY = "sublattice.userdefaults";
+const fmtN = v => Number(v || 0).toLocaleString();
+function loadChats() { try { return JSON.parse(localStorage.getItem(CH_KEY) || "[]"); } catch { return []; } }
+function saveChats(list) { try { localStorage.setItem(CH_KEY, JSON.stringify(list.slice(0, 40))); } catch {} }
+function chatTitle(msgs) {
+  const m = msgs.find(x => x.role === "user" && (typeof x.content === "string" || x.content.some(b => b.type === "text")));
+  if (!m) return "New chat";
+  let t = typeof m.content === "string" ? m.content : m.content.find(b => b.type === "text").text;
+  t = t.replace(/^Attached parameter file `[^`]+`:\n```\n[\s\S]*?\n```\n?/, "").trim() || "Parameter file";
+  return t.length > 48 ? t.slice(0, 48) + "…" : t;
+}
+function persist() {
+  if (!state.messages.length) return;
+  if (!state.chatId) state.chatId = "c" + Date.now().toString(36);
+  const rec = {id: state.chatId, title: chatTitle(state.messages), ts: Date.now(), messages: stripImages(state.messages),
+               usage: state.usage, usages: state.usages, runs: [...state.cards]};
+  const list = loadChats().filter(c => c.id !== rec.id); list.unshift(rec); saveChats(list);
+  try { localStorage.setItem(CUR_KEY, rec.id); } catch {}
+  renderHistory();
+}
+function migrateChats() {
+  if (loadChats().length) return;
+  try {
+    const old = JSON.parse(localStorage.getItem("sublattice.chat") || "[]");
+    if (old.length) { state.messages = old; persist(); state.messages = []; state.chatId = null; }
+  } catch {}
+}
+function resetChat(extra) {
+  clearCards();
+  Object.assign(state, {messages: [], live: [], error: null, chatId: null, usage: {input: 0, output: 0}, usages: {}, turnUsage: null}, extra || {});
+}
+function newChat() {
+  if (state.busy) return;
+  persist(); resetChat(); try { localStorage.removeItem(CUR_KEY); } catch {}
+  render(); updateTok(); renderHistory(); toggleHistory(false);
+}
+function openChat(id, quiet) {
+  const rec = loadChats().find(c => c.id === id); if (!rec) return;
+  if (!quiet) persist();
+  resetChat({messages: rec.messages || [], chatId: rec.id, usage: rec.usage || {input: 0, output: 0}, usages: rec.usages || {}});
+  try { localStorage.setItem(CUR_KEY, rec.id); } catch {}
+  for (const rid of rec.runs || []) rid.startsWith("s") ? trackSweep(rid) : trackRun(rid);
+  render(); updateTok(); renderHistory(); toggleHistory(false);
+}
+function delChat(id) {
+  saveChats(loadChats().filter(c => c.id !== id));
+  if (id === state.chatId) { state.messages = []; newChat(); } else renderHistory();
+}
+function renderHistory() {
+  const ul = $("#historylist"); if (!ul) return; ul.innerHTML = "";
+  const list = loadChats();
+  if (!list.length) { ul.innerHTML = `<li class="nothing">No conversations yet.</li>`; return; }
+  for (const c of list) {
+    const li = document.createElement("li"); li.tabIndex = 0; if (c.id === state.chatId) li.classList.add("active");
+    li.innerHTML = `<span class="ht">${esc(c.title)}</span><span class="hd">${new Date(c.ts).toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}</span><button type="button" class="hx" title="Delete" aria-label="Delete conversation">✕</button>`;
+    li.onclick = e => { if (e.target.closest(".hx")) delChat(c.id); else if (!state.busy) openChat(c.id); };
+    ul.appendChild(li);
+  }
+}
+function toggleHistory(open) {
+  const h = $("#history"), want = open === undefined ? h.hidden : open;
+  h.hidden = !want; $("#historybtn").setAttribute("aria-pressed", String(want));
+  if (want) renderHistory();
+}
+$("#historybtn").onclick = () => toggleHistory();
+$("#histnew").onclick = newChat;
+$("#newchat").onclick = newChat;
+document.addEventListener("click", e => { if (!e.target.closest("#history") && !e.target.closest("#historybtn") && !e.target.closest("#historylist")) toggleHistory(false); });
+
+function updateTok() {
+  const t = state.usage.input + state.usage.output, p = $("#tokpill");
+  p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens`;
+  const b = state.config && state.config.token_budget;
+  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
+}
+
+function getUD() { try { return JSON.parse(localStorage.getItem(UD_KEY) || "null"); } catch { return null; } }
+function paramsLines(vals, neel, extra) {
+  const D = state.config.defaults || {}, lines = [];
+  for (const f of FAST) {
+    const v = parseFloat(vals[f.k]); if (!isFinite(v)) continue;
+    const def = (D[f.k] ?? 0) / f.scale;
+    if (Math.abs(v - def) > 1e-9 * Math.max(1, Math.abs(def))) lines.push(`--${f.k}=${+(v * f.scale).toPrecision(8)}`);
+  }
+  if (parseFloat(vals.Temp) > 0) lines.push("--flag0");
+  if (neel === "plus") lines.push("--m1=0.25,0.0,0.968", "--m2=-0.256,0.0,-0.965");
+  if (neel === "fm") lines.push("--m1=0.25,0.0,0.968", "--m2=0.35,0.0,0.937");
+  const ex = (extra || "").trim(); if (ex) lines.push(...ex.split(/\s+(?=--)/));
+  return lines;
+}
+function udText() { const ud = getUD(); return ud ? paramsLines(ud.values, ud.neel, ud.extra).join("\n") : ""; }
+function applyUD() {
+  const ud = getUD(); if (!ud) return;
+  for (const f of FAST) if (ud.values[f.k] !== undefined && ud.values[f.k] !== "") fastSet(f.k, ud.values[f.k]);
+  $("#f-neel").value = ud.neel || "minus"; $("#f-extra").value = ud.extra || "";
+}
+function openDefaults() {
+  const ud = getUD(), D = state.config.defaults || {}, box = $("#deffields"); box.innerHTML = "";
+  for (const f of FAST) {
+    const base = ud && ud.values[f.k] !== undefined ? ud.values[f.k] : (D[f.k] ?? 0) / f.scale;
+    const row = document.createElement("div"); row.className = "frow";
+    row.innerHTML = `<label for="d-${f.k}">${f.label}</label><input type="number" id="d-${f.k}" step="any" value="${fnum(base)}">`;
+    box.appendChild(row);
+  }
+  $("#d-neel").value = (ud && ud.neel) || "minus"; $("#d-extra").value = (ud && ud.extra) || "";
+  $("#defdlg").hidden = false; $("#defback").hidden = false;
+}
+function closeDefaults() { $("#defdlg").hidden = true; $("#defback").hidden = true; }
+$("#defaultsbtn").onclick = openDefaults;
+$("#defcancel").onclick = closeDefaults;
+$("#defback").onclick = closeDefaults;
+$("#defsave").onclick = () => {
+  const values = Object.fromEntries(FAST.map(f => [f.k, $("#d-" + f.k).value]));
+  try { localStorage.setItem(UD_KEY, JSON.stringify({values, neel: $("#d-neel").value, extra: $("#d-extra").value})); } catch {}
+  baseFast(); fastUpdate(); closeDefaults();
+};
+$("#defreset").onclick = () => { try { localStorage.removeItem(UD_KEY); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); toggleHistory(false); } });
+
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
   [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena. In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. Here I am the guide of SpinMate, an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh. Ask me how to use it."],
+  [/histor|previous|παλι|ιστορικ/i, "The clock icon in the left bar opens your past conversations. Click one to reopen it with its runs and graphs, or the cross to delete it. The pencil icon starts a new chat."],
+  [/default|προεπιλογ/i, "The sliders icon in the left bar (Default parameters) lets you edit the values Fast mode starts from. They are saved in this browser and also sent to the assistant as the base of every run."],
+  [/token|cost|κόστος|usage/i, "The small counter next to Fast and Deep shows the tokens used in this chat. Under each answer you see the input and output tokens of that answer. Runs started from Setup use no tokens."],
+  [/export|download|csv|data|εξαγωγ|κατεβ/i, "Every run card in the chat has Export CSV (the whole trajectory) and Export all data (.zip) with every output file. The same links are in the Result tab."],
   [/fast|deep|mode/i, "Fast (default) uses the default parameters and gives short answers. Deep works from the full parameter set or a txt file and gives a thorough analysis. Switch it under the message box or in Workbench > Setup."],
   [/workbench|panel|result|αποτελ|δεξ/i, "The Workbench button (top right) opens the right panel with your runs, the Result tab and the Setup tab. It opens by itself when a run starts. Use the X in the panel to close it."],
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, use Workbench > Setup > Deep (txt editor with an examples dropdown)."],
@@ -1460,7 +1674,8 @@ async function init() {
   setTheme(document.documentElement.dataset.theme);
   state.config = await api("/api/config");
   $("#username").value = getName();
-  PRESETS_FAST.default(); fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
+  if (getUD()) baseFast(); else PRESETS_FAST.default();
+  fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
   sel.value = localStorage.getItem("sublattice.model") || state.config.model;
@@ -1476,8 +1691,10 @@ async function init() {
   if ($("#keypill").classList.contains("need") && getName()) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
-  try { state.messages = JSON.parse(localStorage.getItem("sublattice.chat") || "[]"); } catch {}
-  render(); await refreshRuns();
+  migrateChats();
+  const cur = loadChats().find(c => c.id === localStorage.getItem(CUR_KEY));
+  if (cur) openChat(cur.id, true); else render();
+  updateTok(); renderHistory(); await refreshRuns();
   if (!getName()) openGuide(true);
   const loop = async () => {
     await refreshRuns();
