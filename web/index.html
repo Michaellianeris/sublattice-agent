@@ -256,7 +256,6 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .guide-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--m1)}
 .guide-head div{flex:1;color:var(--ink);line-height:1.2}
 .guide-head small{display:block;color:var(--muted);font-size:.78rem}
-.guide-desc{max-height:38%;overflow-y:auto;padding:8px 14px;font-size:.8rem;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
 .guide-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
 .gmsg{max-width:88%;padding:7px 11px;border-radius:12px;font-size:.88rem;line-height:1.45}
 .gmsg p{margin:.2em 0}
@@ -275,6 +274,8 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .setupdlg{width:min(680px,calc(100vw - 32px))}
 .dlg-head{display:flex;align-items:center;justify-content:space-between}
 .setupdlg .modes{margin-top:4px}
+.avatar span{width:30px;height:30px;border-radius:50%;background:var(--m1);color:#fff;display:grid;place-items:center;font-weight:600;font-size:.9rem}
+.acc{margin-bottom:10px;font-size:.9rem}
 .tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
 .composer .row .hint{display:none}
 .composer .row .send{margin-left:auto}
@@ -298,7 +299,6 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .defdlg .row{margin-top:14px;flex-wrap:wrap}
 .guide-back{position:fixed;inset:0;z-index:20;background:rgba(15,20,30,.5);backdrop-filter:blur(2px)}
 .guide.centered{right:auto;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 32px));height:auto;max-height:min(600px,calc(100vh - 40px));z-index:22;box-shadow:0 24px 70px rgba(0,0,0,.4)}
-.guide:not(.centered) .guide-desc{display:none}
 .guide.centered .guide-log{flex:none;min-height:110px}
 .guide.centered #guideclose{display:none}
 .guide.centered .guide-head img{width:48px;height:48px}
@@ -388,6 +388,14 @@ main{grid-template-columns:minmax(0,1fr)}
   <button class="rail-btn" id="setupbtn" type="button" title="Run setup (no assistant)" aria-label="Run setup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></button>
   <div class="rail-sp"></div>
   <button class="pill" id="keypill" type="button" title="API key status"><i></i><span id="keytext"></span></button>
+  <div class="settings" id="accountwrap">
+    <button class="rail-btn avatar" id="accountbtn" type="button" title="Account" aria-label="Account" aria-expanded="false"><span id="avatar">?</span></button>
+    <div class="popover" id="accountpanel" role="dialog" aria-label="Account" hidden>
+      <div class="acc" id="accinfo"></div>
+      <button class="btn small" id="logoutbtn" type="button">Log out</button>
+      <button class="btn small primary" id="loginbtn" type="button">Log in</button>
+    </div>
+  </div>
   <div class="settings">
     <button class="rail-btn" id="settingsbtn" type="button" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settingspanel">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
@@ -399,7 +407,6 @@ main{grid-template-columns:minmax(0,1fr)}
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
         <button type="button" data-theme="spin" aria-pressed="false"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
-      <label>Your name <input id="username" maxlength="40" placeholder="So SpinMate can greet you" autocomplete="off"></label>
       <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
       <p>The key stays in this browser tab and is sent only to your own server.</p>
     </div>
@@ -503,7 +510,6 @@ main{grid-template-columns:minmax(0,1fr)}
     <div><b>Athena</b><small>SpinMate's how-to guide</small></div>
     <button class="rail-btn" id="guideclose" type="button" aria-label="Close the guide" title="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
-  <div class="guide-desc">Hi, my name is Athena. In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of the city of Athens. The owl, who sees clearly in the dark, was my symbol. Now I am also the guide of this tool. SpinMate is an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh: describe a run in words or attach a parameter file, and it checks the input, runs the simulation and explains the result from the real magnetization curves. Ask me how to use it; for simulations, use the main chat.</div>
   <div class="guide-log" id="guidelog" aria-live="polite"></div>
   <form class="guide-form" id="guideform"><input id="guideinput" placeholder="Type here…" autocomplete="off" aria-label="Ask the guide"><button class="send" type="submit" aria-label="Send">&rarr;</button></form>
 </section>
@@ -676,15 +682,6 @@ function addUser(text) {
 
 const cleanName = v => v.replace(/[^\p{L}\p{N} .'-]/gu, "").trim().slice(0, 40);
 const getName = () => { try { return localStorage.getItem("sublattice.name") || ""; } catch { return ""; } };
-function wireName(d) {
-  const f = d.querySelector(".namebox"), inp = f.querySelector("input");
-  f.onsubmit = e => {
-    e.preventDefault(); const v = cleanName(inp.value); if (!v) return;
-    try { localStorage.setItem("sublattice.name", v); } catch {}
-    $("#username").value = v; render(); $("#input").focus();
-  };
-  setTimeout(() => inp.focus(), 0);
-}
 
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
@@ -1306,10 +1303,11 @@ $("#cmode-deep").onclick = () => setMode("deep");
 
 
 // ---------------------------------------------------------------- conversations, tokens, default parameters
-const CH_KEY = "sublattice.chats", CUR_KEY = "sublattice.current", UD_KEY = "sublattice.userdefaults";
+const userSlug = () => (getName() || "guest").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "_");
+const kChats = () => "sublattice.chats." + userSlug(), kCur = () => "sublattice.current." + userSlug(), kUD = () => "sublattice.userdefaults." + userSlug();
 const fmtN = v => Number(v || 0).toLocaleString();
-function loadChats() { try { return JSON.parse(localStorage.getItem(CH_KEY) || "[]"); } catch { return []; } }
-function saveChats(list) { try { localStorage.setItem(CH_KEY, JSON.stringify(list.slice(0, 40))); } catch {} }
+function loadChats() { try { return JSON.parse(localStorage.getItem(kChats()) || "[]"); } catch { return []; } }
+function saveChats(list) { try { localStorage.setItem(kChats(), JSON.stringify(list.slice(0, 40))); } catch {} }
 function chatTitle(msgs) {
   const m = msgs.find(x => x.role === "user" && (typeof x.content === "string" || x.content.some(b => b.type === "text")));
   if (!m) return "New chat";
@@ -1323,14 +1321,23 @@ function persist() {
   const rec = {id: state.chatId, title: chatTitle(state.messages), ts: Date.now(), messages: stripImages(state.messages),
                usage: state.usage, usages: state.usages, runs: [...state.cards]};
   const list = loadChats().filter(c => c.id !== rec.id); list.unshift(rec); saveChats(list);
-  try { localStorage.setItem(CUR_KEY, rec.id); } catch {}
+  try { localStorage.setItem(kCur(), rec.id); } catch {}
   renderHistory();
 }
 function migrateChats() {
   if (loadChats().length) return;
   try {
+    const legacy = JSON.parse(localStorage.getItem("sublattice.chats") || "null");
+    if (legacy && legacy.length) {
+      saveChats(legacy);
+      const cur = localStorage.getItem("sublattice.current"), ud = localStorage.getItem("sublattice.userdefaults");
+      if (cur) localStorage.setItem(kCur(), cur);
+      if (ud) localStorage.setItem(kUD(), ud);
+      for (const k of ["sublattice.chats", "sublattice.current", "sublattice.userdefaults", "sublattice.chat"]) localStorage.removeItem(k);
+      return;
+    }
     const old = JSON.parse(localStorage.getItem("sublattice.chat") || "[]");
-    if (old.length) { state.messages = old; persist(); state.messages = []; state.chatId = null; }
+    if (old.length) { state.messages = old; persist(); state.messages = []; state.chatId = null; localStorage.removeItem("sublattice.chat"); }
   } catch {}
 }
 function resetChat(extra) {
@@ -1339,14 +1346,14 @@ function resetChat(extra) {
 }
 function newChat() {
   if (state.busy) return;
-  persist(); resetChat(); try { localStorage.removeItem(CUR_KEY); } catch {}
+  persist(); resetChat(); try { localStorage.removeItem(kCur()); } catch {}
   render(); updateTok(); renderHistory(); toggleHistory(false);
 }
 function openChat(id, quiet) {
   const rec = loadChats().find(c => c.id === id); if (!rec) return;
   if (!quiet) persist();
   resetChat({messages: rec.messages || [], chatId: rec.id, usage: rec.usage || {input: 0, output: 0}, usages: rec.usages || {}});
-  try { localStorage.setItem(CUR_KEY, rec.id); } catch {}
+  try { localStorage.setItem(kCur(), rec.id); } catch {}
   for (const rid of rec.runs || []) rid.startsWith("s") ? trackSweep(rid) : trackRun(rid);
   render(); updateTok(); renderHistory(); toggleHistory(false);
 }
@@ -1382,7 +1389,7 @@ function updateTok() {
   p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
 }
 
-function getUD() { try { return JSON.parse(localStorage.getItem(UD_KEY) || "null"); } catch { return null; } }
+function getUD() { try { return JSON.parse(localStorage.getItem(kUD()) || "null"); } catch { return null; } }
 function paramsLines(vals, neel, extra) {
   const D = state.config.defaults || {}, lines = [];
   for (const f of FAST) {
@@ -1419,11 +1426,43 @@ $("#defcancel").onclick = closeDefaults;
 $("#defback").onclick = closeDefaults;
 $("#defsave").onclick = () => {
   const values = Object.fromEntries(FAST.map(f => [f.k, $("#d-" + f.k).value]));
-  try { localStorage.setItem(UD_KEY, JSON.stringify({values, neel: $("#d-neel").value, extra: $("#d-extra").value})); } catch {}
+  try { localStorage.setItem(kUD(), JSON.stringify({values, neel: $("#d-neel").value, extra: $("#d-extra").value})); } catch {}
   baseFast(); fastUpdate(); closeDefaults();
 };
-$("#defreset").onclick = () => { try { localStorage.removeItem(UD_KEY); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
+$("#defreset").onclick = () => { try { localStorage.removeItem(kUD()); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); toggleHistory(false); } });
+
+function updateAccount() {
+  const n = getName();
+  $("#avatar").textContent = n ? n[0].toUpperCase() : "?";
+  $("#accinfo").innerHTML = n ? `Signed in as <b>${esc(n)}</b>` : "You are not signed in.";
+  $("#logoutbtn").hidden = !n; $("#loginbtn").hidden = !!n;
+}
+function toggleAccount(open) {
+  const p = $("#accountpanel"), want = open === undefined ? p.hidden : open;
+  p.hidden = !want; $("#accountbtn").setAttribute("aria-expanded", String(want));
+}
+function onLogin() {
+  if (getName()) migrateChats();
+  const cur = loadChats().find(c => c.id === localStorage.getItem(kCur()));
+  if (cur) openChat(cur.id, true); else { render(); updateTok(); renderHistory(); }
+  if (getUD()) baseFast(); else PRESETS_FAST.default();
+  fastUpdate(); updateAccount();
+}
+function logout() {
+  if (state.busy) return;
+  persist(); resetChat();
+  try { localStorage.removeItem("sublattice.name"); } catch {}
+  guide.started = false; guide.msgs = []; guide.awaitName = false; $("#guidelog").innerHTML = "";
+  toggleAccount(false); toggleHistory(false);
+  render(); updateTok(); renderHistory(); updateAccount();
+  PRESETS_FAST.default(); fastUpdate();
+  openGuide(true);
+}
+$("#accountbtn").onclick = () => { updateAccount(); toggleAccount(); };
+$("#loginbtn").onclick = () => { toggleAccount(false); openGuide(true); };
+$("#logoutbtn").onclick = logout;
+document.addEventListener("click", e => { if (!e.target.closest("#accountwrap")) toggleAccount(false); });
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
@@ -1440,7 +1479,7 @@ const GUIDE_FAQ = [
   [/model|claude|opus|sonnet|haiku/i, "The model dropdown is under the message box. It lists all models available to your API key; choose \"Other model id…\" to type one yourself."],
   [/key|api|κλειδ/i, "Paste your API key in Settings (gear, bottom of the left bar) or set ANTHROPIC_API_KEY in the .env file used by Docker, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
-  [/name|όνομα/i, "You can change your name in Settings (gear, left bar) > Your name."],
+  [/name|όνομα|log ?in|log ?out|login|logout|account|user|sign/i, "Your name is your login. The round button with your initial in the left bar lets you log out; then type another name in my window to log in. Each name keeps its own chat history and default parameters."],
   [/graph|plot|zoom|play|viewer|γράφημα/i, "In the run card: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
   [/cancel|stop|ακύρ/i, "Press Cancel run on the run card."],
   [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the chat."],
@@ -1470,8 +1509,8 @@ function openGuide(open) {
   setCentered(open && !getName());
   if (open && !guide.started) {
     guide.started = true; const n = getName();
-    guideAdd("bot", n ? `Hi ${n}! I'm Athena, SpinMate's guide. ${ATHENA_INTRO} I can show you around the app: where things are and what the buttons do.` :
-      "Hi! I'm Athena, SpinMate's guide. I can show you around the app. Before we start, what's your name?");
+    guideAdd("bot", n ? `Welcome back, ${n}! I'm Athena, SpinMate's guide. ${ATHENA_INTRO} I can show you around the app: where things are and what the buttons do.` :
+      `Welcome to SpinMate! I'm Athena, its guide. ${ATHENA_INTRO} Before we start, what's your name?`);
     if (n) guideChips(); else guide.awaitName = true;
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
@@ -1483,8 +1522,8 @@ async function guideAsk(q) {
   if (guide.awaitName) {
     const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
     try { localStorage.setItem("sublattice.name", v); } catch {}
-    $("#username").value = v; guide.awaitName = false; setCentered(false); render();
-    guideAdd("bot", `Nice to meet you, ${v}! ${ATHENA_INTRO} Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
+    guide.awaitName = false; setCentered(false); onLogin();
+    guideAdd("bot", `Nice to meet you, ${v}! Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
   }
   guide.msgs.push({role: "user", content: q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
@@ -1539,17 +1578,13 @@ async function loadModels() {
     sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
   } catch {}
 }
-$("#username").addEventListener("input", e => {
-  try { localStorage.setItem("sublattice.name", cleanName(e.target.value)); } catch {}
-  render();
-});
 let modelTimer;
 $("#apikey").addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
 
 async function init() {
   setTheme(document.documentElement.dataset.theme);
   state.config = await api("/api/config");
-  $("#username").value = getName();
+  updateAccount();
   if (getUD()) baseFast(); else PRESETS_FAST.default();
   fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
@@ -1568,7 +1603,7 @@ async function init() {
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }
   migrateChats();
-  const cur = loadChats().find(c => c.id === localStorage.getItem(CUR_KEY));
+  const cur = loadChats().find(c => c.id === localStorage.getItem(kCur()));
   if (cur) openChat(cur.id, true); else render();
   updateTok(); renderHistory(); await refreshRuns();
   if (!getName()) openGuide(true);

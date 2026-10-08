@@ -39,8 +39,9 @@ How the app works
   Fast / Deep shows the tokens used in this chat, and each answer shows its own tokens. Runs started from
   Setup use no tokens. Each run card has Export CSV and Export all data (.zip).
 - Sweeps (many runs over one parameter) are requested in the main chat, for example "sweep A0 from -1e-12 to 1e-12".
-- Left bar: logo, new conversation (pencil), API key status, settings (gear) with colour theme
-  (Light, Dark, Spin), your name and the API key.
+- Left bar: logo, new conversation (pencil), API key status, round avatar button with your initial = account
+  (Log out, then type another name to log in; each name keeps its own history and default parameters),
+  settings (gear) with colour theme (Light, Dark, Spin) and the API key.
 - API key: paste it in the settings or set ANTHROPIC_API_KEY in the .env file used by Docker; the model list
   loads from it. The app runs at http://localhost:8421 (Docker: docker compose up --build).
 """
