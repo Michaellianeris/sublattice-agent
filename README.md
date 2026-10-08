@@ -66,7 +66,7 @@ model id" lets you type one by hand.
 plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
 requests ("find the smallest current that switches the Néel vector") it searches on its own: a coarse
 sweep, then finer sweeps inside the interval where the behaviour changes, for at most four rounds, and it
-reports the interval it found. The assistant is the only part that uses tokens; runs started from Setup
+reports the interval it found. The assistant is the only part that uses tokens; runs started from Run setup
 never do.
 
 **Tokens.** A counter next to the Fast and Deep switch shows the tokens used in the current chat, and each
@@ -74,8 +74,7 @@ answer ends with its own input and output tokens. Set `TOKEN_BUDGET` to stop the
 run it would start, once the server has used that many tokens since it started.
 
 **Conversations.** The clock icon in the left bar lists earlier chats with their runs and graphs; the
-pencil starts a new one. Results appear in the chat under the prompt that asked for them. The Workbench
-only opens when you ask for it.
+pencil starts a new one. Everything appears in the chat under the prompt that asked for it; there is no side panel.
 
 **Default parameters.** The sliders icon in the left bar edits the values Fast mode starts from. They are
 stored in the browser and also sent to the assistant as the base of its runs.
@@ -84,22 +83,22 @@ stored in the browser and also sent to the assistant as the base of its runs.
 (a zip with every output file and the CSV).
 
 **Runs in the chat.** Every run adds a card that shows its steps (parameters checked, run started,
-simulating with progress and time left, plot) and then the m1z, m2z and nz curves, together with the
-order of the sublattices before and after (for example AFM to FM).
+simulating with progress and time left) and, when it finishes, the complete viewer, so the result is
+there as soon as the answer is: a dial with the +x and +z axes showing the sublattice orientation, the
+order before and after (for example AFM to FM), the final vectors, and a plot of m1, m2 and the Néel
+vector. Toggle components, click to move the playhead, drag to zoom (the window is read again from the raw
+data), double-click to reset, and press Play to animate the run. Sweep cards plot mean |nz| against the
+swept parameter; click a point to open that run.
 
-**Workbench.** The Workbench button at the top right opens the right-hand panel. It opens by itself when a
-run starts and is hidden otherwise.
+**Run setup.** The play icon in the left bar opens a dialog for starting a run yourself, without the
+assistant. The result appears in the chat like any other.
 
-- *Result*: interactive plot of m1, m2 and the Néel vector. Toggle components, click to move the
-  playhead, drag to zoom (the window is read again from the raw data), double-click to reset, Play to
-  animate. A dial shows the sublattice orientation in the x-z plane. Output files can be downloaded.
-  Sweeps get a chart of mean |nz| against the swept parameter; click a point to open that run.
-- *Setup, Fast*: presets, sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping,
+- *Fast*: presets, sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping,
   temperature and SOT current, an initial-state selector and a "Quick extra txt" field for one or two
   additional flags. The text that will be run is shown below the form.
-- *Setup, Deep*: a text editor for the full parameter file, an examples menu, Check, Run and Save as file.
+- *Deep*: a text editor for the full parameter file, an examples menu, Check, Run and Save as file.
 
-The app works without the assistant: Setup runs a simulation directly and only the chat needs the API.
+The app works without the assistant: Run setup runs a simulation directly and only the chat needs the API.
 
 **Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) is a small
 assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
@@ -214,7 +213,7 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 
 - "The network returned a web page instead of the Claude API": a gateway or acceptable-use page is
   answering in place of the API. Open the address in a browser or ask your network team to allow it.
-  The simulator itself and the Setup tab keep working in the meantime.
+  The simulator itself and Run setup keep working in the meantime.
 
 ## How it works
 
