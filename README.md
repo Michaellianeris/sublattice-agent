@@ -1,3 +1,4 @@
+
 # SpinMate
 
 SpinMate is a web interface for a two-sublattice macrospin simulator (antiferromagnets, FeRh and
@@ -5,7 +6,8 @@ exchange-coupled ferromagnets). You describe a run in plain language, or attach 
 Claude checks the input with the simulator's own parser, starts the run, follows it and explains the
 result from the actual magnetization curves.
 
-<img width="1905" height="1004" alt="SpinMate main screen" src="https://github.com/user-attachments/assets/1092531f-fe42-4ee6-b375-dd780bb8866d" />
+<img width="1912" height="955" alt="Screenshot 2026-10-08 133848" src="https://github.com/user-attachments/assets/66ca0a89-8961-4402-8ec3-91e0728fd84f" />
+
 
 The physics code in `macrospin/` is the original code and has not been modified. The repository is
 named `sublattice-agent`.
