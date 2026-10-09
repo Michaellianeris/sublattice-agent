@@ -6,7 +6,8 @@ exchange-coupled ferromagnets). You describe a run in plain language, or attach 
 The selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
 result from the actual magnetization curves.
 
-<img width="1899" height="944" alt="Screenshot 2026-10-09 121819" src="https://github.com/user-attachments/assets/e6c0364a-da84-46ed-8787-f774af9a33ad" />
+<img width="1911" height="952" alt="Screenshot 2026-10-09 160300" src="https://github.com/user-attachments/assets/cff4aabd-e6aa-49bd-8851-103502936f08" />
+
 
 
 
