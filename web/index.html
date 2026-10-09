@@ -457,8 +457,9 @@ main{grid-template-columns:minmax(0,1fr)}
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
         <button type="button" data-theme="spin" aria-pressed="false"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
-      <label>API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
-      <p>The key stays in this browser tab and is sent only to your own server.</p>
+      <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
+      <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"></label>
+      <p>The keys stay in this browser tab and are sent only to your own server.</p>
     </div>
   </div>
 </header>
@@ -875,9 +876,10 @@ async function send() {
   $("#input").value = ""; autosize(); setPending(null);
   state.busy = true; state.error = null; state.live = []; state.finished = false; state.turnUsage = null; render(); toggle();
   try {
-    const headers = {"Content-Type": "application/json"};
-    const key = $("#apikey").value.trim(); if (key) headers["X-Api-Key"] = key;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: $("#model").value, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
+    const headers = {"Content-Type": "application/json"}, picked = selectedModel();
+    const key = picked.provider === "openai" ? $("#openaikey").value.trim() : $("#apikey").value.trim();
+    if (key) headers[picked.provider === "openai" ? "X-OpenAI-Api-Key" : "X-Api-Key"] = key;
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1556,52 +1558,74 @@ $("#loginbtn").onclick = () => { toggleAccount(false); openGuide(true); };
 $("#logoutbtn").onclick = logout;
 document.addEventListener("click", e => { if (!e.target.closest("#accountwrap")) toggleAccount(false); });
 
-// ---------------------------------------------------------------- model picker: one god per model family
+// ---------------------------------------------------------------- model picker: Claude and OpenAI share four capability/cost levels
 const GODS = [
-  {id: "hermes", name: "Hermes", family: "haiku", color: "#0FA3B1", tag: "Swift messenger of the gods. The fast, light Haiku models."},
-  {id: "dionysus", name: "Dionysus", family: "sonnet", color: "#8A3FB5", tag: "God of festivals and tales. The balanced Sonnet models."},
-  {id: "zeus", name: "Zeus", family: "opus", color: "#D4A017", tag: "King of the gods. The most capable Opus models."},
-  {id: "apollo", name: "Apollo", family: "fable", color: "#E8662A", tag: "God of the muses and of stories. The Fable models."},
+  {id: "hermes", name: "Hermes", color: "#0FA3B1", tag: "Quick and economical: Haiku, nano and mini models."},
+  {id: "dionysus", name: "Dionysus", color: "#8A3FB5", tag: "Balanced: Sonnet and standard GPT models."},
+  {id: "zeus", name: "Zeus", color: "#D4A017", tag: "Deep and capable: Opus, pro and reasoning models."},
+  {id: "apollo", name: "Apollo", color: "#E8662A", tag: "Fable and specialised or unclassified models."},
 ];
-const modelFamily = id => { const l = String(id).toLowerCase(); const g = GODS.find(x => l.includes(x.family)); return g ? g.id : "other"; };
-const godLogo = g => `<span class="godlogo" style="--c:${g ? g.color : "#6B7280"}"><b>${g ? g.name[0] : "?"}</b>${g ? `<img src="/gods/${g.id}.png" alt="" onerror="this.remove()">` : ""}</span>`;
-function chooseModel(id) {
-  const sel = $("#model");
-  if (![...sel.options].some(o => o.value === id)) {
-    const o = document.createElement("option"); o.value = o.textContent = id;
-    const last = sel.lastElementChild; sel.insertBefore(o, last && last.value === "__custom__" ? last : null);
+const modelKey = (provider, id) => `${provider}::${id}`;
+function addModelOption(provider, id, name) {
+  const sel = $("#model"), key = modelKey(provider, id);
+  let o = [...sel.options].find(x => x.value === key);
+  if (!o) { o = document.createElement("option"); o.value = key; sel.appendChild(o); }
+  o.dataset.provider = provider; o.dataset.model = id; o.textContent = name || id; return o;
+}
+function selectedModel() {
+  const o = $("#model").selectedOptions[0];
+  return o ? {provider: o.dataset.provider || "anthropic", id: o.dataset.model || o.value} : {provider: "anthropic", id: state.config.model};
+}
+function modelFamily(provider, id) {
+  const l = String(id).toLowerCase();
+  if (provider === "anthropic") {
+    if (l.includes("haiku")) return "hermes";
+    if (l.includes("sonnet")) return "dionysus";
+    if (l.includes("opus")) return "zeus";
+    if (l.includes("fable")) return "apollo";
+  } else {
+    if (/(nano|mini|3\.5)/.test(l)) return "hermes";
+    if (/^(o[1-9])|(-pro\b)|reason/.test(l)) return "zeus";
+    if (/^(gpt-|chatgpt-)/.test(l)) return "dionysus";
   }
-  sel.value = id; try { localStorage.setItem("sublattice.model", id); } catch {}
+  return "apollo";
+}
+const godLogo = g => `<span class="godlogo" style="--c:${g ? g.color : "#6B7280"}"><b>${g ? g.name[0] : "?"}</b>${g ? `<img src="/gods/${g.id}.png" alt="" onerror="this.remove()">` : ""}</span>`;
+function chooseModel(provider, id) {
+  const o = addModelOption(provider, id, id); $("#model").value = o.value;
+  try { localStorage.setItem("sublattice.model", o.value); } catch {}
   toggleGods(false); refreshGods();
 }
 function updateGodBtn() {
-  const sel = $("#model"), g = GODS.find(x => x.id === modelFamily(sel.value));
+  const picked = selectedModel(), g = GODS.find(x => x.id === modelFamily(picked.provider, picked.id));
   $("#godlogo").innerHTML = godLogo(g);
-  $("#godname").textContent = g ? g.name : (sel.value ? "Other model" : "Model");
-  $("#godbtn").title = (g ? g.name + " · " : "") + (sel.value || "Choose the model");
+  $("#godname").textContent = g ? g.name : "Model";
+  $("#godbtn").title = `${g ? g.name + " · " : ""}${picked.provider === "openai" ? "OpenAI" : "Anthropic"} · ${picked.id}`;
 }
 function refreshGods() {
-  const sel = $("#model"), menu = $("#godmenu"), cur = sel.value; menu.innerHTML = "";
-  const groups = Object.fromEntries([...GODS.map(g => [g.id, []]), ["other", []]]);
-  for (const o of sel.options) if (o.value !== "__custom__") groups[modelFamily(o.value)].push(o);
+  const sel = $("#model"), menu = $("#godmenu"), picked = selectedModel(); menu.innerHTML = "";
+  const groups = Object.fromEntries(GODS.map(g => [g.id, []]));
+  for (const o of sel.options) groups[modelFamily(o.dataset.provider || "anthropic", o.dataset.model || o.value)].push(o);
   const modelBtn = o => {
     const b = document.createElement("button"); b.type = "button"; b.className = "godmodel";
-    b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(o.value === cur));
-    b.textContent = o.textContent.replace(/\s*\(.*\)$/, ""); b.title = o.value; b.onclick = () => chooseModel(o.value); return b;
+    b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(o.value === sel.value));
+    const provider = o.dataset.provider === "openai" ? "OpenAI" : "Claude";
+    b.textContent = `${o.textContent.replace(/\s*\(.*\)$/, "")} · ${provider}`; b.title = o.dataset.model;
+    b.onclick = () => chooseModel(o.dataset.provider, o.dataset.model); return b;
   };
   for (const g of GODS) {
     const sec = document.createElement("div"); sec.className = "godsec";
     sec.innerHTML = `<div class="godhead">${godLogo(g)}<div><b>${g.name}</b><small>${g.tag}</small></div></div>`;
-    if (!groups[g.id].length) sec.insertAdjacentHTML("beforeend", `<div class="godnone">No ${g.family[0].toUpperCase() + g.family.slice(1)} models for this key</div>`);
+    if (!groups[g.id].length) sec.insertAdjacentHTML("beforeend", `<div class="godnone">No models at this level for the keys in this tab</div>`);
     for (const o of groups[g.id]) sec.appendChild(modelBtn(o));
     menu.appendChild(sec);
   }
-  const rest = document.createElement("div"); rest.className = "godsec";
-  rest.innerHTML = `<div class="godhead">${godLogo(null)}<div><b>Other models</b><small>Anything else your key offers, or type an id.</small></div></div>`;
-  for (const o of groups.other) rest.appendChild(modelBtn(o));
-  const custom = document.createElement("button"); custom.type = "button"; custom.className = "godmodel"; custom.textContent = "Other model id…";
-  custom.onclick = () => { const id = (prompt("Model id, e.g. claude-opus-4-1-20250805") || "").trim(); if (id) chooseModel(id); };
-  rest.appendChild(custom); menu.appendChild(rest);
+  for (const provider of ["anthropic", "openai"]) {
+    const custom = document.createElement("button"); custom.type = "button"; custom.className = "godmodel";
+    custom.textContent = `Other ${provider === "openai" ? "OpenAI" : "Anthropic"} model id…`;
+    custom.onclick = () => { const id = (prompt(`${provider === "openai" ? "OpenAI" : "Anthropic"} model id`) || "").trim(); if (id) chooseModel(provider, id); };
+    menu.appendChild(custom);
+  }
   updateGodBtn();
 }
 function toggleGods(open) {
@@ -1614,30 +1638,30 @@ document.addEventListener("click", e => { if (!e.target.closest("#godpick")) tog
 
 const GOD_INFO = {
   hermes: {level: 1, tier: "Quick", speed: 5, depth: 2,
-    best: ["Single runs and the presets", "Short answers in Fast mode", "The lowest cost per question"], trade: "May miss subtle points in a long analysis."},
+    best: ["Single runs and the presets", "Short answers in Fast mode", "Lowest token use"], trade: "May miss subtle points in a long analysis."},
   dionysus: {level: 2, tier: "Balanced", speed: 4, depth: 3,
     best: ["Everyday runs with a clear explanation", "Sweeps and comparisons", "Fast or Deep mode"], trade: "A good default when you are not sure."},
   zeus: {level: 3, tier: "Most capable", speed: 2, depth: 5,
-    best: ["Deep mode and a careful reading of the curves", "Goal searches, such as finding a threshold over several sweeps", "Long requests with many steps"], trade: "Slowest, and uses the most tokens."},
-  apollo: {level: 4, tier: "Fable", speed: null, depth: null,
-    best: ["The models sold under the Fable name on your key", "Try one and compare its answer with the others on the same run"], trade: "Strengths vary by model, so check the list below."},
+    best: ["Deep mode and careful reading of curves", "Goal searches over several sweeps", "Long requests with many steps"], trade: "Usually slower and more expensive."},
+  apollo: {level: 4, tier: "Specialised", speed: null, depth: null,
+    best: ["Fable and specialised models", "Compare a new model on the same run"], trade: "Strengths and cost vary by model."},
 };
 const dots = n => n == null ? "varies" : "●".repeat(n) + "○".repeat(5 - n);
 function openGods() {
-  const sel = $("#model"), cur = modelFamily(sel.value), box = $("#plans"); box.innerHTML = "";
+  const sel = $("#model"), picked = selectedModel(), cur = modelFamily(picked.provider, picked.id), box = $("#plans"); box.innerHTML = "";
   for (const g of GODS) {
-    const info = GOD_INFO[g.id], list = [...sel.options].filter(o => o.value !== "__custom__" && modelFamily(o.value) === g.id);
+    const info = GOD_INFO[g.id], list = [...sel.options].filter(o => modelFamily(o.dataset.provider || "anthropic", o.dataset.model || o.value) === g.id);
     const el = document.createElement("div"); el.className = "plan" + (cur === g.id ? " sel" : "");
     el.innerHTML = `<div class="lvl"><span>Level ${info.level}</span><em>${cur === g.id ? "Selected" : info.tier}</em></div>
-      <div class="ph">${godLogo(g)}<div><b>${g.name}</b><small>${g.family[0].toUpperCase() + g.family.slice(1)} models</small></div></div>
+      <div class="ph">${godLogo(g)}<div><b>${g.name}</b><small>${info.tier}</small></div></div>
       <div class="meter"><span>Speed</span><span>${dots(info.speed)}</span></div>
       <div class="meter"><span>Depth</span><span>${dots(info.depth)}</span></div>
       <ul>${info.best.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
       <div class="trade">${esc(info.trade)}</div>
-      <div class="models">${list.length ? "On your key: " + list.map(o => esc(o.textContent.replace(/\s*\(.*\)$/, ""))).join(", ") : "No " + g.family[0].toUpperCase() + g.family.slice(1) + " models on your key."}</div>`;
+      <div class="models">${list.length ? "On your keys: " + list.map(o => `${esc(o.textContent.replace(/\s*\(.*\)$/, ""))} (${o.dataset.provider === "openai" ? "OpenAI" : "Claude"})`).join(", ") : "No models at this level for the keys in this tab."}</div>`;
     const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (cur === g.id ? "" : " primary");
     b.textContent = cur === g.id ? "Selected" : "Choose " + g.name; b.disabled = !list.length || cur === g.id;
-    b.onclick = () => { chooseModel(list[0].value); openGods(); };
+    b.onclick = () => { chooseModel(list[0].dataset.provider, list[0].dataset.model); openGods(); };
     el.appendChild(b); box.appendChild(el);
   }
   $("#godsdlg").hidden = false; $("#godsback").hidden = false;
@@ -1661,8 +1685,8 @@ const GUIDE_FAQ = [
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, press the play icon in the left bar (Run setup) and choose Deep: a txt editor with an examples dropdown."],
   [/param|slider|exchange|A0|Ku|Ms|damping/i, "Run setup (play icon in the left bar) > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
   [/preset|afm|fm\b|ferh/i, "In Run setup (play icon in the left bar) > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
-  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box the god button picks the model. Hermes = Haiku (fast), Dionysus = Sonnet (balanced), Zeus = Opus (most capable), Apollo = Fable. Open it to choose a model inside the family, or type another model id."],
-  [/key|api|κλειδ/i, "Paste your API key in Settings (gear, bottom of the left bar) or set ANTHROPIC_API_KEY in the .env file used by Docker, then restart the container."],
+  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box the god button picks a Claude or OpenAI model by capability and cost. Hermes = quick/cheap (Haiku, nano, mini), Dionysus = balanced (Sonnet, standard GPT), Zeus = deep/most capable (Opus, pro, reasoning), Apollo = Fable and specialised models. Open it to choose the exact model and provider."],
+  [/key|api|κλειδ/i, "Settings has separate Anthropic and OpenAI API key fields. Paste either or both, or set ANTHROPIC_API_KEY and OPENAI_API_KEY in .env, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
   [/name|όνομα|log ?in|log ?out|login|logout|account|user|sign/i, "Your name is your login. The round button with your initial in the left bar lets you log out; then type another name in my window to log in. Each name keeps its own chat history and default parameters."],
   [/graph|plot|zoom|play|viewer|γράφημα/i, "In the run card: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
@@ -1713,8 +1737,10 @@ async function guideAsk(q) {
   guide.msgs.push({role: "user", content: q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
   try {
-    const headers = {"Content-Type": "application/json"}, k = $("#apikey").value.trim(); if (k) headers["X-Api-Key"] = k;
-    const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: $("#model").value, name: getName()})});
+    const headers = {"Content-Type": "application/json"}, picked = selectedModel();
+    const k = picked.provider === "openai" ? $("#openaikey").value.trim() : $("#apikey").value.trim();
+    if (k) headers[picked.provider === "openai" ? "X-OpenAI-Api-Key" : "X-Api-Key"] = k;
+    const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: picked.id, provider: picked.provider, name: getName()})});
     wait.innerHTML = md(out.text); guide.msgs.push({role: "assistant", content: out.text});
   } catch (e) {
     const t = guideFaq(q); wait.innerHTML = md(t); guide.msgs.push({role: "assistant", content: t});
@@ -1727,9 +1753,10 @@ $("#guideform").onsubmit = e => { e.preventDefault(); const i = $("#guideinput")
 
 // ---------------------------------------------------------------- settings
 function keyState() {
-  const k = $("#apikey").value.trim(), pill = $("#keypill"), txt = $("#keytext");
-  if (k) { txt.textContent = "Key set for this tab"; pill.className = "pill good"; }
-  else if (state.config.has_server_key) { txt.textContent = "Using the server key"; pill.className = "pill good"; }
+  const anthropic = $("#apikey").value.trim() || state.config.has_server_key;
+  const openai = $("#openaikey").value.trim() || state.config.has_openai_key;
+  const pill = $("#keypill"), txt = $("#keytext"), n = +!!anthropic + +!!openai;
+  if (n) { txt.textContent = n === 2 ? "Both providers ready" : (anthropic ? "Anthropic ready" : "OpenAI ready"); pill.className = "pill good"; }
   else { txt.textContent = "Add an API key"; pill.className = "pill need"; }
 }
 function toggleSettings(open) {
@@ -1742,6 +1769,7 @@ $("#keypill").onclick = () => toggleSettings(true);
 document.addEventListener("click", e => { if (!e.target.closest(".settings") && !e.target.closest("#keypill")) toggleSettings(false); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleSettings(false); });
 $("#apikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.key", $("#apikey").value.trim()); keyState(); });
+$("#openaikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.openai.key", $("#openaikey").value.trim()); keyState(); });
 
 function setTheme(t) {
   if (!["light", "dark", "spin"].includes(t)) t = "light";
@@ -1753,19 +1781,20 @@ document.querySelectorAll("#themes button").forEach(b => b.onclick = () => setTh
 
 async function loadModels() {
   try {
-    const headers = {}, k = $("#apikey").value.trim(); if (k) headers["X-Api-Key"] = k;
+    const headers = {}, a = $("#apikey").value.trim(), o = $("#openaikey").value.trim();
+    if (a) headers["X-Api-Key"] = a;
+    if (o) headers["X-OpenAI-Api-Key"] = o;
     const out = await api("/api/models", {headers}); if (!out.models || !out.models.length) return;
-    const sel = $("#model"), keep = localStorage.getItem("sublattice.model") || sel.value || out.default;
-    sel.innerHTML = "";
-    for (const m of out.models) { const o = document.createElement("option"); o.value = m.id; o.textContent = m.name && m.name !== m.id ? `${m.name} (${m.id})` : m.id; sel.appendChild(o); }
-    const other = document.createElement("option"); other.value = "__custom__"; other.textContent = "Other model id…"; sel.appendChild(other);
-    sel.title = out.source === "api" ? `${out.models.length} models from your API key` : `Built-in list (could not read your key's models${out.error ? ": " + out.error : ""})`;
-    sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
+    const sel = $("#model"), keep = localStorage.getItem("sublattice.model"); sel.innerHTML = "";
+    for (const m of out.models) addModelOption(m.provider || "anthropic", m.id, m.name);
+    const fallback = modelKey("anthropic", (out.defaults || {}).anthropic || state.config.model);
+    sel.value = [...sel.options].some(x => x.value === keep) ? keep : ([...sel.options].some(x => x.value === fallback) ? fallback : sel.options[0].value);
+    sel.title = `${out.models.length} models from Anthropic and OpenAI`;
     refreshGods();
   } catch {}
 }
 let modelTimer;
-$("#apikey").addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
+for (const id of ["#apikey", "#openaikey"]) $(id).addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
 
 async function init() {
   setTheme(document.documentElement.dataset.theme);
@@ -1774,18 +1803,12 @@ async function init() {
   if (getUD()) baseFast(); else PRESETS_FAST.default();
   fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
-  for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
-  sel.value = localStorage.getItem("sublattice.model") || state.config.model;
+  for (const m of state.config.models) addModelOption("anthropic", m, m);
+  sel.value = localStorage.getItem("sublattice.model") || modelKey("anthropic", state.config.model);
   refreshGods();
-  sel.onchange = () => {
-    if (sel.value === "__custom__") {
-      const id = (prompt("Model id, e.g. claude-opus-4-1-20250805") || "").trim();
-      if (!id) { sel.value = localStorage.getItem("sublattice.model") || sel.options[0].value; return; }
-      const o = document.createElement("option"); o.value = o.textContent = id; sel.insertBefore(o, sel.lastElementChild); sel.value = id;
-    }
-    localStorage.setItem("sublattice.model", sel.value);
-  };
-  $("#apikey").value = sessionStorage.getItem("sublattice.key") || ""; keyState(); loadModels();
+  $("#apikey").value = sessionStorage.getItem("sublattice.key") || "";
+  $("#openaikey").value = sessionStorage.getItem("sublattice.openai.key") || "";
+  keyState(); loadModels();
   if ($("#keypill").classList.contains("need") && getName()) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }

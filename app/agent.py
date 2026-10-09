@@ -5,6 +5,7 @@ import re
 
 import anthropic
 
+from . import openai_provider
 from . import tools
 from .prompts import SYSTEM_PROMPT
 
@@ -23,13 +24,14 @@ def list_models(api_key=None):
     err = None if key else "no API key"
     if key:
         try:
-            found = [{"id": m.id, "name": getattr(m, "display_name", None) or m.id}
+            found = [{"id": m.id, "name": getattr(m, "display_name", None) or m.id,
+                      "provider": "anthropic"}
                      for m in anthropic.Anthropic(api_key=key).models.list(limit=1000)]
             if found:
                 return found, "api", None
         except Exception as e:
             err = f"{type(e.__cause__ or e).__name__}: {e.__cause__ or e}"
-    return [{"id": m, "name": m} for m in MODELS], "configured", err
+    return [{"id": m, "name": m, "provider": "anthropic"} for m in MODELS], "configured", err
 
 
 MODE_NOTES = {
@@ -50,15 +52,18 @@ def tokens_used():
     return USED["input"] + USED["output"]
 
 
+def _account_values(inp, out):
+    USED["input"] += int(inp or 0)
+    USED["output"] += int(out or 0)
+    return int(inp or 0), int(out or 0)
+
+
 def _account(resp):
-    """Add the usage of one API response to the session counters; returns (input, output)."""
+    """Add the usage of one Anthropic response to the session counters; returns (input, output)."""
     u = getattr(resp, "usage", None)
     inp = sum(int(getattr(u, k, 0) or 0) for k in
               ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
-    out = int(getattr(u, "output_tokens", 0) or 0)
-    USED["input"] += inp
-    USED["output"] += out
-    return inp, out
+    return _account_values(inp, getattr(u, "output_tokens", 0) if u else 0)
 
 
 class AgentError(Exception):
@@ -88,7 +93,7 @@ def _dump(block):
     return d
 
 
-def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
+def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -186,10 +191,98 @@ def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaul
     yield {"type": "done", "messages": messages}
 
 
-def chat(messages, api_key=None, model=None):
+def _system_text(mode=None, name=None, defaults_text=None):
+    parts = [SYSTEM_PROMPT]
+    if mode in MODE_NOTES:
+        parts.append(MODE_NOTES[mode])
+    if name:
+        parts.append(f"The user's name is {name}. Greet them by name in your first reply and use their name only occasionally after that.")
+    if defaults_text and defaults_text.strip():
+        parts.append("The user's saved default parameters. Use them as the base of every run unless the user asks for something else:\n" + defaults_text.strip())
+    return "\n\n".join(parts)
+
+
+def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
+    model = model or openai_provider.DEFAULT_MODEL
+    messages = list(messages)
+    input_items = openai_provider.to_input(messages)
+    instructions = _system_text(mode, name, defaults_text)
+    turn_in = turn_out = 0
+
+    def usage_event():
+        return {"type": "usage", "input": turn_in, "output": turn_out,
+                "session": tokens_used(), "budget": TOKEN_BUDGET}
+
+    for _ in range(MAX_STEPS):
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
+            yield usage_event()
+            yield {"type": "error", "status": 429,
+                   "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
+        try:
+            response = openai_provider.create(model, instructions, input_items, tools.TOOLS,
+                                              api_key, MAX_TOKENS, 90)
+        except openai_provider.OpenAIError as e:
+            yield {"type": "error", "status": e.status, "error": str(e)}
+            return
+
+        inp, out = _account_values(*openai_provider.usage(response))
+        turn_in += inp
+        turn_out += out
+        blocks, calls, replay = openai_provider.output_blocks(response)
+        if not blocks and response.get("error"):
+            yield {"type": "error", "status": 502, "error": str(response["error"])}
+            return
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET and calls:
+            yield usage_event()
+            yield {"type": "error", "status": 429,
+                   "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
+
+        if blocks:
+            messages.append({"role": "assistant", "content": blocks})
+        for block in blocks:
+            if block["type"] == "text" and block["text"].strip():
+                yield {"type": "text", "text": block["text"]}
+        if not calls:
+            yield usage_event()
+            yield {"type": "done", "messages": messages}
+            return
+
+        results = []
+        for call in calls:
+            yield {"type": "tool_start", "id": call["id"], "name": call["name"],
+                   "input": call["input"]}
+            try:
+                value, event = tools.call(call["name"], call["input"])
+                is_error = '"ok": false' in value if isinstance(value, str) else False
+            except Exception as e:
+                value, event, is_error = f"tool failed: {e}", {"tool": call["name"], "error": str(e)}, True
+            yield {"type": "tool_done", "id": call["id"], "event": event, "is_error": is_error}
+            results.append({"type": "tool_result", "tool_use_id": call["id"],
+                            "content": value, "is_error": is_error})
+        result_message = {"role": "user", "content": results}
+        messages.append(result_message)
+        input_items.extend(replay)
+        input_items.extend(openai_provider.to_input([result_message]))
+
+    messages.append({"role": "assistant", "content": [{"type": "text",
+        "text": "I stopped after too many tool calls in one turn. Tell me how to continue."}]})
+    yield usage_event()
+    yield {"type": "done", "messages": messages}
+
+
+def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None,
+                provider="anthropic"):
+    """Provider-neutral tool loop; yields the same events for Anthropic and OpenAI."""
+    stream = _openai_stream if provider == "openai" else _anthropic_stream
+    yield from stream(messages, api_key, model, mode, name, defaults_text)
+
+
+def chat(messages, api_key=None, model=None, provider="anthropic"):
     """Blocking version of chat_stream. Returns (messages, tool events)."""
     events = []
-    for ev in chat_stream(messages, api_key, model):
+    for ev in chat_stream(messages, api_key, model, provider=provider):
         if ev["type"] == "tool_done":
             events.append(ev["event"])
         elif ev["type"] == "error":

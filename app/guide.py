@@ -5,6 +5,7 @@ import re
 import anthropic
 
 from . import agent
+from . import openai_provider
 
 GUIDE_PROMPT = """You are Athena, the small owl assistant in the corner of the SpinMate web app. You are named after the
 Greek goddess of wisdom, craft and strategy, born from the head of Zeus and protector of Athens, whose
@@ -46,20 +47,29 @@ How the app works
 - Left bar: logo, new conversation (pencil), API key status, round avatar button with your initial = account
   (Log out, then type another name to log in; each name keeps its own history and default parameters),
   settings (gear) with colour theme (Light, Dark, Spin) and the API key.
-- API key: paste it in the settings or set ANTHROPIC_API_KEY in the .env file used by Docker; the model list
-  loads from it. The app runs at http://localhost:8421 (Docker: docker compose up --build).
+- API keys: Settings has separate Anthropic and OpenAI fields. Paste either or both, or set
+  ANTHROPIC_API_KEY and OPENAI_API_KEY in the .env file used by Docker. The combined model list loads from
+  the keys. The app runs at http://localhost:8421 (Docker: docker compose up --build).
 """
 
 
-def answer(messages, api_key=None, model=None, name=None):
-    key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
-        raise agent.AgentError("No API key", 401)
+def answer(messages, api_key=None, model=None, name=None, provider="anthropic"):
     system = GUIDE_PROMPT + (f"\nThe user's name is {name}." if name else "")
     msgs = [{"role": m["role"], "content": str(m["content"])[:600]} for m in messages[-8:]
             if m.get("role") in ("user", "assistant") and m.get("content")]
     if not msgs or msgs[-1]["role"] != "user":
         raise agent.AgentError("Empty question", 400)
+    if provider == "openai":
+        try:
+            text, resp = openai_provider.text(msgs, system, model, api_key, 400)
+        except openai_provider.OpenAIError as e:
+            raise agent.AgentError(str(e), e.status)
+        agent._account_values(*openai_provider.usage(resp))
+        return text
+
+    key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        raise agent.AgentError("No Anthropic API key", 401)
     try:
         resp = anthropic.Anthropic(api_key=key).messages.create(
             model=model or agent.DEFAULT_MODEL, max_tokens=400, system=system, messages=msgs, timeout=60)

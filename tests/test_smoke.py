@@ -92,6 +92,53 @@ def test_agent_loop_with_fake_claude(client):
     assert wait_done(client, result["run_id"])["status"] == "done"
 
 
+def test_openai_agent_loop_translates_tools_and_usage(client):
+    from app import agent, openai_provider
+
+    replies = iter([
+        {"output": [{"type": "function_call", "call_id": "call_1", "name": "start_simulation",
+                     "arguments": json.dumps({"parameters_text": "--t=0.1e-9 --SOT_DC_Amp=0"})}],
+         "usage": {"input_tokens": 10, "output_tokens": 2}},
+        {"output": [{"type": "message", "content": [{"type": "output_text", "text": "started"}]}],
+         "usage": {"input_tokens": 12, "output_tokens": 3}},
+    ])
+    seen = []
+
+    def fake_create(model, instructions, input_items, tools, api_key=None, max_tokens=4096, timeout=90):
+        seen.append((model, input_items))
+        return next(replies)
+
+    real = openai_provider.create
+    openai_provider.create = fake_create
+    try:
+        events = list(agent.chat_stream([{"role": "user", "content": "go"}], api_key="k",
+                                        model="gpt-test", provider="openai"))
+    finally:
+        openai_provider.create = real
+    assert [e["type"] for e in events] == ["tool_start", "tool_done", "text", "usage", "done"]
+    assert events[3]["input"] == 22 and events[3]["output"] == 5
+    messages = events[-1]["messages"]
+    assert messages[1]["content"][0]["type"] == "tool_use"
+    assert messages[2]["content"][0]["type"] == "tool_result"
+    assert any(i.get("type") == "function_call_output" for i in seen[1][1])
+    result = json.loads(messages[2]["content"][0]["content"])
+    assert wait_done(client, result["run_id"])["status"] == "done"
+
+
+def test_models_endpoint_combines_providers(client):
+    from app import agent, openai_provider
+
+    real_agent, real_openai = agent.list_models, openai_provider.list_models
+    agent.list_models = lambda key=None: ([{"id": "claude-x", "name": "Claude X", "provider": "anthropic"}], "api", None)
+    openai_provider.list_models = lambda key=None: ([{"id": "gpt-x", "name": "gpt-x", "provider": "openai"}], "api", None)
+    try:
+        data = client.get("/api/models").json()
+    finally:
+        agent.list_models, openai_provider.list_models = real_agent, real_openai
+    assert {m["provider"] for m in data["models"]} == {"anthropic", "openai"}
+    assert data["sources"] == {"anthropic": "api", "openai": "api"}
+
+
 def test_series_endpoint_downsamples_and_zooms(client):
     out = client.post("/api/runs", json={"parameters_text": "--t=0.3e-9 --SOT_DC_Amp=0"}).json()
     run = wait_done(client, out["run_id"])

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from . import agent
 from . import guide
+from . import openai_provider
 from . import params as P
 from . import simulations as S
 
@@ -27,12 +28,14 @@ class ChatIn(BaseModel):
     mode: str | None = None
     name: str | None = None
     defaults: str | None = None
+    provider: str = "anthropic"
 
 
 class GuideIn(BaseModel):
     messages: list
     model: str | None = None
     name: str | None = None
+    provider: str = "anthropic"
 
 
 class ParamsIn(BaseModel):
@@ -67,39 +70,52 @@ def god_logo(name: str):
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
 
 
 @app.post("/api/guide")
-def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None)):
+def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None),
+                 x_openai_api_key: str | None = Header(default=None)):
     try:
         name = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()
-        return {"text": guide.answer(body.messages, x_api_key, body.model, name)}
+        key = x_openai_api_key if body.provider == "openai" else x_api_key
+        return {"text": guide.answer(body.messages, key, body.model, name, body.provider)}
     except agent.AgentError as e:
         return JSONResponse({"error": str(e)}, status_code=e.status)
 
 
 @app.get("/api/models")
-def models(x_api_key: str | None = Header(default=None)):
-    found, source, error = agent.list_models(x_api_key)
-    return {"models": found, "source": source, "error": error, "default": agent.DEFAULT_MODEL}
+def models(x_api_key: str | None = Header(default=None),
+           x_openai_api_key: str | None = Header(default=None)):
+    claude, c_source, c_error = agent.list_models(x_api_key)
+    openai, o_source, o_error = openai_provider.list_models(x_openai_api_key)
+    return {"models": claude + openai,
+            "sources": {"anthropic": c_source, "openai": o_source},
+            "errors": {"anthropic": c_error, "openai": o_error},
+            "defaults": {"anthropic": agent.DEFAULT_MODEL, "openai": openai_provider.DEFAULT_MODEL}}
 
 
 @app.post("/api/chat")
-def chat(body: ChatIn, x_api_key: str | None = Header(default=None)):
-    """Streams newline-delimited JSON events while Claude works."""
+def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
+         x_openai_api_key: str | None = Header(default=None)):
+    """Streams provider-neutral agent events as newline-delimited JSON."""
+    if body.provider not in ("anthropic", "openai"):
+        raise HTTPException(400, f"unknown provider {body.provider}")
     if body.model and not re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", body.model):
         raise HTTPException(400, f"invalid model name {body.model}")
-    if not (x_api_key or os.environ.get("ANTHROPIC_API_KEY")):
-        return JSONResponse({"error": "No API key. Paste a key from console.anthropic.com "
-                                      "or set ANTHROPIC_API_KEY."}, status_code=401)
+    key = x_openai_api_key if body.provider == "openai" else x_api_key
+    env_name = "OPENAI_API_KEY" if body.provider == "openai" else "ANTHROPIC_API_KEY"
+    if not (key or os.environ.get(env_name)):
+        return JSONResponse({"error": f"No {body.provider} API key. Add one in Settings or set {env_name}."},
+                            status_code=401)
 
     def stream():
         try:
-            for ev in agent.chat_stream(body.messages, api_key=x_api_key, model=body.model, mode=body.mode,
+            for ev in agent.chat_stream(body.messages, api_key=key, model=body.model, mode=body.mode,
                                     name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
-                                    defaults_text=(body.defaults or "")[:2000]):
+                                    defaults_text=(body.defaults or "")[:2000], provider=body.provider):
                 yield json.dumps(ev, default=str) + "\n"
         except Exception as e:  # keep the stream well-formed for the page
             yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"

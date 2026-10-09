@@ -3,7 +3,7 @@
 
 SpinMate is a web interface for a two-sublattice macrospin simulator (antiferromagnets, FeRh and
 exchange-coupled ferromagnets). You describe a run in plain language, or attach a parameter file, and
-Claude checks the input with the simulator's own parser, starts the run, follows it and explains the
+The selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
 result from the actual magnetization curves.
 
 <img width="1899" height="944" alt="Screenshot 2026-10-09 121819" src="https://github.com/user-attachments/assets/e6c0364a-da84-46ed-8787-f774af9a33ad" />
@@ -27,10 +27,10 @@ named `sublattice-agent`.
 
 ## Quick start
 
-You need Docker and an Anthropic API key (console.anthropic.com, Settings, API keys).
+You need Docker and at least one API key: Anthropic (console.anthropic.com) or OpenAI (platform.openai.com).
 
 ```bash
-cp .env.example .env          # put the key in ANTHROPIC_API_KEY
+cp .env.example .env          # put a key in ANTHROPIC_API_KEY and/or OPENAI_API_KEY
 docker compose up --build
 ```
 
@@ -61,9 +61,11 @@ with the paperclip (drag and drop also works). Under the message box you choose 
   quantitative explanation.
 
 The model picker has one god per model family: **Hermes** for Haiku, **Dionysus** for Sonnet, **Zeus** for
-Opus and **Apollo** for Fable. Open it to choose a model inside the family. The list is read from your API
-key, so it contains whatever Anthropic models the key can use; anything that fits no family appears under
-"Other models", and "Other model id" lets you type one by hand. The logos are read from `web/gods/`
+Opus/reasoning and **Apollo** for Fable or specialised models. Claude and OpenAI share these four levels:
+Hermes contains Haiku, nano and mini models; Dionysus contains Sonnet and standard GPT models; Zeus contains
+Opus, pro and reasoning models; Apollo contains Fable and anything specialised or unclassified. The combined
+list is read from both keys. Each exact model is labelled Claude or OpenAI, and a custom id can be entered for
+either provider. The logos are read from `web/gods/`
 (`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god shows a coloured
 badge with its initial.
 The temple icon in the left bar opens *Model gods*, a comparison of the four levels with what each is good
@@ -109,13 +111,13 @@ The app works without the assistant: Run setup runs a simulation directly and on
 
 **Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) is a small
 assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
-Fast and Deep do. If the Claude API cannot be reached it falls back to a built-in list of answers.
+Fast and Deep do. If the selected provider cannot be reached it falls back to a built-in list of answers.
 
 **Account.** There is no password: you log in by typing your name when Athena asks for it. The round button
 with your initial in the left bar shows who is signed in and lets you log out. Every name keeps its own
 chat history and default parameters in the browser.
 
-**Settings** (gear in the left bar): colour theme (Light, Dark, Spin) and the API key.
+**Settings** (gear in the left bar): colour theme (Light, Dark, Spin), Anthropic API key and OpenAI API key.
 
 By default a run is deterministic: temperature 0 and no current. See the note on `SOT_DC_Amp` below.
 
@@ -192,9 +194,12 @@ Set these in `.env`.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | empty | server-side key; otherwise paste it in the page |
-| `CLAUDE_MODEL` | `claude-sonnet-5` | default model |
-| `CLAUDE_MODELS` | built-in list | fallback model list when the key's list cannot be read |
+| `ANTHROPIC_API_KEY` | empty | server-side Anthropic key; otherwise paste it in Settings |
+| `OPENAI_API_KEY` | empty | server-side OpenAI key; otherwise paste it in Settings |
+| `CLAUDE_MODEL` | `claude-sonnet-5` | default Claude model |
+| `CLAUDE_MODELS` | built-in list | fallback Claude model list |
+| `OPENAI_MODEL` | `gpt-4.1` | default OpenAI model |
+| `OPENAI_MODELS` | built-in list | fallback OpenAI model list |
 | `HOST_PORT` | `8421` | port on your machine |
 | `MAX_PARALLEL` | CPU cores - 1 | simultaneous runs |
 | `MAX_SWEEP_RUNS` | `400` | largest sweep |
@@ -222,7 +227,7 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 
   The `certs/` folder is mounted read-only and ignored by git.
 
-- "The network returned a web page instead of the Claude API": a gateway or acceptable-use page is
+- "The network returned a web page instead of the Claude/OpenAI API": a gateway or acceptable-use page is
   answering in place of the API. Open the address in a browser or ask your network team to allow it.
   The simulator itself and Run setup keep working in the meantime.
 
@@ -232,7 +237,7 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 browser (web/index.html)
    |  conversation kept in the page, sent every turn, answer streamed back as events
    v
-FastAPI (app/server.py) --> Claude tool-use loop (app/agent.py, app/tools.py)
+FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/agent.py, app/tools.py)
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
 run queue (app/simulations.py) --> python -m app.runner   (one process per run)
@@ -260,4 +265,4 @@ tests/             smoke tests
 ```
 
 The server has no login. It is meant for local use; do not expose the port to the internet, since anyone
-who can reach it can start simulations and use the server-side API key.
+who can reach it can start simulations and use the server-side API keys.
