@@ -55,6 +55,14 @@ def athena():
     return FileResponse(WEB / "athena.png")
 
 
+@app.get("/gods/{name}")
+def god_logo(name: str):
+    path = WEB / "gods" / name
+    if not re.fullmatch(r"[a-z]+\.png", name) or not path.exists():
+        raise HTTPException(404, "no logo")
+    return FileResponse(path)
+
+
 @app.get("/api/config")
 def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
