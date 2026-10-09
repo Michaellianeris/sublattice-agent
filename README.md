@@ -65,6 +65,8 @@ key, so it contains whatever Anthropic models the key can use; anything that fit
 "Other models", and "Other model id" lets you type one by hand. The logos are read from `web/gods/`
 (`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god shows a coloured
 badge with its initial.
+The temple icon in the left bar opens *Model gods*, a comparison of the four levels with what each is good
+for, its speed and depth, and the models of your key that belong to it, plus a button to choose it.
 
 **Agent behaviour.** After it starts a run the assistant waits for it, reads the result (including the
 plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
