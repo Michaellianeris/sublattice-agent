@@ -298,8 +298,8 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .defdlg .frow select,.defdlg .frow input:not([type]){grid-column:2}
 .defdlg .row{margin-top:14px;flex-wrap:wrap}
 .guide-back{position:fixed;inset:0;z-index:20;background:rgba(15,20,30,.5);backdrop-filter:blur(2px)}
-.guide.centered{right:auto;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 32px));height:auto;max-height:min(600px,calc(100vh - 40px));z-index:22;box-shadow:0 24px 70px rgba(0,0,0,.4)}
-.guide.centered .guide-log{flex:none;min-height:110px}
+.guide.centered{right:auto;bottom:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(540px,calc(100vw - 32px));height:auto;max-height:calc(100vh - 40px);z-index:22;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.guide.centered .guide-log{flex:1 1 auto;min-height:110px;overflow-y:auto}
 .guide.centered #guideclose{display:none}
 .guide.centered .guide-head img{width:48px;height:48px}
 @media (max-width:900px){.guide{right:8px;bottom:8px}}
@@ -1466,7 +1466,7 @@ document.addEventListener("click", e => { if (!e.target.closest("#accountwrap"))
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
-  [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena. In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. Here I am the guide of SpinMate, an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh. Ask me how to use it."],
+  [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena, your guide. In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship, born fully armed from the head of Zeus and protector of Athens, and the owl was her symbol. I am SpinMate's AI assistant for two-sublattice macrospin simulations. Ask me how to use it."],
   [/histor|previous|παλι|ιστορικ/i, "The clock icon in the left bar opens your past conversations. Click one to reopen it with its runs and graphs, or the cross to delete it. The pencil icon starts a new chat."],
   [/default|προεπιλογ/i, "The sliders icon in the left bar (Default parameters) lets you edit the values Fast mode starts from. They are saved in this browser and also sent to the assistant as the base of every run."],
   [/token|cost|κόστος|usage/i, "The small counter next to Fast and Deep shows the tokens used in this chat. Under each answer you see the input and output tokens of that answer. Runs started from Setup use no tokens."],
@@ -1486,7 +1486,7 @@ const GUIDE_FAQ = [
   [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
   [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or press the play icon in the left bar (Run setup), pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
-const ATHENA_INTRO = "In Greek mythology I was the goddess of wisdom, craft and strategy, born fully armed from the head of Zeus and protector of Athens, and the owl was my symbol. SpinMate is an AI assistant for two-sublattice macrospin simulations of antiferromagnets and FeRh: describe a run in words or attach a parameter file, and it checks the input, runs the simulation and explains the result from the real magnetization curves.";
+const ATHENA_INTRO = "In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship. Born fully armed from the head of Zeus, she was the protector of Athens, and the owl was her symbol.\n\nInspired by her spirit, I am Athena, SpinMate's AI assistant for two-sublattice macrospin simulations. Simply describe the simulation you want in plain language or upload a parameter file. I'll validate the inputs, run the simulation, and help you interpret the results using the actual magnetization curves produced by the model.";
 const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
 const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
@@ -1509,8 +1509,8 @@ function openGuide(open) {
   setCentered(open && !getName());
   if (open && !guide.started) {
     guide.started = true; const n = getName();
-    guideAdd("bot", n ? `Welcome back, ${n}! I'm Athena, SpinMate's guide. ${ATHENA_INTRO} I can show you around the app: where things are and what the buttons do.` :
-      `Welcome to SpinMate! I'm Athena, its guide. ${ATHENA_INTRO} Before we start, what's your name?`);
+    guideAdd("bot", n ? `Welcome back, ${n}! I'm Athena, your guide.\n\n${ATHENA_INTRO}\n\nI can also show you around the app: where things are and what the buttons do.` :
+      `Welcome to SpinMate! I'm Athena, your guide.\n\n${ATHENA_INTRO}\n\nBefore we begin, what's your name?`);
     if (n) guideChips(); else guide.awaitName = true;
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
