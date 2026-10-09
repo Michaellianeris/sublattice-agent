@@ -22,7 +22,8 @@ for d in (RUNS, SWEEPS, INPUTS):
 MAX_PARALLEL = int(os.environ.get("MAX_PARALLEL") or max(1, (os.cpu_count() or 2) - 1))
 MAX_SWEEP_RUNS = int(os.environ.get("MAX_SWEEP_RUNS", "400"))
 RESULT_FILES = ["Two_Spin_Dynamics.png", "output1.dat", "output2.dat", "neel_z.dat",
-                "parameters.txt", "summary.json", "simulation_parameters.log", "stderr.log"]
+                "parameters.txt", "summary.json", "simulation_parameters.log", "stderr.log",
+                "continuation.json", "chain.json"]
 
 _lock = threading.Lock()
 _neel_cache = {}      # (run_id, discard) -> mean |n_z|; finished runs do not change
@@ -73,7 +74,7 @@ def sec_per_step():
     vals = []
     for d in RUNS.iterdir():
         m, s = _read(d / "meta.json"), _read(d / "summary.json")
-        if m and s and m.get("status") == "done" and m.get("steps"):
+        if m and s and m.get("status") == "done" and m.get("steps") and m.get("kind") != "combined":
             vals.append(s["runtime_s"] / m["steps"])
     if not vals:
         return P.DEFAULT_SEC_PER_STEP
@@ -110,18 +111,21 @@ def _execute(run_id):
     _update(run_id, status="done" if ok else "failed", finished=time.time(), returncode=code)
 
 
-def start_run(parameters_text, label="", sweep_id=None, sweep_value=None):
+def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent_run=None, t_offset=None):
     check = P.validate(parameters_text, sec_per_step())
     if not check["ok"]:
         return {"ok": False, "error": check["error"]}
     run_id = _next_id(RUNS, "r")
     run_dir = RUNS / run_id
     (run_dir / "parameters.txt").write_text(check["cleaned_text"])
+    if parent_run:
+        _write(run_dir / "continuation.json", {"parent_run": parent_run, "t_offset_s": t_offset})
     _write(run_dir / "meta.json", {
         "id": run_id, "label": label or "", "status": "queued", "created": time.time(),
         "steps": check["steps"], "estimated_runtime_s": check["estimated_runtime_s"],
         "changed_from_defaults": check["changed_from_defaults"], "warnings": check["warnings"],
         "sweep_id": sweep_id, "sweep_value": sweep_value,
+        "parent_run": parent_run, "t_offset_s": t_offset,
     })
     _pool.submit(_execute, run_id)
     return {"ok": True, "run_id": run_id, "steps": check["steps"],
@@ -182,6 +186,150 @@ def run_file(run_id, name):
         return None
     path = RUNS / run_id / name
     return path if path.exists() else None
+
+
+# ---------- continuation chains
+
+def _last_state(run_id):
+    """Final m1, m2 at full precision (last line of the output files)."""
+    def last(path):
+        with open(path, "rb") as f:
+            f.seek(0, 2)
+            f.seek(max(0, f.tell() - 4096))
+            line = f.read().decode().strip().splitlines()[-1]
+        return [float(x) for x in line.split()[1:4]]
+    d = RUNS / run_id
+    return last(d / "output1.dat"), last(d / "output2.dat")
+
+
+def _end_time(run_id):
+    """Physical time at the end of a run: t_offset + steps * h (the last stored row is the state after the last step)."""
+    m = _meta(run_id)
+    if m.get("kind") == "combined":
+        return m["t_end_s"]
+    args, _ = P._parse((RUNS / run_id / "parameters.txt").read_text())
+    return float(m.get("t_offset_s") or 0.0) + int(args.t / args.h) * args.h
+
+
+def continue_run(run_id, extra_t=None, extra_parameters="", label=""):
+    """New run that starts from the final state of run_id at time t_end, with the same parameters
+    (plus extra_parameters, which override). Drives keep their phase through t_offset."""
+    m = _meta(run_id) if _valid(run_id, "r") else None
+    if not m:
+        return {"ok": False, "error": f"no run {run_id}"}
+    if m["status"] != "done":
+        return {"ok": False, "error": f"{run_id} is {m['status']}, it must be done to continue from it"}
+    text = (RUNS / run_id / "parameters.txt").read_text()
+    args, _ = P._parse(text)
+    m1, m2 = _last_state(run_id)
+    t_offset = _end_time(run_id)
+    vec = lambda v: ",".join(repr(x) for x in v)
+    new = (text.rstrip("\n") + "\n# continuation of " + run_id + "\n"
+           + f"--m1={vec(m1)}\n--m2={vec(m2)}\n--t={float(extra_t or args.t)!r}\n"
+           + (extra_parameters.strip() + "\n" if extra_parameters.strip() else ""))
+    out = start_run(new, label or f"{run_id} continued", parent_run=run_id, t_offset=t_offset)
+    if out.get("ok"):
+        out.update(parent_run=run_id, t_start_ns=round(t_offset * 1e9, 6),
+                   t_end_ns=round((t_offset + float(extra_t or args.t)) * 1e9, 6))
+        notes = []
+        if args.flag0 and args.Temp > 0:
+            notes.append("thermal noise: the random sequence differs from one long run")
+        if args.gaussian:
+            notes.append("--gaussian values are drawn again for this segment")
+        if notes:
+            out["notes"] = notes
+    return out
+
+
+def chain_of(run_id):
+    """Run ids from the first segment to run_id, following parent_run links."""
+    ids, cur, seen = [], run_id, set()
+    while cur and cur not in seen:
+        seen.add(cur)
+        m = _meta(cur)
+        if not m:
+            break
+        if m.get("kind") == "combined":
+            ids = m["chain"] + ids
+            break
+        ids.insert(0, cur)
+        cur = m.get("parent_run")
+    return ids
+
+
+def combine_runs(run_ids=None, run_id=None, label=""):
+    """Join segments into one new run (output files, summary, plot), so the viewer, exports and
+    get_run work on the whole time range. run_id alone follows its parent_run chain."""
+    import numpy as np
+    ids = list(run_ids or []) or (chain_of(run_id) if run_id and _valid(run_id, "r") else [])
+    if len(ids) < 2:
+        return {"ok": False, "error": "need at least two runs (give run_ids, or run_id of the last segment of a chain)"}
+    for rid in ids:
+        mm = _meta(rid) if _valid(rid, "r") else None
+        if not mm or mm["status"] != "done":
+            return {"ok": False, "error": f"{rid} is not a finished run"}
+    a_all, b_all, bounds, warnings = [], [], [], []
+    for i, rid in enumerate(ids):
+        a = np.loadtxt(RUNS / rid / "output1.dat")
+        b = np.loadtxt(RUNS / rid / "output2.dat")
+        if i:
+            parent = _meta(rid).get("parent_run")
+            pm = _meta(parent) if parent and _valid(parent, "r") else None
+            linked = parent == ids[i - 1] or bool(pm and pm.get("kind") == "combined" and pm["chain"][-1] == ids[i - 1])
+            if linked:
+                a, b = a[1:], b[1:]  # first row repeats the parent's final state
+            else:
+                dt = a[1, 0] - a[0, 0]
+                shift = a_all[-1][-1, 0] + dt - a[0, 0]
+                a[:, 0] += shift
+                b[:, 0] += shift
+                warnings.append(f"{rid} is not a continuation of {ids[i - 1]}: its time was shifted by "
+                                f"{shift * 1e9:.4g} ns and m may jump at the boundary")
+            bounds.append(float(a[0, 0]))
+        a_all.append(a)
+        b_all.append(b)
+    A, B = np.vstack(a_all), np.vstack(b_all)
+    new_id = _next_id(RUNS, "r")
+    d = RUNS / new_id
+    for name, arr in (("output1.dat", A), ("output2.dat", B)):
+        np.savetxt(d / name, arr, fmt=["%.16E", "%.16f", "%.16f", "%.16f"])
+    (d / "parameters.txt").write_text((RUNS / ids[-1] / "parameters.txt").read_text())
+    from . import runner
+    runtime = sum(((_read(RUNS / r / "summary.json") or {}).get("runtime_s") or 0) for r in ids)
+    summary = runner.summarise(runtime, folder=d, extra={"chain": ids, "segment_starts_ns": [round(x * 1e9, 6) for x in bounds]})
+    _chain_plot(d, A, B, bounds)
+    _write(d / "chain.json", {"chain": ids, "segment_starts_s": bounds, "warnings": warnings})
+    t_end = _end_time(ids[-1]) if not warnings else float(A[-1, 0] + (A[-1, 0] - A[-2, 0]))
+    _write(d / "meta.json", {
+        "id": new_id, "label": label or "combined " + " + ".join(ids), "status": "done", "kind": "combined",
+        "chain": ids, "created": time.time(), "finished": time.time(), "steps": int(len(A)),
+        "t_end_s": t_end, "warnings": warnings,
+    })
+    return {"ok": True, "run_id": new_id, "chain": ids, "points": int(len(A)),
+            "t_start_ns": round(float(A[0, 0]) * 1e9, 6), "t_end_ns": round(t_end * 1e9, 6),
+            "order_initial": summary["order_initial"], "order_final": summary["order_final"],
+            "warnings": warnings}
+
+
+def _chain_plot(folder, A, B, bounds):
+    """Same layout as the original Two_Spin_Dynamics.png, with dashed lines at the segment joins."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(5, 3.2), dpi=200)
+    t = A[:, 0] * 1e9
+    for arr, ls, cols, sub in ((A, "-", ("green", "blue", "red"), "1"), (B, "--", ("orchid", "purple", "orange"), "2")):
+        for k, (c, ax_name) in enumerate(zip(cols, "xyz")):
+            ax.plot(t, arr[:, k + 1], ls, color=c, lw=0.9, label=rf"$m_{{{sub},{ax_name}}}$")
+    for x in bounds:
+        ax.axvline(x * 1e9, color="gray", ls=":", lw=0.8)
+    ax.set_xlabel("Time (ns)")
+    ax.set_ylabel(r"Magnetisation ($M/M_s$)")
+    ax.tick_params(direction="in")
+    ax.legend(loc="upper left", bbox_to_anchor=(1, 1), frameon=False, fontsize=6)
+    fig.tight_layout()
+    fig.savefig(folder / "Two_Spin_Dynamics.png")
+    plt.close(fig)
 
 
 # ---------- trajectories for the viewer

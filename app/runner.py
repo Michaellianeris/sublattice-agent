@@ -6,6 +6,8 @@ The physics code in macrospin/ is not modified. This wrapper only:
   - silences the per-step print in the temperature-dependent branch
   - adds a font fallback (Times New Roman is missing in Docker)
   - writes summary.json and neel_z.dat when the run ends
+  - continuation runs: shifts the solver time by t_offset (from continuation.json) so time-dependent
+    drives keep their phase, and writes absolute times to the output files
 """
 import json
 import os
@@ -25,7 +27,15 @@ def write_json(path, data):
     tmp.replace(path)
 
 
-def patch_progress(total_steps):
+def read_offset(folder="."):
+    """t_offset [s] of a continuation run, 0 for a normal run."""
+    path = Path(folder) / "continuation.json"
+    if not path.exists():
+        return 0.0
+    return float(json.loads(path.read_text()).get("t_offset_s") or 0.0)
+
+
+def patch_progress(total_steps, t_offset=0.0):
     import solver as solver_mod
 
     original = solver_mod.solver.Heun
@@ -38,10 +48,27 @@ def patch_progress(total_steps):
                 "step": state["n"], "total": total_steps,
                 "elapsed": time.time() - state["t0"],
             })
-        return original(self, m1, m2, t0)
+        # absolute time for the drives (AC field, A0(t), Ku(t), chirp, T(t))
+        return original(self, m1, m2, t0 + t_offset)
 
     solver_mod.solver.Heun = heun
     return state
+
+
+def patch_output_time(t_offset):
+    """Write absolute times in output1.dat / output2.dat and on the plot."""
+    if not t_offset:
+        return
+    import output as output_mod
+
+    original = output_mod.output.save_data
+
+    def save_data(self, xx):
+        for res in xx:
+            res[:, 0] += t_offset
+        return original(self, xx)
+
+    output_mod.output.save_data = save_data
 
 
 def dominant_frequency(t, y):
@@ -59,10 +86,11 @@ def dominant_frequency(t, y):
     return float(freqs[k])
 
 
-def summarise(runtime):
+def summarise(runtime, folder=".", extra=None):
     import numpy as np
-    d1 = np.loadtxt("output1.dat")
-    d2 = np.loadtxt("output2.dat")
+    folder = Path(folder)
+    d1 = np.loadtxt(folder / "output1.dat")
+    d2 = np.loadtxt(folder / "output2.dat")
     t = d1[:, 0]
     m1, m2 = d1[:, 1:4], d2[:, 1:4]
     neel = (m1 - m2) / 2.0
@@ -70,7 +98,7 @@ def summarise(runtime):
 
     # same definition as original_scripts/neel_vector_generate.py
     neel_z = np.abs((m1[:, 2] - m2[:, 2]) / 2.0)
-    np.savetxt("neel_z.dat", np.column_stack((t, neel_z)), fmt="%.6e")
+    np.savetxt(folder / "neel_z.dat", np.column_stack((t, neel_z)), fmt="%.6e")
 
     dot = np.sum(m1 * m2, axis=1)
 
@@ -86,6 +114,7 @@ def summarise(runtime):
 
     summary = {
         "points": int(len(t)),
+        "t_start_s": float(t[0]),
         "t_end_s": float(t[-1]),
         "runtime_s": round(runtime, 2),
         "m1_initial": vec(m1[0]), "m1_final": vec(m1[-1]),
@@ -106,7 +135,8 @@ def summarise(runtime):
                         ("dominant_freq_neel_z_GHz", neel[half:, 2])):
         f = dominant_frequency(t[half:], series)
         summary[key] = round(f / 1e9, 4) if f else None
-    write_json("summary.json", summary)
+    summary.update(extra or {})
+    write_json(folder / "summary.json", summary)
     return summary
 
 
@@ -120,7 +150,9 @@ def main():
     args = parse_arguments()
     total = int(args.t / args.h)
 
-    patch_progress(total)
+    t_offset = read_offset()
+    patch_progress(total, t_offset)
+    patch_output_time(t_offset)
 
     if os.environ.get("MACROSPIN_VERBOSE") != "1":
         import current
@@ -135,7 +167,7 @@ def main():
     main_mod.MAIN().main()
     runtime = time.time() - t0
     write_json("progress.json", {"step": total, "total": total, "elapsed": runtime})
-    summarise(runtime)
+    summarise(runtime, extra={"t_offset_s": t_offset} if t_offset else None)
 
 
 if __name__ == "__main__":

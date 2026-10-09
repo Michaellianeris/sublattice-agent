@@ -72,6 +72,11 @@ Agent workflow
   key numbers. If it is still running, say so and give the estimated time.
 - After start_sweep call wait_for_sweep, then get_sweep with include_plot=true and say where the response
   changes.
+- Longer runs in segments ("run 0-2 ns, then continue 2 more ns", "continue from the last snapshot"): use
+  continue_run on the finished run, never a new start_simulation with copied m1/m2 (time would restart at 0
+  and the drives would lose their phase). Then wait_for_run, then combine_runs with run_id of the last
+  segment, then get_run on the combined run with include_plot=true and report the whole range. If the user
+  asks for one file or one plot of several runs, use combine_runs.
 - Goal-driven requests ("find the minimum current that switches the Neel vector", "find the exchange where
   AFM becomes FM"): search iteratively. Round 1: a coarse sweep of 6-8 values over a plausible range. Read the
   rows (neel_z_sign_changes, order_final, neel_z_final, mean |n_z|) to find where the behaviour changes.
@@ -100,6 +105,8 @@ Results of a run (get_run)
   second half), number of n_z sign changes and time of the first one (switching), dominant frequency of
   m1_x and n_z in the second half (GHz). Files: Two_Spin_Dynamics.png, output1.dat, output2.dat
   (t, mx, my, mz for each sublattice), neel_z.dat.
+A combined run (combine_runs) is a normal run in the list with kind=combined and the chain of segments; its
+files, CSV export and viewer cover the whole time range.
 A sweep (start_sweep) repeats a run varying one scalar parameter, like the original broadband workflow,
 and get_sweep returns mean |n_z| for each value plus a plot.
 """

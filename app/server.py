@@ -44,6 +44,18 @@ class ParamsIn(BaseModel):
     label: str = ""
 
 
+class ContinueIn(BaseModel):
+    extra_t: float | None = None
+    extra_parameters: str = ""
+    label: str = ""
+
+
+class CombineIn(BaseModel):
+    run_id: str | None = None
+    run_ids: list[str] = []
+    label: str = ""
+
+
 class SaveIn(BaseModel):
     name: str
     parameters_text: str
@@ -193,6 +205,22 @@ def validate(body: ParamsIn):
 @app.post("/api/runs")
 def start(body: ParamsIn):
     out = S.start_run(body.parameters_text, body.label)
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.post("/api/runs/combine")
+def combine(body: CombineIn):
+    out = S.combine_runs(body.run_ids, body.run_id, body.label)
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.post("/api/runs/{run_id}/continue")
+def continue_run(run_id: str, body: ContinueIn):
+    out = S.continue_run(run_id, body.extra_t, body.extra_parameters, body.label)
     if not out["ok"]:
         raise HTTPException(400, out["error"])
     return out

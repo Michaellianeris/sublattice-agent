@@ -85,6 +85,28 @@ TOOLS = [
                          "required": ["sweep_id"]},
     },
     {
+        "name": "continue_run",
+        "description": "Continue a finished run from its final state for extra_t more seconds (default: the same "
+                       "duration). Time does not restart: the new run covers t_end -> t_end + extra_t, so AC "
+                       "fields, A0(t), Ku(t), chirp and the FeRh temperature cycle keep their phase. "
+                       "extra_parameters (parameter lines) can change conditions for the new segment. "
+                       "Returns the new run id; call wait_for_run, then combine_runs for one trajectory.",
+        "input_schema": {"type": "object",
+                         "properties": {"run_id": TEXT, "extra_t": {"type": "number"},
+                                        "extra_parameters": TEXT, "label": TEXT},
+                         "required": ["run_id"]},
+    },
+    {
+        "name": "combine_runs",
+        "description": "Join finished runs into one new run with one trajectory, summary, CSV and plot over the "
+                       "whole time range (segment joins marked). Give run_id of the last segment to follow its "
+                       "continuation chain, or run_ids in time order. Then call get_run on the returned run_id "
+                       "with include_plot=true.",
+        "input_schema": {"type": "object",
+                         "properties": {"run_id": TEXT, "run_ids": {"type": "array", "items": TEXT},
+                                        "label": TEXT}},
+    },
+    {
         "name": "list_runs",
         "description": "Most recent runs with their status.",
         "input_schema": {"type": "object", "properties": {"limit": {"type": "integer"}}},
@@ -105,7 +127,7 @@ def _image(path):
 def _brief(run):
     keep = ("id", "label", "status", "progress", "eta_s", "steps", "estimated_runtime_s",
             "sweep_id", "sweep_value", "warnings", "changed_from_defaults", "summary",
-            "parameters_text", "error_tail", "files")
+            "parameters_text", "error_tail", "files", "kind", "chain", "parent_run", "t_offset_s")
     return {k: run[k] for k in keep if k in run and run[k] is not None}
 
 
@@ -151,8 +173,13 @@ def call(name, args):
             if args.get("include_plot") and png:
                 return [{"type": "text", "text": json.dumps(out)}, _image(png)], \
                     {"tool": name, "sweep_id": info["id"]}
+    elif name == "continue_run":
+        out = S.continue_run(args["run_id"], args.get("extra_t"), args.get("extra_parameters") or "",
+                             args.get("label", ""))
+    elif name == "combine_runs":
+        out = S.combine_runs(args.get("run_ids"), args.get("run_id"), args.get("label", ""))
     elif name == "list_runs":
-        out = {"runs": [{k: r.get(k) for k in ("id", "label", "status", "progress")}
+        out = {"runs": [{k: r.get(k) for k in ("id", "label", "status", "progress", "parent_run", "kind")}
                         for r in S.list_runs(int(args.get("limit") or 20))]}
     elif name == "cancel_run":
         out = S.cancel(args["run_id"])

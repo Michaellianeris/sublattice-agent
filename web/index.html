@@ -690,6 +690,8 @@ const TOOL_UI = {
   cancel_run: {run: a => `Cancelling ${a.run_id}`, done: a => `Cancelled ${a.run_id}`},
   wait_for_run: {run: a => `Waiting for ${a.run_id}`, done: a => `Finished waiting for ${a.run_id}`},
   wait_for_sweep: {run: a => `Waiting for ${a.sweep_id}`, done: a => `Finished waiting for ${a.sweep_id}`},
+  continue_run: {run: a => `Continuing ${a.run_id}`, done: (a, r) => r.run_id ? `Continued ${a.run_id} as ${r.run_id}` : `Continued ${a.run_id}`},
+  combine_runs: {run: () => "Combining runs", done: (a, r) => r.run_id ? `Combined ${(r.chain || []).join(" + ")} into ${r.run_id}` : "Combined runs"},
 };
 
 function toolResults(messages) {
@@ -732,7 +734,7 @@ function render() {
   const results = toolResults(state.messages), placed = new Set();
   const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
   const place = (name, res) => {
-    const id = name === "start_simulation" ? res.run_id : name === "start_sweep" ? res.sweep_id : null;
+    const id = ["start_simulation", "continue_run", "combine_runs"].includes(name) ? res.run_id : name === "start_sweep" ? res.sweep_id : null;
     if (id && cardEls.has(id)) { log.appendChild(cardEls.get(id).el); placed.add(id); return true; }
     return false;
   };
@@ -853,7 +855,7 @@ function onEvent(ev) {
     const it = state.live.find(x => x.id === ev.id);
     if (it) { it.status = "done"; it.event = ev.event; }
     const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
-    if (target && ["start_simulation", "start_sweep"].includes(ev.event.tool)) {
+    if (target && ["start_simulation", "start_sweep", "continue_run", "combine_runs"].includes(ev.event.tool)) {
       refreshRuns();
       if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
     }
@@ -1260,6 +1262,8 @@ function trackRun(id, label) {
       <button class="btn small" type="button" data-r="cancel">Cancel run</button>
       <button class="btn small" type="button" data-r="analyse" hidden>Ask the assistant to analyse</button>
       <button class="btn small" type="button" data-r="edit" hidden>Edit parameters</button>
+      <button class="btn small" type="button" data-r="cont" hidden title="New run from the final state, same duration, time continues">Continue run</button>
+      <button class="btn small" type="button" data-r="join" hidden title="One trajectory, plot and CSV for the whole chain">Combine chain</button>
       <a class="btn small" data-r="csv" download hidden>Export CSV</a><a class="btn small" data-r="zip" download hidden>Export all data (.zip)</a>
     </div>`;
   cardEls.set(id, {el, chart: null, view: null, final: false}); state.cards.push(id);
@@ -1338,6 +1342,15 @@ async function paintCard(id, c, r) {
   for (const k of ["csv", "zip", "analyse", "edit"]) show(k, true);
   el.querySelector("[data-r=analyse]").onclick = () => { $("#input").value = `Analyse run ${id}.`; send(); };
   el.querySelector("[data-r=edit]").onclick = () => { openSetup("deep"); $("#params").value = r.parameters_text; $("#label").value = r.label || ""; $("#check").click(); };
+  show("cont", true); show("join", !!r.parent_run);
+  el.querySelector("[data-r=cont]").onclick = async () => {
+    try { const o = await postJson(`/api/runs/${id}/continue`, {}); trackRun(o.run_id, `${id} continued`); refreshRuns(); }
+    catch (e) { alert(e.message); }
+  };
+  el.querySelector("[data-r=join]").onclick = async () => {
+    try { const o = await postJson(`/api/runs/combine`, {run_id: id}); trackRun(o.run_id, o.chain.join(" + ")); refreshRuns(); }
+    catch (e) { alert(e.message); }
+  };
   const files = el.querySelector("[data-r=files]");
   files.innerHTML = r.files.filter(f => f !== "summary.json").map(f => `<a href="/api/runs/${id}/files/${f}" download>${f}</a>`).join("");
   files.hidden = false;

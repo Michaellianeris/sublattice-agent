@@ -208,3 +208,33 @@ def test_chat_falls_back_to_the_next_provider(client):
     assert seen == [("anthropic", "claude-haiku-4-5"), ("openai", "gpt-5-nano")]
     assert events[0] == {"type": "model", "provider": "openai", "model": "gpt-5-nano"}
     assert events[-1]["type"] == "done"
+
+
+def test_continue_and_combine_match_one_long_run(client):
+    """0.2 ns + 0.2 ns continued (AC field on) must equal one 0.4 ns run: time does not restart."""
+    import numpy as np
+    from app import simulations as S
+    drive = "--SOT_DC_Amp=0 --flag3 --H_Amp=0.05 --Hex_AC=1,0,0 --Fr=20e9 --A0=0.248e-12"
+    one = client.post("/api/runs", json={"parameters_text": f"--t=0.4e-9 {drive}"}).json()["run_id"]
+    first = client.post("/api/runs", json={"parameters_text": f"--t=0.2e-9 {drive}"}).json()["run_id"]
+    assert wait_done(client, first)["status"] == "done"
+    cont = client.post(f"/api/runs/{first}/continue", json={}).json()
+    assert cont["parent_run"] == first and abs(cont["t_start_ns"] - 0.2) < 1e-9
+    second = wait_done(client, cont["run_id"])
+    assert second["status"] == "done" and second["summary"]["t_offset_s"] > 0
+    assert wait_done(client, one)["status"] == "done"
+
+    comb = client.post("/api/runs/combine", json={"run_id": second["id"]}).json()
+    assert comb["chain"] == [first, second["id"]] and abs(comb["t_end_ns"] - 0.4) < 1e-9
+    a = np.loadtxt(S.RUNS / comb["run_id"] / "output1.dat")
+    ref = np.loadtxt(S.RUNS / one / "output1.dat")
+    common, ia, ir = np.intersect1d(np.round(a[:, 0] * 1e15), np.round(ref[:, 0] * 1e15), return_indices=True)
+    assert len(common) >= len(ref) - 1
+    assert np.max(np.abs(a[ia, 1:] - ref[ir, 1:])) < 1e-9
+    info = client.get(f"/api/runs/{comb['run_id']}").json()
+    assert info["kind"] == "combined" and "Two_Spin_Dynamics.png" in info["files"]
+    assert client.get(f"/api/runs/{comb['run_id']}/export.csv").status_code == 200
+
+
+def test_combine_needs_two_runs(client):
+    assert client.post("/api/runs/combine", json={"run_ids": ["r0001"]}).status_code == 400

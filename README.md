@@ -148,6 +148,16 @@ The `examples/` folder has a file for each scenario, plus a few driven cases:
 | `neel_minus_z_no_current.txt`, `neel_plus_z_no_current.txt` | Néel vector starting along -z or +z |
 | `sot_switching.txt`, `ac_drive_25GHz.txt`, `chirp_pulse.txt` | driven dynamics |
 
+## Continuing a run
+
+Ask "run 0-2 ns, then continue 2 ns from the last state and show me one plot", or press **Continue run**
+on a finished card. `continue_run` starts a new run from the final m1, m2 (full precision) and keeps the
+clock running: the solver gets `t0 + t_offset`, so AC fields, A0(t), Ku(t), the chirp and the FeRh
+temperature cycle do not restart their phase. **Combine chain** (`combine_runs`) joins the segments into
+one run with one trajectory, plot, CSV and summary; segment joins are dotted lines on the plot.
+A FeRh run of 0-2 ns + 2-4 ns matches a single 4 ns run to about 1e-14. With thermal noise (`flag0`)
+the random sequence differs from one long run, and `--gaussian` values are drawn again per segment.
+
 ## Parameter files
 
 The format is that of `main.py --input-file`: command-line options, one or several per line. Lines starting
