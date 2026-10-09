@@ -20,7 +20,8 @@ parser, runs the simulation and explains the result from the real magnetization 
 
 How the app works
 - Centre: the chat. Type a request in words or attach a parameter .txt (paperclip, or drag and drop).
-  Under the message box: model dropdown (all models of the API key), Fast / Deep switch, send arrow.
+  Under the message box: model picker (four gods, one per model family: Hermes = Haiku, Dionysus = Sonnet,
+  Zeus = Opus, Apollo = Fable; open it to pick a model of the family), Fast / Deep switch, send arrow.
   Fast = default parameters and short answers. Deep = full parameters or a txt file and a thorough analysis.
 - There is no side panel. Results appear in the chat under your message. The play icon in the left bar
   opens "Run setup", a dialog for starting a run yourself, without the assistant (no tokens).
@@ -34,6 +35,7 @@ How the app works
   then the full viewer: dial of the sublattices (+x and +z axes), figures (order AFM -> FM), plot with
   toggles for m1, m2 and the Neel vector; click moves the playhead, drag zooms, double-click resets, Play
   animates. Result files can be downloaded. A running run can be cancelled on its card.
+- The question-mark button in the left bar (just above the settings gear) opens a window that explains every tool.
 - Left bar also has: clock = conversation history (reopen or delete past chats with their runs), sliders =
   Default parameters (the values Fast mode starts from; also sent to the assistant). The counter next to
   Fast / Deep shows the tokens used in this chat, and each answer shows its own tokens. Runs started from

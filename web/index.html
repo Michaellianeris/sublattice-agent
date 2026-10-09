@@ -276,6 +276,36 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .setupdlg .modes{margin-top:4px}
 .avatar span{width:30px;height:30px;border-radius:50%;background:var(--m1);color:#fff;display:grid;place-items:center;font-weight:600;font-size:.9rem}
 .acc{margin-bottom:10px;font-size:.9rem}
+.godpick{position:relative}
+.godbtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px 3px 4px;cursor:pointer;color:var(--ink);font-size:.85rem}
+.godbtn:hover,.godbtn[aria-expanded=true]{border-color:var(--m1)}
+.godbtn .caret{color:var(--muted);font-size:.7rem}
+.godlogo{position:relative;width:24px;height:24px;border-radius:50%;background:var(--c,#888);display:inline-grid;place-items:center;overflow:hidden;flex:none;color:#fff;font-size:.74rem}
+.godlogo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.godmenu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:12;width:min(360px,calc(100vw - 40px));max-height:min(70vh,540px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(16,24,40,.22);padding:6px 8px}
+.godsec{padding:8px 2px 8px;border-bottom:1px solid var(--grid)}
+.godsec:last-child{border-bottom:none}
+.godhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.godhead .godlogo{width:34px;height:34px;font-size:1rem}
+.godhead small{display:block;color:var(--muted);font-size:.76rem;line-height:1.25}
+.godmodel{display:block;width:100%;text-align:left;border:none;background:none;border-radius:8px;padding:4px 10px 4px 44px;cursor:pointer;color:var(--ink);font-size:.84rem}
+.godmodel:hover{background:var(--soft)}
+.godmodel[aria-checked=true]{background:var(--soft);font-weight:600}
+.godmodel[aria-checked=true]::before{content:"\2713  ";color:var(--m1)}
+.godnone{padding:2px 10px 2px 44px;font-size:.78rem;color:var(--muted)}
+.toolsdlg{width:min(720px,calc(100vw - 32px))}
+.toolsec{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+.toolsec:first-child{margin-top:4px}
+.toollist{display:grid;gap:12px}
+.tool{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.tool .ti{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--soft);color:var(--m1);font-size:.7rem;overflow:hidden}
+.tool h4{margin:0 0 2px;font-size:.95rem}
+.tool p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45}
+.tool .ti .avatar span{width:24px;height:24px;font-size:.75rem}
+.tool .dotstatus{width:12px;height:12px;border-radius:50%;background:var(--ok)}
+.tool .owl{width:100%;height:100%;object-fit:cover}
+.godstack{display:grid;grid-template-columns:1fr 1fr;width:100%;height:100%}
+.godstack img{width:100%;height:100%;object-fit:cover}
 .tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
 .composer .row .hint{display:none}
 .composer .row .send{margin-left:auto}
@@ -396,6 +426,7 @@ main{grid-template-columns:minmax(0,1fr)}
       <button class="btn small primary" id="loginbtn" type="button">Log in</button>
     </div>
   </div>
+  <button class="rail-btn" id="toolsbtn" type="button" title="What do these tools do?" aria-label="What the tools do"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 015 .9c0 1.7-2.5 2.2-2.5 3.9"/><path d="M12 17.2h0"/></svg></button>
   <div class="settings">
     <button class="rail-btn" id="settingsbtn" type="button" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settingspanel">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
@@ -425,7 +456,11 @@ main{grid-template-columns:minmax(0,1fr)}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
           </button>
           <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
-          <select id="model" class="pick" title="Model" aria-label="Model"></select>
+          <div class="godpick" id="godpick">
+            <button class="godbtn" id="godbtn" type="button" aria-haspopup="true" aria-expanded="false" title="Choose the model"><span id="godlogo"></span><span id="godname">Model</span><span class="caret" aria-hidden="true">&#9662;</span></button>
+            <div class="godmenu" id="godmenu" role="menu" hidden></div>
+            <select id="model" hidden aria-hidden="true"></select>
+          </div>
           <div class="modes mini" role="group" aria-label="Mode">
             <button type="button" id="cmode-fast" aria-pressed="true" title="Fast: default parameters, short answers">Fast</button>
             <button type="button" id="cmode-deep" aria-pressed="false" title="Deep: full parameters or txt, thorough analysis">Deep</button>
@@ -445,6 +480,31 @@ main{grid-template-columns:minmax(0,1fr)}
 <button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
   <img src="/athena.png" alt="" width="40" height="40">
 </button>
+<div class="modal-back" id="toolsback" hidden></div>
+<section class="defdlg toolsdlg" id="toolsdlg" hidden role="dialog" aria-label="What the tools do">
+  <div class="dlg-head"><h3>What the tools do</h3>
+    <button class="rail-btn" id="toolsclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="toollist">
+<div class="toolsec">Left bar</div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span><div><h4>New chat</h4><p>Starts a fresh conversation. The current one is saved in the history first.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h4>History</h4><p>Lists your earlier chats with their runs and graphs. Click one to reopen it, or the cross to delete it. Every user has their own history.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><h4>Default parameters</h4><p>Edit the values Fast mode starts from: duration, Ms, exchange A0, anisotropy Ku, damping, temperature, SOT current, the initial state and one or two extra flags. They are saved in this browser and also sent to the assistant as the base of its runs. &ldquo;Reset to built-in&rdquo; brings back the originals.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><div><h4>Run setup</h4><p>Starts a simulation yourself, without the assistant, so it uses no tokens. <b>Fast</b> has presets (AFM&rarr;FM, AFM&rarr;AFM, FM&rarr;AFM, FM&rarr;FM, FeRh heating), sliders, Check and Run. <b>Deep</b> is a text editor for the full parameter file with an examples menu, Check, Run and Save as file. The result appears in the chat.</p></div></div>
+<div class="tool"><span class="ti"><span class="dotstatus"></span></span><div><h4>API key status</h4><p>Green when a key is available (on the server or in this tab), amber when it is missing. Click it to open the settings.</p></div></div>
+<div class="tool"><span class="ti"><span class="avatar"><span>M</span></span></span><div><h4>Account</h4><p>Shows who is signed in. Log out, then type another name in Athena&rsquo;s window to log in. Each name keeps its own history and default parameters. There is no password.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Colour theme (Light, Dark, Spin) and your API key. The key stays in this browser tab and is only sent to your own server.</p></div></div>
+<div class="toolsec">Under the message box</div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></span><div><h4>Attach</h4><p>Adds a parameter .txt file to your message. Dragging a file onto the chat works too.</p></div></div>
+<div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model gods</h4><p>One god per model family. <b>Hermes</b> = Haiku (fast and light), <b>Dionysus</b> = Sonnet (balanced), <b>Zeus</b> = Opus (most capable), <b>Apollo</b> = Fable. Open the picker to choose a model inside the family, or type another model id.</p></div></div>
+<div class="tool"><span class="ti"><b>F/D</b></span><div><h4>Fast and Deep</h4><p><b>Fast</b> uses the default parameters and answers briefly. <b>Deep</b> works from the full parameters or your file, mentions the caveats that apply and analyses the dynamics in detail.</p></div></div>
+<div class="tool"><span class="ti"><b>tok</b></span><div><h4>Token counter</h4><p>Tokens used in the current chat. Each answer also shows its own input and output tokens. Runs started from Run setup use none.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><div><h4>Send</h4><p>Sends the message. Enter does the same.</p></div></div>
+<div class="toolsec">In the chat</div>
+<div class="tool"><span class="ti"><b>&#9654;</b></span><div><h4>Run cards</h4><p>Every run shows its steps and then the full viewer: a dial with the +x and +z axes, the order before and after (for example AFM&rarr;FM), and a plot of m1, m2 and the N&eacute;el vector. Click the plot to move the playhead, drag to zoom, double-click to reset, and press Play to animate.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></span><div><h4>Export</h4><p><b>Export CSV</b> saves the whole trajectory (time, m1, m2, N&eacute;el vector). <b>Export all data</b> saves a zip with every output file of the run. Sweeps give a chart of mean |nz| against the swept parameter; click a point to open that run.</p></div></div>
+<div class="tool"><span class="ti"><img class="owl" src="/athena.png" alt="" onerror="this.remove()"></span><div><h4>Athena</h4><p>The owl in the bottom right corner explains how to use the app. She only answers questions about SpinMate itself; for simulations, ask in the chat.</p></div></div>
+  </div>
+</section>
 <div class="modal-back" id="setupback" hidden></div>
 <section class="defdlg setupdlg" id="setupdlg" hidden role="dialog" aria-label="Run setup">
   <div class="dlg-head"><h3>Run setup</h3>
@@ -1241,6 +1301,11 @@ async function paintCard(id, c, r) {
 
 // ---------------------------------------------------------------- setup dialog, fast / deep
 function openSetup(mode) { $("#setupdlg").hidden = false; $("#setupback").hidden = false; if (mode) setMode(mode); }
+function openTools() { $("#toolsdlg").hidden = false; $("#toolsback").hidden = false; }
+function closeTools() { $("#toolsdlg").hidden = true; $("#toolsback").hidden = true; }
+$("#toolsbtn").onclick = openTools;
+$("#toolsclose").onclick = closeTools;
+$("#toolsback").onclick = closeTools;
 function closeSetup() { $("#setupdlg").hidden = true; $("#setupback").hidden = true; }
 $("#setupbtn").onclick = () => openSetup();
 $("#setupclose").onclick = closeSetup;
@@ -1430,7 +1495,7 @@ $("#defsave").onclick = () => {
   baseFast(); fastUpdate(); closeDefaults();
 };
 $("#defreset").onclick = () => { try { localStorage.removeItem(kUD()); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
-document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); toggleHistory(false); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); closeTools(); toggleHistory(false); } });
 
 function updateAccount() {
   const n = getName();
@@ -1464,8 +1529,65 @@ $("#loginbtn").onclick = () => { toggleAccount(false); openGuide(true); };
 $("#logoutbtn").onclick = logout;
 document.addEventListener("click", e => { if (!e.target.closest("#accountwrap")) toggleAccount(false); });
 
+// ---------------------------------------------------------------- model picker: one god per model family
+const GODS = [
+  {id: "hermes", name: "Hermes", family: "haiku", color: "#0FA3B1", tag: "Swift messenger of the gods. The fast, light Haiku models."},
+  {id: "dionysus", name: "Dionysus", family: "sonnet", color: "#8A3FB5", tag: "God of festivals and tales. The balanced Sonnet models."},
+  {id: "zeus", name: "Zeus", family: "opus", color: "#D4A017", tag: "King of the gods. The most capable Opus models."},
+  {id: "apollo", name: "Apollo", family: "fable", color: "#E8662A", tag: "God of the muses and of stories. The Fable models."},
+];
+const modelFamily = id => { const l = String(id).toLowerCase(); const g = GODS.find(x => l.includes(x.family)); return g ? g.id : "other"; };
+const godLogo = g => `<span class="godlogo" style="--c:${g ? g.color : "#6B7280"}"><b>${g ? g.name[0] : "?"}</b>${g ? `<img src="/gods/${g.id}.png" alt="" onerror="this.remove()">` : ""}</span>`;
+function chooseModel(id) {
+  const sel = $("#model");
+  if (![...sel.options].some(o => o.value === id)) {
+    const o = document.createElement("option"); o.value = o.textContent = id;
+    const last = sel.lastElementChild; sel.insertBefore(o, last && last.value === "__custom__" ? last : null);
+  }
+  sel.value = id; try { localStorage.setItem("sublattice.model", id); } catch {}
+  toggleGods(false); refreshGods();
+}
+function updateGodBtn() {
+  const sel = $("#model"), g = GODS.find(x => x.id === modelFamily(sel.value));
+  $("#godlogo").innerHTML = godLogo(g);
+  $("#godname").textContent = g ? g.name : (sel.value ? "Other model" : "Model");
+  $("#godbtn").title = (g ? g.name + " · " : "") + (sel.value || "Choose the model");
+}
+function refreshGods() {
+  const sel = $("#model"), menu = $("#godmenu"), cur = sel.value; menu.innerHTML = "";
+  const groups = Object.fromEntries([...GODS.map(g => [g.id, []]), ["other", []]]);
+  for (const o of sel.options) if (o.value !== "__custom__") groups[modelFamily(o.value)].push(o);
+  const modelBtn = o => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "godmodel";
+    b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(o.value === cur));
+    b.textContent = o.textContent.replace(/\s*\(.*\)$/, ""); b.title = o.value; b.onclick = () => chooseModel(o.value); return b;
+  };
+  for (const g of GODS) {
+    const sec = document.createElement("div"); sec.className = "godsec";
+    sec.innerHTML = `<div class="godhead">${godLogo(g)}<div><b>${g.name}</b><small>${g.tag}</small></div></div>`;
+    if (!groups[g.id].length) sec.insertAdjacentHTML("beforeend", `<div class="godnone">No ${g.family[0].toUpperCase() + g.family.slice(1)} models for this key</div>`);
+    for (const o of groups[g.id]) sec.appendChild(modelBtn(o));
+    menu.appendChild(sec);
+  }
+  const rest = document.createElement("div"); rest.className = "godsec";
+  rest.innerHTML = `<div class="godhead">${godLogo(null)}<div><b>Other models</b><small>Anything else your key offers, or type an id.</small></div></div>`;
+  for (const o of groups.other) rest.appendChild(modelBtn(o));
+  const custom = document.createElement("button"); custom.type = "button"; custom.className = "godmodel"; custom.textContent = "Other model id…";
+  custom.onclick = () => { const id = (prompt("Model id, e.g. claude-opus-4-1-20250805") || "").trim(); if (id) chooseModel(id); };
+  rest.appendChild(custom); menu.appendChild(rest);
+  updateGodBtn();
+}
+function toggleGods(open) {
+  const m = $("#godmenu"), want = open === undefined ? m.hidden : open;
+  if (want) m.style.maxHeight = Math.max(160, Math.min(540, $("#godbtn").getBoundingClientRect().top - 16)) + "px";
+  m.hidden = !want; $("#godbtn").setAttribute("aria-expanded", String(want));
+}
+$("#godbtn").onclick = () => toggleGods();
+document.addEventListener("click", e => { if (!e.target.closest("#godpick")) toggleGods(false); });
+
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
+  [/tool|button|icon|explain|what does|help/i, "The question-mark button in the left bar (just above the settings gear) opens a window that explains what every button does: the left bar, the controls under the message box and the run cards."],
   [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena, your guide. In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship, born fully armed from the head of Zeus and protector of Athens, and the owl was her symbol. I am SpinMate's AI assistant for two-sublattice macrospin simulations. Ask me how to use it."],
   [/histor|previous|παλι|ιστορικ/i, "The clock icon in the left bar opens your past conversations. Click one to reopen it with its runs and graphs, or the cross to delete it. The pencil icon starts a new chat."],
   [/default|προεπιλογ/i, "The sliders icon in the left bar (Default parameters) lets you edit the values Fast mode starts from. They are saved in this browser and also sent to the assistant as the base of every run."],
@@ -1476,7 +1598,7 @@ const GUIDE_FAQ = [
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, press the play icon in the left bar (Run setup) and choose Deep: a txt editor with an examples dropdown."],
   [/param|slider|exchange|A0|Ku|Ms|damping/i, "Run setup (play icon in the left bar) > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
   [/preset|afm|fm\b|ferh/i, "In Run setup (play icon in the left bar) > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
-  [/model|claude|opus|sonnet|haiku/i, "The model dropdown is under the message box. It lists all models available to your API key; choose \"Other model id…\" to type one yourself."],
+  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box the god button picks the model. Hermes = Haiku (fast), Dionysus = Sonnet (balanced), Zeus = Opus (most capable), Apollo = Fable. Open it to choose a model inside the family, or type another model id."],
   [/key|api|κλειδ/i, "Paste your API key in Settings (gear, bottom of the left bar) or set ANTHROPIC_API_KEY in the .env file used by Docker, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
   [/name|όνομα|log ?in|log ?out|login|logout|account|user|sign/i, "Your name is your login. The round button with your initial in the left bar lets you log out; then type another name in my window to log in. Each name keeps its own chat history and default parameters."],
@@ -1576,6 +1698,7 @@ async function loadModels() {
     const other = document.createElement("option"); other.value = "__custom__"; other.textContent = "Other model id…"; sel.appendChild(other);
     sel.title = out.source === "api" ? `${out.models.length} models from your API key` : `Built-in list (could not read your key's models${out.error ? ": " + out.error : ""})`;
     sel.value = [...sel.options].some(o => o.value === keep) ? keep : ([...sel.options].some(o => o.value === out.default) ? out.default : sel.options[0].value);
+    refreshGods();
   } catch {}
 }
 let modelTimer;
@@ -1590,6 +1713,7 @@ async function init() {
   const sel = $("#model");
   for (const m of state.config.models) { const o = document.createElement("option"); o.value = o.textContent = m; sel.appendChild(o); }
   sel.value = localStorage.getItem("sublattice.model") || state.config.model;
+  refreshGods();
   sel.onchange = () => {
     if (sel.value === "__custom__") {
       const id = (prompt("Model id, e.g. claude-opus-4-1-20250805") || "").trim();
