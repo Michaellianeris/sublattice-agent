@@ -178,5 +178,33 @@ def test_chat_streams_events_in_order(client):
             events = [json.loads(line) for line in r.iter_lines() if line]
     finally:
         agent.anthropic.Anthropic = real
-    assert [e["type"] for e in events] == ["text", "tool_start", "tool_done", "text", "done"]
+    assert [e["type"] for e in events] == ["model", "text", "tool_start", "tool_done", "text", "done"]
+    assert events[0]["provider"] == "anthropic"
     assert events[-1]["messages"][-1]["role"] == "assistant"
+
+
+def test_chat_falls_back_to_the_next_provider(client):
+    from app import agent
+
+    seen = []
+
+    def fake_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, provider="anthropic"):
+        seen.append((provider, model))
+        if provider == "anthropic":
+            yield {"type": "error", "status": 429, "error": "no credit"}
+            return
+        yield {"type": "text", "text": "ok"}
+        yield {"type": "done", "messages": messages}
+
+    real = agent.chat_stream
+    agent.chat_stream = fake_stream
+    try:
+        with client.stream("POST", "/api/chat", headers={"x-api-key": "a", "x-openai-api-key": "o"},
+                           json={"messages": [{"role": "user", "content": "go"}], "provider": "anthropic",
+                                 "model": "claude-haiku-4-5", "fallbacks": [{"provider": "openai", "model": "gpt-5-nano"}]}) as r:
+            events = [json.loads(line) for line in r.iter_lines() if line]
+    finally:
+        agent.chat_stream = real
+    assert seen == [("anthropic", "claude-haiku-4-5"), ("openai", "gpt-5-nano")]
+    assert events[0] == {"type": "model", "provider": "openai", "model": "gpt-5-nano"}
+    assert events[-1]["type"] == "done"

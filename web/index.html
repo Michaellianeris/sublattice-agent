@@ -39,6 +39,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:12px
 .popover label{display:block;font-size:.88rem;color:var(--muted);margin-bottom:10px}
 .popover select,.popover input{display:block;width:100%;margin-top:3px;border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:var(--panel);color:var(--ink)}
 .popover p{margin:2px 0 0;font-size:.82rem;color:var(--muted)}
+.popover{max-height:calc(100vh - 24px);overflow-y:auto}
+.popover details{margin:2px 0 10px;font-size:.88rem;color:var(--muted)}
+.popover summary{cursor:pointer;margin-bottom:6px}
+.popover details label{font-size:.8rem;margin-bottom:6px}
+.popover details select{font-size:.8rem}
 
 /* layout */
 main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);height:calc(100vh - 57px)}
@@ -293,6 +298,12 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .godmodel:hover{background:var(--soft)}
 .godmodel[aria-checked=true]{background:var(--soft);font-weight:600}
 .godmodel[aria-checked=true]::before{content:"\2713  ";color:var(--m1)}
+.godrow{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;padding:7px 10px}
+.godrow[aria-checked=true]::before{content:none}
+.godrow b{font-size:.92rem}
+.godrow small{display:block;color:var(--muted);font-size:.76rem;line-height:1.3;font-weight:400}
+.godrow .use{color:var(--m1)}
+.godrow:disabled{opacity:.55;cursor:default}
 .godnone{padding:2px 10px 2px 44px;font-size:.78rem;color:var(--muted)}
 .toolsdlg{width:min(720px,calc(100vw - 32px))}
 .toolsec{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
@@ -460,6 +471,10 @@ main{grid-template-columns:minmax(0,1fr)}
       <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
       <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"></label>
       <p>The keys stay in this browser tab and are sent only to your own server.</p>
+      <details class="prefs"><summary>Model behind each god</summary>
+        <div id="prefs"></div>
+        <p>Auto picks the newest suitable model of each provider you have a key for, tries Claude first and switches to OpenAI if a call fails. Choose a model to always use it for that god.</p>
+      </details>
     </div>
   </div>
 </header>
@@ -517,13 +532,13 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h4>History</h4><p>Lists your earlier chats with their runs and graphs. Click one to reopen it, or the cross to delete it. Every user has their own history.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><h4>Default parameters</h4><p>Edit the values Fast mode starts from: duration, Ms, exchange A0, anisotropy Ku, damping, temperature, SOT current, the initial state and one or two extra flags. They are saved in this browser and also sent to the assistant as the base of its runs. &ldquo;Reset to built-in&rdquo; brings back the originals.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><div><h4>Run setup</h4><p>Starts a simulation yourself, without the assistant, so it uses no tokens. <b>Fast</b> has presets (AFM&rarr;FM, AFM&rarr;AFM, FM&rarr;AFM, FM&rarr;FM, FeRh heating), sliders, Check and Run. <b>Deep</b> is a text editor for the full parameter file with an examples menu, Check, Run and Save as file. The result appears in the chat.</p></div></div>
-<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which models of your key belong to it. Each card has a button to choose it.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which model it will use and what it falls back to. Each card has a button to choose it.</p></div></div>
 <div class="tool"><span class="ti"><span class="dotstatus"></span></span><div><h4>API key status</h4><p>Green when a key is available (on the server or in this tab), amber when it is missing. Click it to open the settings.</p></div></div>
 <div class="tool"><span class="ti"><span class="avatar"><span>M</span></span></span><div><h4>Account</h4><p>Shows who is signed in. Log out, then type another name in Athena&rsquo;s window to log in. Each name keeps its own history and default parameters. There is no password.</p></div></div>
-<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Colour theme (Light, Dark, Spin) and your API key. The key stays in this browser tab and is only sent to your own server.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Colour theme (Light, Dark, Spin), your Anthropic and OpenAI API keys, and the model each god uses (Auto by default). The keys stay in this browser tab and are only sent to your own server.</p></div></div>
 <div class="toolsec">Under the message box</div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></span><div><h4>Attach</h4><p>Adds a parameter .txt file to your message. Dragging a file onto the chat works too.</p></div></div>
-<div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model picker</h4><p>One god per model family. <b>Hermes</b> = Haiku (fast and light), <b>Dionysus</b> = Sonnet (balanced), <b>Zeus</b> = Opus (most capable), <b>Apollo</b> = Fable. Open the picker to choose a model inside the family, or type another model id.</p></div></div>
+<div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model picker</h4><p>Choose a god: <b>Hermes</b> (quick), <b>Dionysus</b> (balanced), <b>Zeus</b> (most capable) or <b>Apollo</b> (specialised). The exact Claude or OpenAI model behind it is chosen automatically, and each god shows which one it will use. To fix a specific model, use Settings &gt; Model behind each god.</p></div></div>
 <div class="tool"><span class="ti"><b>F/D</b></span><div><h4>Fast and Deep</h4><p><b>Fast</b> uses the default parameters and answers briefly. <b>Deep</b> works from the full parameters or your file, mentions the caveats that apply and analyses the dynamics in detail.</p></div></div>
 <div class="tool"><span class="ti"><b>tok</b></span><div><h4>Token counter</h4><p>Tokens used in the current chat. Each answer also shows its own input and output tokens. Runs started from Run setup use none.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><div><h4>Send</h4><p>Sends the message. Enter does the same.</p></div></div>
@@ -705,6 +720,7 @@ function chipFor(name, input, result, running) {
 
 function fmtUsage(u) {
   return `tokens: ${fmtN(u.input)} in · ${fmtN(u.output)} out · ${fmtN(u.input + u.output)} total` +
+    (u.used ? ` · ${u.used.god ? u.used.god + " → " : ""}${u.used.model}` : "") +
     (u.session ? ` (server session ${fmtN(u.session)}${u.budget ? " of " + fmtN(u.budget) : ""})` : "");
 }
 
@@ -842,7 +858,8 @@ function onEvent(ev) {
       if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
     }
   }
-  else if (ev.type === "usage") { state.turnUsage = ev; state.usage.input += ev.input; state.usage.output += ev.output; updateTok(); }
+  else if (ev.type === "model") { state.turnModel = ev; }
+  else if (ev.type === "usage") { state.turnUsage = Object.assign({}, ev, {used: state.turnModel}); state.usage.input += ev.input; state.usage.output += ev.output; updateTok(); }
   else if (ev.type === "done") {
     state.messages = ev.messages; state.live = []; state.finished = true;
     if (state.turnUsage) state.usages[ev.messages.length - 1] = state.turnUsage;
@@ -874,12 +891,13 @@ async function send() {
   if (state.pending) content = "Attached parameter file `" + state.pending.name + "`:\n```\n" + state.pending.text.trim() + "\n```\n" + text;
   state.messages.push({role: "user", content});
   $("#input").value = ""; autosize(); setPending(null);
-  state.busy = true; state.error = null; state.live = []; state.finished = false; state.turnUsage = null; render(); toggle();
+  state.busy = true; state.error = null; state.live = []; state.finished = false; state.turnUsage = null; state.turnModel = null; render(); toggle();
   try {
     const headers = {"Content-Type": "application/json"}, picked = selectedModel();
-    const key = picked.provider === "openai" ? $("#openaikey").value.trim() : $("#apikey").value.trim();
-    if (key) headers[picked.provider === "openai" ? "X-OpenAI-Api-Key" : "X-Api-Key"] = key;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
+    const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
+    if (ak) headers["X-Api-Key"] = ak;
+    if (ok) headers["X-OpenAI-Api-Key"] = ok;
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1558,13 +1576,14 @@ $("#loginbtn").onclick = () => { toggleAccount(false); openGuide(true); };
 $("#logoutbtn").onclick = logout;
 document.addEventListener("click", e => { if (!e.target.closest("#accountwrap")) toggleAccount(false); });
 
-// ---------------------------------------------------------------- model picker: Claude and OpenAI share four capability/cost levels
+// ---------------------------------------------------------------- model picker: choose a god, the model behind it is automatic
 const GODS = [
-  {id: "hermes", name: "Hermes", color: "#0FA3B1", tag: "Quick and economical: Haiku, nano and mini models."},
-  {id: "dionysus", name: "Dionysus", color: "#8A3FB5", tag: "Balanced: Sonnet and standard GPT models."},
-  {id: "zeus", name: "Zeus", color: "#D4A017", tag: "Deep and capable: Opus, pro and reasoning models."},
-  {id: "apollo", name: "Apollo", color: "#E8662A", tag: "Fable and specialised or unclassified models."},
+  {id: "hermes", name: "Hermes", color: "#0FA3B1", tag: "Quick and economical"},
+  {id: "dionysus", name: "Dionysus", color: "#8A3FB5", tag: "Balanced, for everyday work"},
+  {id: "zeus", name: "Zeus", color: "#D4A017", tag: "Deep and most capable"},
+  {id: "apollo", name: "Apollo", color: "#E8662A", tag: "Specialised and new models"},
 ];
+const providerLabel = p => p === "openai" ? "OpenAI" : "Claude";
 const modelKey = (provider, id) => `${provider}::${id}`;
 function addModelOption(provider, id, name) {
   const sel = $("#model"), key = modelKey(provider, id);
@@ -1572,62 +1591,86 @@ function addModelOption(provider, id, name) {
   if (!o) { o = document.createElement("option"); o.value = key; sel.appendChild(o); }
   o.dataset.provider = provider; o.dataset.model = id; o.textContent = name || id; return o;
 }
-function selectedModel() {
-  const o = $("#model").selectedOptions[0];
-  return o ? {provider: o.dataset.provider || "anthropic", id: o.dataset.model || o.value} : {provider: "anthropic", id: state.config.model};
-}
+const keyOk = provider => provider === "openai" ? !!($("#openaikey").value.trim() || state.config.has_openai_key) : !!($("#apikey").value.trim() || state.config.has_server_key);
 function modelFamily(provider, id) {
   const l = String(id).toLowerCase();
   if (provider === "anthropic") {
     if (l.includes("haiku")) return "hermes";
     if (l.includes("sonnet")) return "dionysus";
     if (l.includes("opus")) return "zeus";
-    if (l.includes("fable")) return "apollo";
-  } else {
-    if (/(nano|mini|3\.5)/.test(l)) return "hermes";
-    if (/^(o[1-9])|(-pro\b)|reason/.test(l)) return "zeus";
-    if (/^(gpt-|chatgpt-)/.test(l)) return "dionysus";
+    return "apollo";
   }
+  if (/(nano|mini|3\.5)/.test(l)) return "hermes";
+  if (/^(o[1-9])|(-pro\b)|reason/.test(l)) return "zeus";
+  if (/^(gpt-|chatgpt-)/.test(l)) return "dionysus";
   return "apollo";
 }
+const SKIP = /codex|chat-latest|instruct|turbo|preview|live|deep-research|search|audio|realtime|oss|transcribe|image|vision/;
+function modelScore(id) {
+  const l = String(id).toLowerCase();
+  const m = l.match(/(?:claude-(?:[a-z]+-)?|gpt-|\bo)(\d+)(?:[.-](\d{1,2})(?!\d))?/);
+  let v = m ? +m[1] + (m[2] ? +m[2] / 10 : 0) : 0;
+  if (/\d{4}-\d{2}-\d{2}$|\d{8}$/.test(l)) v -= 0.001;
+  if (/nano/.test(l)) v += 0.0002;
+  return v;
+}
+const godOptions = godId => [...$("#model").options].filter(o => modelFamily(o.dataset.provider || "anthropic", o.dataset.model || o.value) === godId);
+const godPref = godId => { try { return localStorage.getItem("sublattice.pref." + godId) || ""; } catch { return ""; } };
+function candidates(godId) {
+  const opts = godOptions(godId).filter(o => keyOk(o.dataset.provider)), list = [];
+  const pref = opts.find(o => o.value === godPref(godId)); if (pref) list.push(pref);
+  for (const p of ["anthropic", "openai"]) {
+    const best = opts.filter(o => o.dataset.provider === p && !SKIP.test(o.dataset.model))
+      .sort((a, b) => modelScore(b.dataset.model) - modelScore(a.dataset.model))[0];
+    if (best && !list.includes(best)) list.push(best);
+  }
+  if (!list.length && opts.length) list.push(opts[0]);
+  return list;
+}
+const currentGod = () => { try { return localStorage.getItem("sublattice.god") || "dionysus"; } catch { return "dionysus"; } };
+function selectedModel() {
+  const list = candidates(currentGod()), c = list[0];
+  if (!c) return {provider: "anthropic", id: state.config.model, god: currentGod(), fallbacks: []};
+  return {provider: c.dataset.provider, id: c.dataset.model, god: currentGod(),
+          fallbacks: list.slice(1, 4).map(o => ({provider: o.dataset.provider, model: o.dataset.model}))};
+}
 const godLogo = g => `<span class="godlogo" style="--c:${g ? g.color : "#6B7280"}"><b>${g ? g.name[0] : "?"}</b>${g ? `<img src="/gods/${g.id}.png" alt="" onerror="this.remove()">` : ""}</span>`;
-function chooseModel(provider, id) {
-  const o = addModelOption(provider, id, id); $("#model").value = o.value;
-  try { localStorage.setItem("sublattice.model", o.value); } catch {}
+const modelName = o => o.textContent.replace(/\s*\(.*\)$/, "");
+function chooseGod(id) {
+  try { localStorage.setItem("sublattice.god", id); } catch {}
   toggleGods(false); refreshGods();
 }
 function updateGodBtn() {
-  const picked = selectedModel(), g = GODS.find(x => x.id === modelFamily(picked.provider, picked.id));
+  const g = GODS.find(x => x.id === currentGod()) || GODS[1], c = candidates(g.id)[0];
   $("#godlogo").innerHTML = godLogo(g);
-  $("#godname").textContent = g ? g.name : "Model";
-  $("#godbtn").title = `${g ? g.name + " · " : ""}${picked.provider === "openai" ? "OpenAI" : "Anthropic"} · ${picked.id}`;
+  $("#godname").textContent = g.name;
+  $("#godbtn").title = `${g.name} → ${c ? providerLabel(c.dataset.provider) + " " + c.dataset.model : "no model available, add an API key"}`;
 }
 function refreshGods() {
-  const sel = $("#model"), menu = $("#godmenu"), picked = selectedModel(); menu.innerHTML = "";
-  const groups = Object.fromEntries(GODS.map(g => [g.id, []]));
-  for (const o of sel.options) groups[modelFamily(o.dataset.provider || "anthropic", o.dataset.model || o.value)].push(o);
-  const modelBtn = o => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "godmodel";
-    b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(o.value === sel.value));
-    const provider = o.dataset.provider === "openai" ? "OpenAI" : "Claude";
-    b.textContent = `${o.textContent.replace(/\s*\(.*\)$/, "")} · ${provider}`; b.title = o.dataset.model;
-    b.onclick = () => chooseModel(o.dataset.provider, o.dataset.model); return b;
-  };
+  const menu = $("#godmenu"), cur = currentGod(); menu.innerHTML = "";
   for (const g of GODS) {
-    const sec = document.createElement("div"); sec.className = "godsec";
-    sec.innerHTML = `<div class="godhead">${godLogo(g)}<div><b>${g.name}</b><small>${g.tag}</small></div></div>`;
-    if (!groups[g.id].length) sec.insertAdjacentHTML("beforeend", `<div class="godnone">No models at this level for the keys in this tab</div>`);
-    for (const o of groups[g.id]) sec.appendChild(modelBtn(o));
-    menu.appendChild(sec);
+    const c = candidates(g.id)[0], b = document.createElement("button");
+    b.type = "button"; b.className = "godmodel godrow"; b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(g.id === cur));
+    b.innerHTML = `${godLogo(g)}<span><b>${g.name}</b><small>${g.tag}</small><small class="use">${c ? "Uses " + esc(modelName(c)) + " · " + providerLabel(c.dataset.provider) : "No model yet, add an API key"}</small></span>`;
+    b.onclick = () => chooseGod(g.id); menu.appendChild(b);
   }
-  for (const provider of ["anthropic", "openai"]) {
-    const custom = document.createElement("button"); custom.type = "button"; custom.className = "godmodel";
-    custom.textContent = `Other ${provider === "openai" ? "OpenAI" : "Anthropic"} model id…`;
-    custom.onclick = () => { const id = (prompt(`${provider === "openai" ? "OpenAI" : "Anthropic"} model id`) || "").trim(); if (id) chooseModel(provider, id); };
-    menu.appendChild(custom);
-  }
-  updateGodBtn();
+  updateGodBtn(); renderPrefs();
 }
+function renderPrefs() {
+  const box = $("#prefs"); if (!box || box.contains(document.activeElement)) return; box.innerHTML = "";
+  for (const g of GODS) {
+    const label = document.createElement("label"), sel = document.createElement("select");
+    label.append(g.name + " ", sel);
+    const auto = document.createElement("option"); auto.value = ""; auto.textContent = "Auto (recommended)"; sel.appendChild(auto);
+    for (const o of godOptions(g.id).sort((a, b) => modelScore(b.dataset.model) - modelScore(a.dataset.model))) {
+      const x = document.createElement("option"); x.value = o.value; x.textContent = `${modelName(o)} · ${providerLabel(o.dataset.provider)}`; sel.appendChild(x);
+    }
+    sel.value = godPref(g.id); if (sel.value !== godPref(g.id)) sel.value = "";
+    sel.onchange = () => { try { sel.value ? localStorage.setItem("sublattice.pref." + g.id, sel.value) : localStorage.removeItem("sublattice.pref." + g.id); } catch {} updateGodBtn(); refreshGodsMenuOnly(); };
+    box.appendChild(label);
+  }
+}
+function refreshGodsMenuOnly() { const keep = $("#prefs").innerHTML; refreshGods(); if (!$("#godsdlg").hidden) openGods(); }
 function toggleGods(open) {
   const m = $("#godmenu"), want = open === undefined ? m.hidden : open;
   if (want) m.style.maxHeight = Math.max(160, Math.min(540, $("#godbtn").getBoundingClientRect().top - 16)) + "px";
@@ -1648,9 +1691,9 @@ const GOD_INFO = {
 };
 const dots = n => n == null ? "varies" : "●".repeat(n) + "○".repeat(5 - n);
 function openGods() {
-  const sel = $("#model"), picked = selectedModel(), cur = modelFamily(picked.provider, picked.id), box = $("#plans"); box.innerHTML = "";
+  const cur = currentGod(), box = $("#plans"); box.innerHTML = "";
   for (const g of GODS) {
-    const info = GOD_INFO[g.id], list = [...sel.options].filter(o => modelFamily(o.dataset.provider || "anthropic", o.dataset.model || o.value) === g.id);
+    const info = GOD_INFO[g.id], list = candidates(g.id), total = godOptions(g.id).length;
     const el = document.createElement("div"); el.className = "plan" + (cur === g.id ? " sel" : "");
     el.innerHTML = `<div class="lvl"><span>Level ${info.level}</span><em>${cur === g.id ? "Selected" : info.tier}</em></div>
       <div class="ph">${godLogo(g)}<div><b>${g.name}</b><small>${info.tier}</small></div></div>
@@ -1658,10 +1701,10 @@ function openGods() {
       <div class="meter"><span>Depth</span><span>${dots(info.depth)}</span></div>
       <ul>${info.best.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
       <div class="trade">${esc(info.trade)}</div>
-      <div class="models">${list.length ? "On your keys: " + list.map(o => `${esc(o.textContent.replace(/\s*\(.*\)$/, ""))} (${o.dataset.provider === "openai" ? "OpenAI" : "Claude"})`).join(", ") : "No models at this level for the keys in this tab."}</div>`;
+      <div class="models">${list.length ? `Uses <b>${esc(modelName(list[0]))}</b> (${providerLabel(list[0].dataset.provider)})${list[1] ? `; falls back to ${esc(modelName(list[1]))} (${providerLabel(list[1].dataset.provider)})` : ""}. ${total} model${total === 1 ? "" : "s"} available; change it in Settings.` : "No model available. Add an API key in Settings."}</div>`;
     const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (cur === g.id ? "" : " primary");
     b.textContent = cur === g.id ? "Selected" : "Choose " + g.name; b.disabled = !list.length || cur === g.id;
-    b.onclick = () => { chooseModel(list[0].dataset.provider, list[0].dataset.model); openGods(); };
+    b.onclick = () => { chooseGod(g.id); openGods(); };
     el.appendChild(b); box.appendChild(el);
   }
   $("#godsdlg").hidden = false; $("#godsback").hidden = false;
@@ -1685,7 +1728,7 @@ const GUIDE_FAQ = [
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, press the play icon in the left bar (Run setup) and choose Deep: a txt editor with an examples dropdown."],
   [/param|slider|exchange|A0|Ku|Ms|damping/i, "Run setup (play icon in the left bar) > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
   [/preset|afm|fm\b|ferh/i, "In Run setup (play icon in the left bar) > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
-  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box the god button picks a Claude or OpenAI model by capability and cost. Hermes = quick/cheap (Haiku, nano, mini), Dionysus = balanced (Sonnet, standard GPT), Zeus = deep/most capable (Opus, pro, reasoning), Apollo = Fable and specialised models. Open it to choose the exact model and provider."],
+  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box you choose a god: Hermes = quick and economical, Dionysus = balanced, Zeus = deep and most capable, Apollo = specialised and new models. The model behind each god is picked automatically from your Claude and OpenAI keys, and switches to the other provider if a call fails. To always use a specific model, open Settings > Model behind each god."],
   [/key|api|κλειδ/i, "Settings has separate Anthropic and OpenAI API key fields. Paste either or both, or set ANTHROPIC_API_KEY and OPENAI_API_KEY in .env, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
   [/name|όνομα|log ?in|log ?out|login|logout|account|user|sign/i, "Your name is your login. The round button with your initial in the left bar lets you log out; then type another name in my window to log in. Each name keeps its own chat history and default parameters."],
@@ -1738,8 +1781,9 @@ async function guideAsk(q) {
   const wait = guideAdd("bot", "…");
   try {
     const headers = {"Content-Type": "application/json"}, picked = selectedModel();
-    const k = picked.provider === "openai" ? $("#openaikey").value.trim() : $("#apikey").value.trim();
-    if (k) headers[picked.provider === "openai" ? "X-OpenAI-Api-Key" : "X-Api-Key"] = k;
+    const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
+    if (ak) headers["X-Api-Key"] = ak;
+    if (ok) headers["X-OpenAI-Api-Key"] = ok;
     const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: picked.id, provider: picked.provider, name: getName()})});
     wait.innerHTML = md(out.text); guide.msgs.push({role: "assistant", content: out.text});
   } catch (e) {
@@ -1758,6 +1802,7 @@ function keyState() {
   const pill = $("#keypill"), txt = $("#keytext"), n = +!!anthropic + +!!openai;
   if (n) { txt.textContent = n === 2 ? "Both providers ready" : (anthropic ? "Anthropic ready" : "OpenAI ready"); pill.className = "pill good"; }
   else { txt.textContent = "Add an API key"; pill.className = "pill need"; }
+  refreshGods();
 }
 function toggleSettings(open) {
   const panel = $("#settingspanel"), want = open === undefined ? panel.hidden : open;
@@ -1785,10 +1830,8 @@ async function loadModels() {
     if (a) headers["X-Api-Key"] = a;
     if (o) headers["X-OpenAI-Api-Key"] = o;
     const out = await api("/api/models", {headers}); if (!out.models || !out.models.length) return;
-    const sel = $("#model"), keep = localStorage.getItem("sublattice.model"); sel.innerHTML = "";
+    const sel = $("#model"); sel.innerHTML = "";
     for (const m of out.models) addModelOption(m.provider || "anthropic", m.id, m.name);
-    const fallback = modelKey("anthropic", (out.defaults || {}).anthropic || state.config.model);
-    sel.value = [...sel.options].some(x => x.value === keep) ? keep : ([...sel.options].some(x => x.value === fallback) ? fallback : sel.options[0].value);
     sel.title = `${out.models.length} models from Anthropic and OpenAI`;
     refreshGods();
   } catch {}
@@ -1804,7 +1847,6 @@ async function init() {
   fastUpdate(); setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
   const sel = $("#model");
   for (const m of state.config.models) addModelOption("anthropic", m, m);
-  sel.value = localStorage.getItem("sublattice.model") || modelKey("anthropic", state.config.model);
   refreshGods();
   $("#apikey").value = sessionStorage.getItem("sublattice.key") || "";
   $("#openaikey").value = sessionStorage.getItem("sublattice.openai.key") || "";

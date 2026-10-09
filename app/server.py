@@ -29,6 +29,7 @@ class ChatIn(BaseModel):
     name: str | None = None
     defaults: str | None = None
     provider: str = "anthropic"
+    fallbacks: list = []
 
 
 class GuideIn(BaseModel):
@@ -105,18 +106,36 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
         raise HTTPException(400, f"unknown provider {body.provider}")
     if body.model and not re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", body.model):
         raise HTTPException(400, f"invalid model name {body.model}")
-    key = x_openai_api_key if body.provider == "openai" else x_api_key
-    env_name = "OPENAI_API_KEY" if body.provider == "openai" else "ANTHROPIC_API_KEY"
-    if not (key or os.environ.get(env_name)):
+    keys = {"anthropic": x_api_key or os.environ.get("ANTHROPIC_API_KEY"),
+            "openai": x_openai_api_key or os.environ.get("OPENAI_API_KEY")}
+    given = {"anthropic": x_api_key, "openai": x_openai_api_key}
+    tries = [{"provider": body.provider, "model": body.model}]
+    for c in body.fallbacks[:3]:
+        if (isinstance(c, dict) and c.get("provider") in keys and isinstance(c.get("model"), str)
+                and re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", c["model"])):
+            tries.append({"provider": c["provider"], "model": c["model"]})
+    tries = [t for t in tries if keys[t["provider"]]]
+    if not tries:
+        env_name = "OPENAI_API_KEY" if body.provider == "openai" else "ANTHROPIC_API_KEY"
         return JSONResponse({"error": f"No {body.provider} API key. Add one in Settings or set {env_name}."},
                             status_code=401)
+    retry = {400, 401, 402, 403, 404, 429, 502}
 
     def stream():
         try:
-            for ev in agent.chat_stream(body.messages, api_key=key, model=body.model, mode=body.mode,
-                                    name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
-                                    defaults_text=(body.defaults or "")[:2000], provider=body.provider):
-                yield json.dumps(ev, default=str) + "\n"
+            for i, t in enumerate(tries):
+                events = agent.chat_stream(body.messages, api_key=given[t["provider"]], model=t["model"], mode=body.mode,
+                                           name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
+                                           defaults_text=(body.defaults or "")[:2000], provider=t["provider"])
+                first = next(events, None)
+                if first and first.get("type") == "error" and first.get("status") in retry and i < len(tries) - 1:
+                    continue
+                yield json.dumps({"type": "model", "provider": t["provider"], "model": t["model"]}) + "\n"
+                if first:
+                    yield json.dumps(first, default=str) + "\n"
+                for ev in events:
+                    yield json.dumps(ev, default=str) + "\n"
+                return
         except Exception as e:  # keep the stream well-formed for the page
             yield json.dumps({"type": "error", "status": 500, "error": f"Unexpected error: {e}"}) + "\n"
 

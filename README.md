@@ -60,16 +60,16 @@ with the paperclip (drag and drop also works). Under the message box you choose 
 - **Deep** works from the full parameter set or your txt file, mentions the caveats that apply and gives a
   quantitative explanation.
 
-The model picker has one god per model family: **Hermes** for Haiku, **Dionysus** for Sonnet, **Zeus** for
-Opus/reasoning and **Apollo** for Fable or specialised models. Claude and OpenAI share these four levels:
-Hermes contains Haiku, nano and mini models; Dionysus contains Sonnet and standard GPT models; Zeus contains
-Opus, pro and reasoning models; Apollo contains Fable and anything specialised or unclassified. The combined
-list is read from both keys. Each exact model is labelled Claude or OpenAI, and a custom id can be entered for
-either provider. The logos are read from `web/gods/`
-(`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god shows a coloured
-badge with its initial.
+Under the message box you choose one of four gods: **Hermes** (quick and economical), **Dionysus** (balanced),
+**Zeus** (deep and most capable) or **Apollo** (specialised and new models). The model behind each god is chosen
+automatically from the keys you have: for every provider it takes the newest suitable model of that level (for
+Hermes, for example, Claude Haiku or an OpenAI nano/mini model), tries Claude first and switches to OpenAI if a
+call fails, for instance when there is no credit. Each answer shows which model was used. To always use a given
+model for a god, open Settings and pick it under *Model behind each god*; the default is Auto. The logos are
+read from `web/gods/` (`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god
+shows a coloured badge with its initial.
 The temple icon in the left bar opens *Model gods*, a comparison of the four levels with what each is good
-for, its speed and depth, and the models of your key that belong to it, plus a button to choose it.
+for, its speed and depth, and the model each one will use, plus a button to choose it.
 
 **Agent behaviour.** After it starts a run the assistant waits for it, reads the result (including the
 plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
