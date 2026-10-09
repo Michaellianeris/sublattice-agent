@@ -35,6 +35,8 @@ How the app works
   then the full viewer: dial of the sublattices (+x and +z axes), figures (order AFM -> FM), plot with
   toggles for m1, m2 and the Neel vector; click moves the playhead, drag zooms, double-click resets, Play
   animates. Result files can be downloaded. A running run can be cancelled on its card.
+- The temple icon in the left bar (above the question mark) opens "Model gods": four cards, one per level (Hermes = Haiku,
+  Dionysus = Sonnet, Zeus = Opus, Apollo = Fable) saying what each is good for, with a button to choose it.
 - The question-mark button in the left bar (just above the settings gear) opens a window that explains every tool.
 - Left bar also has: clock = conversation history (reopen or delete past chats with their runs), sliders =
   Default parameters (the values Fast mode starts from; also sent to the assistant). The counter next to

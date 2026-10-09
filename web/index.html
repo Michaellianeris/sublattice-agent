@@ -306,6 +306,23 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .tool .owl{width:100%;height:100%;object-fit:cover}
 .godstack{display:grid;grid-template-columns:1fr 1fr;width:100%;height:100%}
 .godstack img{width:100%;height:100%;object-fit:cover}
+.godsdlg{width:min(1060px,calc(100vw - 32px))}
+.godsdlg p{margin:0 0 12px;color:var(--muted);font-size:.88rem}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.plan{border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.plan.sel{border-color:var(--m1);box-shadow:0 0 0 2px color-mix(in srgb,var(--m1) 25%,transparent)}
+.plan .lvl{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;justify-content:space-between}
+.plan .lvl em{font-style:normal;color:var(--m1);font-weight:600}
+.plan .ph{display:flex;align-items:center;gap:10px}
+.plan .ph .godlogo{width:56px;height:56px;font-size:1.4rem}
+.plan .ph b{font-size:1.1rem;display:block}
+.plan .ph small{color:var(--muted)}
+.plan .meter{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+.plan .meter span:last-child{color:var(--m1);letter-spacing:2px}
+.plan ul{margin:0;padding-left:18px;font-size:.84rem;flex:1}
+.plan .trade{font-size:.78rem;color:var(--muted)}
+.plan .models{font-size:.78rem;color:var(--muted);border-top:1px solid var(--grid);padding-top:6px}
+.plan .btn{width:100%}
 .tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
 .composer .row .hint{display:none}
 .composer .row .send{margin-left:auto}
@@ -426,6 +443,7 @@ main{grid-template-columns:minmax(0,1fr)}
       <button class="btn small primary" id="loginbtn" type="button">Log in</button>
     </div>
   </div>
+  <button class="rail-btn" id="godsbtn" type="button" title="Model gods: what each model level does" aria-label="Model gods"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></button>
   <button class="rail-btn" id="toolsbtn" type="button" title="What do these tools do?" aria-label="What the tools do"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 015 .9c0 1.7-2.5 2.2-2.5 3.9"/><path d="M12 17.2h0"/></svg></button>
   <div class="settings">
     <button class="rail-btn" id="settingsbtn" type="button" title="Settings" aria-label="Settings" aria-expanded="false" aria-controls="settingspanel">
@@ -480,6 +498,13 @@ main{grid-template-columns:minmax(0,1fr)}
 <button class="guide-fab" id="guidefab" type="button" title="Need help? Ask Athena" aria-label="Ask Athena, the SpinMate guide">
   <img src="/athena.png" alt="" width="40" height="40">
 </button>
+<div class="modal-back" id="godsback" hidden></div>
+<section class="defdlg godsdlg" id="godsdlg" hidden role="dialog" aria-label="Model gods">
+  <div class="dlg-head"><h3>Model gods</h3>
+    <button class="rail-btn" id="godsclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>Four levels, one god each. Pick the level that matches the question: a quick check, an everyday run, or a careful analysis. Larger models usually cost more tokens and take longer to answer.</p>
+  <div class="plans" id="plans"></div>
+</section>
 <div class="modal-back" id="toolsback" hidden></div>
 <section class="defdlg toolsdlg" id="toolsdlg" hidden role="dialog" aria-label="What the tools do">
   <div class="dlg-head"><h3>What the tools do</h3>
@@ -490,12 +515,13 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h4>History</h4><p>Lists your earlier chats with their runs and graphs. Click one to reopen it, or the cross to delete it. Every user has their own history.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><h4>Default parameters</h4><p>Edit the values Fast mode starts from: duration, Ms, exchange A0, anisotropy Ku, damping, temperature, SOT current, the initial state and one or two extra flags. They are saved in this browser and also sent to the assistant as the base of its runs. &ldquo;Reset to built-in&rdquo; brings back the originals.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><div><h4>Run setup</h4><p>Starts a simulation yourself, without the assistant, so it uses no tokens. <b>Fast</b> has presets (AFM&rarr;FM, AFM&rarr;AFM, FM&rarr;AFM, FM&rarr;FM, FeRh heating), sliders, Check and Run. <b>Deep</b> is a text editor for the full parameter file with an examples menu, Check, Run and Save as file. The result appears in the chat.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which models of your key belong to it. Each card has a button to choose it.</p></div></div>
 <div class="tool"><span class="ti"><span class="dotstatus"></span></span><div><h4>API key status</h4><p>Green when a key is available (on the server or in this tab), amber when it is missing. Click it to open the settings.</p></div></div>
 <div class="tool"><span class="ti"><span class="avatar"><span>M</span></span></span><div><h4>Account</h4><p>Shows who is signed in. Log out, then type another name in Athena&rsquo;s window to log in. Each name keeps its own history and default parameters. There is no password.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Colour theme (Light, Dark, Spin) and your API key. The key stays in this browser tab and is only sent to your own server.</p></div></div>
 <div class="toolsec">Under the message box</div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></span><div><h4>Attach</h4><p>Adds a parameter .txt file to your message. Dragging a file onto the chat works too.</p></div></div>
-<div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model gods</h4><p>One god per model family. <b>Hermes</b> = Haiku (fast and light), <b>Dionysus</b> = Sonnet (balanced), <b>Zeus</b> = Opus (most capable), <b>Apollo</b> = Fable. Open the picker to choose a model inside the family, or type another model id.</p></div></div>
+<div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model picker</h4><p>One god per model family. <b>Hermes</b> = Haiku (fast and light), <b>Dionysus</b> = Sonnet (balanced), <b>Zeus</b> = Opus (most capable), <b>Apollo</b> = Fable. Open the picker to choose a model inside the family, or type another model id.</p></div></div>
 <div class="tool"><span class="ti"><b>F/D</b></span><div><h4>Fast and Deep</h4><p><b>Fast</b> uses the default parameters and answers briefly. <b>Deep</b> works from the full parameters or your file, mentions the caveats that apply and analyses the dynamics in detail.</p></div></div>
 <div class="tool"><span class="ti"><b>tok</b></span><div><h4>Token counter</h4><p>Tokens used in the current chat. Each answer also shows its own input and output tokens. Runs started from Run setup use none.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><div><h4>Send</h4><p>Sends the message. Enter does the same.</p></div></div>
@@ -1495,7 +1521,7 @@ $("#defsave").onclick = () => {
   baseFast(); fastUpdate(); closeDefaults();
 };
 $("#defreset").onclick = () => { try { localStorage.removeItem(kUD()); } catch {} PRESETS_FAST.default(); fastUpdate(); closeDefaults(); };
-document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); closeTools(); toggleHistory(false); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDefaults(); closeSetup(); closeTools(); closeGods(); toggleHistory(false); } });
 
 function updateAccount() {
   const n = getName();
@@ -1585,8 +1611,44 @@ function toggleGods(open) {
 $("#godbtn").onclick = () => toggleGods();
 document.addEventListener("click", e => { if (!e.target.closest("#godpick")) toggleGods(false); });
 
+const GOD_INFO = {
+  hermes: {level: 1, tier: "Quick", speed: 5, depth: 2,
+    best: ["Single runs and the presets", "Short answers in Fast mode", "The lowest cost per question"], trade: "May miss subtle points in a long analysis."},
+  dionysus: {level: 2, tier: "Balanced", speed: 4, depth: 3,
+    best: ["Everyday runs with a clear explanation", "Sweeps and comparisons", "Fast or Deep mode"], trade: "A good default when you are not sure."},
+  zeus: {level: 3, tier: "Most capable", speed: 2, depth: 5,
+    best: ["Deep mode and a careful reading of the curves", "Goal searches, such as finding a threshold over several sweeps", "Long requests with many steps"], trade: "Slowest, and uses the most tokens."},
+  apollo: {level: 4, tier: "Fable", speed: null, depth: null,
+    best: ["The models sold under the Fable name on your key", "Try one and compare its answer with the others on the same run"], trade: "Strengths vary by model, so check the list below."},
+};
+const dots = n => n == null ? "varies" : "●".repeat(n) + "○".repeat(5 - n);
+function openGods() {
+  const sel = $("#model"), cur = modelFamily(sel.value), box = $("#plans"); box.innerHTML = "";
+  for (const g of GODS) {
+    const info = GOD_INFO[g.id], list = [...sel.options].filter(o => o.value !== "__custom__" && modelFamily(o.value) === g.id);
+    const el = document.createElement("div"); el.className = "plan" + (cur === g.id ? " sel" : "");
+    el.innerHTML = `<div class="lvl"><span>Level ${info.level}</span><em>${cur === g.id ? "Selected" : info.tier}</em></div>
+      <div class="ph">${godLogo(g)}<div><b>${g.name}</b><small>${g.family[0].toUpperCase() + g.family.slice(1)} models</small></div></div>
+      <div class="meter"><span>Speed</span><span>${dots(info.speed)}</span></div>
+      <div class="meter"><span>Depth</span><span>${dots(info.depth)}</span></div>
+      <ul>${info.best.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      <div class="trade">${esc(info.trade)}</div>
+      <div class="models">${list.length ? "On your key: " + list.map(o => esc(o.textContent.replace(/\s*\(.*\)$/, ""))).join(", ") : "No " + g.family[0].toUpperCase() + g.family.slice(1) + " models on your key."}</div>`;
+    const b = document.createElement("button"); b.type = "button"; b.className = "btn" + (cur === g.id ? "" : " primary");
+    b.textContent = cur === g.id ? "Selected" : "Choose " + g.name; b.disabled = !list.length || cur === g.id;
+    b.onclick = () => { chooseModel(list[0].value); openGods(); };
+    el.appendChild(b); box.appendChild(el);
+  }
+  $("#godsdlg").hidden = false; $("#godsback").hidden = false;
+}
+function closeGods() { $("#godsdlg").hidden = true; $("#godsback").hidden = true; }
+$("#godsbtn").onclick = openGods;
+$("#godsclose").onclick = closeGods;
+$("#godsback").onclick = closeGods;
+
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
+  [/level|plan|compare|comparison|which model|best model|model gods/i, "The temple icon in the left bar (above the question mark) opens Model gods: four cards, one per level. Hermes = Haiku (quick), Dionysus = Sonnet (balanced), Zeus = Opus (most capable), Apollo = Fable. Each card says what it is good for and has a button to choose it."],
   [/tool|button|icon|explain|what does|help/i, "The question-mark button in the left bar (just above the settings gear) opens a window that explains what every button does: the left bar, the controls under the message box and the run cards."],
   [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena, your guide. In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship, born fully armed from the head of Zeus and protector of Athens, and the owl was her symbol. I am SpinMate's AI assistant for two-sublattice macrospin simulations. Ask me how to use it."],
   [/histor|previous|παλι|ιστορικ/i, "The clock icon in the left bar opens your past conversations. Click one to reopen it with its runs and graphs, or the cross to delete it. The pencil icon starts a new chat."],
