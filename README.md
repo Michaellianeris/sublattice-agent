@@ -59,8 +59,12 @@ with the paperclip (drag and drop also works). Under the message box you choose 
 - **Deep** works from the full parameter set or your txt file, mentions the caveats that apply and gives a
   quantitative explanation.
 
-The model list is read from your API key, so it contains whatever Anthropic models the key can use. "Other
-model id" lets you type one by hand.
+The model picker has one god per model family: **Hermes** for Haiku, **Dionysus** for Sonnet, **Zeus** for
+Opus and **Apollo** for Fable. Open it to choose a model inside the family. The list is read from your API
+key, so it contains whatever Anthropic models the key can use; anything that fits no family appears under
+"Other models", and "Other model id" lets you type one by hand. The logos are read from `web/gods/`
+(`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god shows a coloured
+badge with its initial.
 
 **Agent behaviour.** After it starts a run the assistant waits for it, reads the result (including the
 plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
